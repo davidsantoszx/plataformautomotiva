@@ -1,0 +1,167 @@
+// use prisma-next
+
+enum ProjectMode {
+  REAL
+  FREE
+}
+
+enum CompatibilityLevel {
+  COMPATIBLE
+  ADAPTATION
+  INCOMPATIBLE
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  email     String    @unique
+  username  String?   @unique
+  name      String?
+  password  String
+
+  projects  Project[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model CarBrand {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+
+  models    CarModel[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model CarModel {
+  id        Int       @id @default(autoincrement())
+  brandId   Int
+  name      String
+  slug      String
+
+  brand     CarBrand  @relation(fields: [brandId], references: [id])
+  generations CarGeneration[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+
+  @@unique([brandId, slug])
+}
+
+model CarGeneration {
+  id          Int       @id @default(autoincrement())
+  modelId     Int
+  name        String
+  yearStart   Int
+  yearEnd     Int?
+
+  model       CarModel  @relation(fields: [modelId], references: [id])
+  vehicles    Vehicle[]
+
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model Vehicle {
+  id           Int       @id @default(autoincrement())
+  generationId Int
+  year         Int
+  version      String?
+  engine       String?
+  transmission String?
+
+  generation   CarGeneration @relation(fields: [generationId], references: [id])
+
+  projects     Project[]
+  compatibilities PartCompatibility[]
+
+  createdAt    TimestamptzString @default(now())
+  updatedAt    temporal.updatedAtString()
+
+  @@unique([generationId, year, version])
+}
+
+model PartCategory {
+  id        Int       @id @default(autoincrement())
+  name      String    @unique
+  slug      String    @unique
+
+  parts     Part[]
+
+  createdAt TimestamptzString @default(now())
+  updatedAt temporal.updatedAtString()
+}
+
+model Part {
+  id             Int       @id @default(autoincrement())
+  categoryId     Int
+  name           String
+  slug           String
+  brand          String?
+  description    String?
+  estimatedPrice Float
+  imageUrl       String?
+  modelUrl       String?
+
+  category       PartCategory @relation(fields: [categoryId], references: [id])
+
+  compatibilities PartCompatibility[]
+  projectParts    ProjectPart[]
+
+  createdAt      TimestamptzString @default(now())
+  updatedAt      temporal.updatedAtString()
+
+  @@unique([categoryId, slug])
+}
+
+model PartCompatibility {
+  id          Int       @id @default(autoincrement())
+  partId      Int
+  vehicleId   Int
+  level       CompatibilityLevel
+  requiresAdaptation Boolean @default(false)
+  notes       String?
+
+  part        Part     @relation(fields: [partId], references: [id])
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id])
+
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+
+  @@unique([partId, vehicleId])
+}
+
+model Project {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  vehicleId   Int
+  name        String
+  mode        ProjectMode @default(REAL)
+  isPublic    Boolean @default(false)
+  shareToken  String?     @unique
+
+  user        User      @relation(fields: [userId], references: [id])
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
+  parts       ProjectPart[]
+
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+}
+
+model ProjectPart {
+  id          Int       @id @default(autoincrement())
+  projectId   Int
+  partId      Int
+  quantity    Int       @default(1)
+  priceAtTime Float
+
+  project     Project   @relation(fields: [projectId], references: [id])
+  part        Part      @relation(fields: [partId], references: [id])
+
+  createdAt   TimestamptzString @default(now())
+  updatedAt   temporal.updatedAtString()
+
+  @@unique([projectId, partId])
+}
