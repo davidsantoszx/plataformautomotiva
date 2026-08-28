@@ -10,7 +10,6 @@
     "contract:emit": "prisma contract emit"
   },
   "dependencies": {
-    "@prisma/client": "^7.10.0",
     "@prisma/orm-postgres": "^8.0.0-rc.7",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
