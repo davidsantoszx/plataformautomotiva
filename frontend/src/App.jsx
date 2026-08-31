@@ -3,6 +3,7 @@ import {
   getBrands,
   getModelsByBrand,
   getGenerationsByModel,
+  getVehiclesByGeneration,
 } from './services/api'
 import './App.css'
 
@@ -16,6 +17,9 @@ function App() {
   const [generations, setGenerations] = useState([])
   const [selectedModel, setSelectedModel] = useState('')
   const [loadingGenerations, setLoadingGenerations] = useState(false)
+  const [vehicles, setVehicles] = useState([])
+  const [selectedGeneration, setSelectedGeneration] = useState('')
+  const [loadingVehicles, setLoadingVehicles] = useState(false)
 
   useEffect(() => {
     async function loadBrands() {
@@ -66,6 +70,30 @@ function App() {
 
   if (!modelId) {
     return
+  }
+
+  async function handleGenerationChange(event) {
+  const generationId = event.target.value
+
+  setSelectedGeneration(generationId)
+  setVehicles([])
+  setError('')
+
+  if (!generationId) {
+    return
+  }
+
+  try {
+    setLoadingVehicles(true)
+
+    const data = await getVehiclesByGeneration(generationId)
+    setVehicles(data.vehicles)
+  } catch (error) {
+    console.error(error)
+    setError('Não foi possível carregar os veículos.')
+  } finally {
+    setLoadingVehicles(false)
+  }
   }
 
   try {
@@ -148,7 +176,8 @@ function App() {
         )}
 
         {!loadingGenerations && generations.length > 0 && (
-          <select>
+          <select   value={selectedGeneration}
+              onChange={handleGenerationChange}>
             <option value="">Selecione uma geração</option>
 
             {generations.map((generation) => (
@@ -160,6 +189,30 @@ function App() {
         )}
       </section>
       )}
+
+      {selectedGeneration && (
+      <section>
+        <h2>Veículos</h2>
+
+        {loadingVehicles && <p>Carregando veículos...</p>}
+
+        {!loadingVehicles && vehicles.length === 0 && (
+          <p>Nenhum veículo cadastrado para esta geração.</p>
+        )}
+
+        {!loadingVehicles && vehicles.length > 0 && (
+          <select>
+            <option value="">Selecione um veículo</option>
+
+            {vehicles.map((vehicle) => (
+              <option key={vehicle.id} value={vehicle.id}>
+                {vehicle.year} {vehicle.version || ''}
+              </option>
+            ))}
+          </select>
+        )}
+      </section>
+    )}
 
       {error && <p>{error}</p>}
     </main>

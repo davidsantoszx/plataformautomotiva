@@ -34,3 +34,15 @@ export async function getGenerationsByModel(modelId) {
 
   return response.json()
 }
+
+export async function getVehiclesByGeneration(generationId) {
+  const response = await fetch(
+    `${API_URL}/cars/generations/${generationId}/vehicles`,
+  )
+
+  if (!response.ok) {
+    throw new Error('Erro ao buscar veículos')
+  }
+
+  return response.json()
+}
