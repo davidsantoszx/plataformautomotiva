@@ -1,121 +1,168 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
+import { useEffect, useState } from 'react'
+import {
+  getBrands,
+  getModelsByBrand,
+  getGenerationsByModel,
+} from './services/api'
 import './App.css'
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [brands, setBrands] = useState([])
+  const [models, setModels] = useState([])
+  const [selectedBrand, setSelectedBrand] = useState('')
+  const [loadingBrands, setLoadingBrands] = useState(true)
+  const [loadingModels, setLoadingModels] = useState(false)
+  const [error, setError] = useState('')
+  const [generations, setGenerations] = useState([])
+  const [selectedModel, setSelectedModel] = useState('')
+  const [loadingGenerations, setLoadingGenerations] = useState(false)
+
+  useEffect(() => {
+    async function loadBrands() {
+      try {
+        const data = await getBrands()
+        setBrands(data.brands)
+      } catch (error) {
+        console.error(error)
+        setError('Não foi possível carregar as marcas.')
+      } finally {
+        setLoadingBrands(false)
+      }
+    }
+
+    loadBrands()
+  }, [])
+
+  async function handleBrandChange(event) {
+    const brandId = event.target.value
+
+    setSelectedBrand(brandId)
+    setModels([])
+    setError('')
+
+    if (!brandId) {
+      return
+    }
+
+    try {
+      setLoadingModels(true)
+
+      const data = await getModelsByBrand(brandId)
+      setModels(data.models)
+    } catch (error) {
+      console.error(error)
+      setError('Não foi possível carregar os modelos.')
+    } finally {
+      setLoadingModels(false)
+    }
+  }
+
+  async function handleModelChange(event) {
+  const modelId = event.target.value
+
+  setSelectedModel(modelId)
+  setGenerations([])
+  setError('')
+
+  if (!modelId) {
+    return
+  }
+
+  try {
+    setLoadingGenerations(true)
+
+    const data = await getGenerationsByModel(modelId)
+    setGenerations(data.generations)
+  } catch (error) {
+    console.error(error)
+    setError('Não foi possível carregar as gerações.')
+  } finally {
+    setLoadingGenerations(false)
+  }
+  }
+
+
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+    <main>
+      <h1>Plataforma Automotiva</h1>
+
+      <p>Catálogo de veículos</p>
+
+      <section>
+        <h2>Selecione uma marca</h2>
+
+        {loadingBrands && <p>Carregando marcas...</p>}
+
+        {!loadingBrands && (
+          <select
+            value={selectedBrand}
+            onChange={handleBrandChange}
+          >
+            <option value="">Selecione uma marca</option>
+
+            {brands.map((brand) => (
+              <option key={brand.id} value={brand.id}>
+                {brand.name}
+              </option>
+            ))}
+          </select>
+        )}
       </section>
 
-      <div className="ticks"></div>
+      {selectedBrand && (
+        <section>
+          <h2>Modelos</h2>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+          {loadingModels && <p>Carregando modelos...</p>}
+
+          {!loadingModels && models.length === 0 && (
+            <p>Nenhum modelo cadastrado para esta marca.</p>
+          )}
+
+          {!loadingModels && models.length > 0 && (
+            <select
+              value={selectedModel}
+              onChange={handleModelChange}
+            >
+              <option value="">Selecione um modelo</option>
+
+              {models.map((model) => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          )}
+        </section>
+      )}
+
+      {selectedModel && (
+      <section>
+        <h2>Gerações</h2>
+
+        {loadingGenerations && <p>Carregando gerações...</p>}
+
+        {!loadingGenerations && generations.length === 0 && (
+          <p>Nenhuma geração cadastrada para este modelo.</p>
+        )}
+
+        {!loadingGenerations && generations.length > 0 && (
+          <select>
+            <option value="">Selecione uma geração</option>
+
+            {generations.map((generation) => (
+              <option key={generation.id} value={generation.id}>
+                {generation.name}
+              </option>
+            ))}
+          </select>
+        )}
       </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+      {error && <p>{error}</p>}
+    </main>
   )
 }
 
