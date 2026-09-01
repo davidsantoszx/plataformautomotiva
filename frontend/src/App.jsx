@@ -66,35 +66,15 @@ function App() {
 
   setSelectedModel(modelId)
   setGenerations([])
+  setSelectedGeneration('')
+  setVehicles([])
   setError('')
 
   if (!modelId) {
     return
   }
 
-  async function handleGenerationChange(event) {
-  const generationId = event.target.value
-
-  setSelectedGeneration(generationId)
-  setVehicles([])
-  setError('')
-
-  if (!generationId) {
-    return
-  }
-
-  try {
-    setLoadingVehicles(true)
-
-    const data = await getVehiclesByGeneration(generationId)
-    setVehicles(data.vehicles)
-  } catch (error) {
-    console.error(error)
-    setError('Não foi possível carregar os veículos.')
-  } finally {
-    setLoadingVehicles(false)
-  }
-  }
+ 
 
   try {
     setLoadingGenerations(true)
@@ -109,7 +89,29 @@ function App() {
   }
   }
 
+  async function handleGenerationChange(event) {
+    const generationId = event.target.value
 
+    setSelectedGeneration(generationId)
+    setVehicles([])
+    setError('')
+
+    if (!generationId) {
+      return
+    }
+
+    try {
+      setLoadingVehicles(true)
+
+      const data = await getVehiclesByGeneration(generationId)
+      setVehicles(data.vehicles)
+    } catch (error) {
+      console.error(error)
+      setError('Não foi possível carregar os veículos.')
+    } finally {
+      setLoadingVehicles(false)
+    }
+    }
 
   return (
     <main>
