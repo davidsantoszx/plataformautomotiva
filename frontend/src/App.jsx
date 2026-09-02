@@ -20,6 +20,7 @@ function App() {
   const [vehicles, setVehicles] = useState([])
   const [selectedGeneration, setSelectedGeneration] = useState('')
   const [loadingVehicles, setLoadingVehicles] = useState(false)
+  const [selectedVehicle, setSelectedVehicle] = useState('')
 
   useEffect(() => {
     async function loadBrands() {
@@ -203,15 +204,18 @@ function App() {
         )}
 
         {!loadingVehicles && vehicles.length > 0 && (
-          <select>
-            <option value="">Selecione um veículo</option>
+        <select
+          value={selectedVehicle}
+          onChange={(event) => setSelectedVehicle(event.target.value)}
+        >
+          <option value="">Selecione um veículo</option>
 
-            {vehicles.map((vehicle) => (
-              <option key={vehicle.id} value={vehicle.id}>
-                {vehicle.year} {vehicle.version || ''}
-              </option>
-            ))}
-          </select>
+          {vehicles.map((vehicle) => (
+            <option key={vehicle.id} value={vehicle.id}>
+              {vehicle.year} {vehicle.version || ''}
+            </option>
+          ))}
+        </select>
         )}
       </section>
     )}
