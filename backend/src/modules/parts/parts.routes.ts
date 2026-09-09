@@ -7,6 +7,7 @@ import {
   getPartsByCategory,
   getPart,
   postPart,
+  getCompatibilitiesByVehicle,
 } from './parts.controller'
 
 const router = Router()
@@ -20,6 +21,11 @@ router.post('/categories', postCategory)
 router.get(
   '/categories/:categoryId/parts',
   getPartsByCategory,
+)
+
+router.get(
+  '/vehicles/:vehicleId/compatibilities',
+  getCompatibilitiesByVehicle,
 )
 
 router.get('/parts/:id', getPart)

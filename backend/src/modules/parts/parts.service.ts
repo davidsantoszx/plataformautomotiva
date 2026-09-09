@@ -133,3 +133,32 @@ export async function createPart(
     modelUrl,
   })
 }
+
+export async function listCompatibilitiesByVehicle(
+  vehicleId: number,
+) {
+  const vehicle =
+    await db.orm.public.Vehicle.first({
+      id: vehicleId,
+    })
+
+  if (!vehicle) {
+    throw new Error('VEHICLE_NOT_FOUND')
+  }
+
+  return db.orm.public.PartCompatibility
+    .select(
+      'id',
+      'partId',
+      'vehicleId',
+      'level',
+      'requiresAdaptation',
+      'notes',
+      'createdAt',
+      'updatedAt',
+    )
+    .where({
+      vehicleId,
+    })
+    .all()
+}

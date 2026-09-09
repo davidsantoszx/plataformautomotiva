@@ -7,6 +7,7 @@ import {
   getPartById,
   listCategories,
   listPartsByCategory,
+  listCompatibilitiesByVehicle,
 } from './parts.service'
 
 export async function getCategories(
@@ -222,6 +223,47 @@ export async function postPart(
           message: 'Slug da peça já cadastrado nessa categoria',
         })
       }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function getCompatibilitiesByVehicle(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const vehicleId = Number(
+      req.params.vehicleId,
+    )
+
+    if (!Number.isInteger(vehicleId)) {
+      return res.status(400).json({
+        message: 'ID do veículo inválido',
+      })
+    }
+
+    const compatibilities =
+      await listCompatibilitiesByVehicle(
+        vehicleId,
+      )
+
+    return res.json({
+      compatibilities,
+    })
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === 'VEHICLE_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message: 'Veículo não encontrado',
+      })
     }
 
     console.error(error)
