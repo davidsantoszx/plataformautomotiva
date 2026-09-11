@@ -9,6 +9,7 @@ import {
   listProjectParts,
   listProjectsByUser,
   removePartFromProject,
+  updateProjectPartQuantity,
 } from './projects.service'
 
 export async function getProjects(
@@ -77,9 +78,22 @@ export async function postProject(
       mode,
     } = req.body
 
-    if (!vehicleId || !name) {
+    if (
+      !vehicleId ||
+      typeof name !== 'string' ||
+      !name.trim()
+    ) {
       return res.status(400).json({
-        message: 'vehicleId e name são obrigatórios',
+        message:
+          'vehicleId e name são obrigatórios',
+      })
+    }
+
+    const parsedVehicleId = Number(vehicleId)
+
+    if (!Number.isInteger(parsedVehicleId)) {
+      return res.status(400).json({
+        message: 'vehicleId inválido',
       })
     }
 
@@ -91,7 +105,7 @@ export async function postProject(
 
     const project = await createProject(
       req.userId!,
-      Number(vehicleId),
+      parsedVehicleId,
       name.trim(),
       mode,
     )
@@ -175,21 +189,40 @@ export async function postProjectPart(
       })
     }
 
-    if (!partId) {
+    const parsedPartId = Number(partId)
+
+    if (!Number.isInteger(parsedPartId)) {
       return res.status(400).json({
         message: 'partId é obrigatório',
       })
     }
 
-    const projectPart = await addPartToProject(
-      projectId,
-      req.userId!,
-      Number(partId),
-      quantity ? Number(quantity) : 1,
-    )
+    const parsedQuantity =
+      quantity === undefined
+        ? 1
+        : Number(quantity)
 
-    return res.status(201).json({
-      message: 'Peça adicionada ao projeto',
+    if (
+      !Number.isInteger(parsedQuantity) ||
+      parsedQuantity < 1
+    ) {
+      return res.status(400).json({
+        message:
+          'quantity deve ser um número inteiro maior que zero',
+      })
+    }
+
+    const projectPart =
+      await addPartToProject(
+        projectId,
+        req.userId!,
+        parsedPartId,
+        parsedQuantity,
+      )
+
+    return res.status(200).json({
+      message:
+        'Peça adicionada/quantidade atualizada',
       projectPart,
     })
   } catch (error) {
@@ -210,6 +243,86 @@ export async function postProjectPart(
         return res.status(409).json({
           message:
             'Peça incompatível com o veículo no modo Projeto Real',
+        })
+      }
+
+      if (error.message === 'INVALID_QUANTITY') {
+        return res.status(400).json({
+          message:
+            'Quantidade deve ser um número inteiro maior que zero',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchProjectPart(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const projectId = Number(req.params.projectId)
+    const partId = Number(req.params.partId)
+    const quantity = Number(req.body.quantity)
+
+    if (
+      !Number.isInteger(projectId) ||
+      !Number.isInteger(partId)
+    ) {
+      return res.status(400).json({
+        message: 'ID inválido',
+      })
+    }
+
+    if (
+      !Number.isInteger(quantity) ||
+      quantity < 1
+    ) {
+      return res.status(400).json({
+        message:
+          'quantity deve ser um número inteiro maior que zero',
+      })
+    }
+
+    const projectPart =
+      await updateProjectPartQuantity(
+        projectId,
+        req.userId!,
+        partId,
+        quantity,
+      )
+
+    return res.json({
+      message: 'Quantidade atualizada',
+      projectPart,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'PROJECT_NOT_FOUND') {
+        return res.status(404).json({
+          message: 'Projeto não encontrado',
+        })
+      }
+
+      if (
+        error.message ===
+        'PROJECT_PART_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message: 'Peça não encontrada no projeto',
+        })
+      }
+
+      if (error.message === 'INVALID_QUANTITY') {
+        return res.status(400).json({
+          message:
+            'Quantidade deve ser um número inteiro maior que zero',
         })
       }
     }

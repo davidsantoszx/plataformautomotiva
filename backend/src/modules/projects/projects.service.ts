@@ -58,6 +58,10 @@ export async function addPartToProject(
   partId: number,
   quantity: number,
 ) {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error('INVALID_QUANTITY')
+  }
+
   const project = await db.orm.public.Project.first({
     id: projectId,
     userId,
@@ -89,12 +93,67 @@ export async function addPartToProject(
     throw new Error('PART_NOT_COMPATIBLE')
   }
 
+  const existingProjectPart =
+    await db.orm.public.ProjectPart.first({
+      projectId,
+      partId,
+    })
+
+  if (existingProjectPart) {
+    return db.orm.public.ProjectPart
+      .where({
+        id: existingProjectPart.id,
+      })
+      .update({
+        quantity:
+          existingProjectPart.quantity + quantity,
+      })
+  }
+
   return db.orm.public.ProjectPart.create({
     projectId,
     partId,
     quantity,
     priceAtTime: part.estimatedPrice,
   })
+}
+
+export async function updateProjectPartQuantity(
+  projectId: number,
+  userId: number,
+  partId: number,
+  quantity: number,
+) {
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    throw new Error('INVALID_QUANTITY')
+  }
+
+  const project = await db.orm.public.Project.first({
+    id: projectId,
+    userId,
+  })
+
+  if (!project) {
+    throw new Error('PROJECT_NOT_FOUND')
+  }
+
+  const projectPart =
+    await db.orm.public.ProjectPart.first({
+      projectId,
+      partId,
+    })
+
+  if (!projectPart) {
+    throw new Error('PROJECT_PART_NOT_FOUND')
+  }
+
+  return db.orm.public.ProjectPart
+    .where({
+      id: projectPart.id,
+    })
+    .update({
+      quantity,
+    })
 }
 
 export async function removePartFromProject(
@@ -111,12 +170,12 @@ export async function removePartFromProject(
     throw new Error('PROJECT_NOT_FOUND')
   }
 
-return db.orm.public.ProjectPart
-  .where({
-    projectId,
-    partId,
-  })
-  .delete()
+  return db.orm.public.ProjectPart
+    .where({
+      projectId,
+      partId,
+    })
+    .delete()
 }
 
 export async function listProjectParts(
@@ -132,7 +191,7 @@ export async function listProjectParts(
     throw new Error('PROJECT_NOT_FOUND')
   }
 
-  return db.orm.public.ProjectPart
+  const projectParts = await db.orm.public.ProjectPart
     .select(
       'id',
       'projectId',
@@ -146,4 +205,35 @@ export async function listProjectParts(
       projectId,
     })
     .all()
+
+  const projectPartsWithDetails =
+    await Promise.all(
+      projectParts.map(async (projectPart) => {
+        const part =
+          await db.orm.public.Part
+            .select(
+              'id',
+              'categoryId',
+              'name',
+              'slug',
+              'brand',
+              'description',
+              'estimatedPrice',
+              'imageUrl',
+              'modelUrl',
+              'createdAt',
+              'updatedAt',
+            )
+            .first({
+              id: projectPart.partId,
+            })
+
+        return {
+          ...projectPart,
+          part,
+        }
+      }),
+    )
+
+  return projectPartsWithDetails
 }

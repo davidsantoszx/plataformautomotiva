@@ -210,6 +210,39 @@ export async function addPartToProject(
   return data
 }
 
+export async function updateProjectPartQuantity(
+  token,
+  projectId,
+  partId,
+  quantity,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/parts/${partId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        quantity,
+      }),
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Erro ao atualizar quantidade da peça',
+    )
+  }
+
+  return data
+}
+
+
 export async function removePartFromProject(
   token,
   projectId,

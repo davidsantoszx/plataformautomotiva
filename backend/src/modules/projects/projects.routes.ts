@@ -7,6 +7,7 @@ import {
   getProject,
   getProjectParts,
   getProjects,
+  patchProjectPart,
   postProject,
   postProjectPart,
 } from './projects.controller'
@@ -29,6 +30,11 @@ router.get(
 router.post(
   '/:projectId/parts',
   postProjectPart,
+)
+
+router.patch(
+  '/:projectId/parts/:partId',
+  patchProjectPart,
 )
 
 router.delete(

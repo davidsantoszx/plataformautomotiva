@@ -16,6 +16,7 @@ import {
   getProjects,
   getProject,
   getCompatibilitiesByVehicle,
+  updateProjectPartQuantity,
 } from './services/api'
 
 import './App.css'
@@ -35,6 +36,16 @@ function getStoredUser() {
   } catch {
     return null
   }
+}
+
+function formatCurrency(value) {
+  return Number(value || 0).toLocaleString(
+    'pt-BR',
+    {
+      style: 'currency',
+      currency: 'BRL',
+    },
+  )
 }
 
 function App() {
@@ -187,6 +198,8 @@ function App() {
     setProjectParts([])
     setProjectPartDetails({})
 
+    setCompatibilities({})
+
     setError('')
     setProjectError('')
 
@@ -232,6 +245,8 @@ function App() {
     setProjectParts([])
     setProjectPartDetails({})
 
+    setCompatibilities({})
+
     setError('')
     setProjectError('')
 
@@ -275,6 +290,8 @@ function App() {
     setCurrentProject(null)
     setProjectParts([])
     setProjectPartDetails({})
+
+    setCompatibilities({})
 
     setError('')
     setProjectError('')
@@ -592,69 +609,136 @@ function App() {
   // ADICIONAR PEÇA
   // =========================
 
-  async function handleAddPart(part) {
-    if (!token || !currentProject) {
-      setProjectError(
-        'Faça login e crie um projeto primeiro.',
-      )
-      return
-    }
-
-    const compatibility =
-      compatibilities[part.id]
-
-    if (
-      currentProject.mode === 'REAL' &&
-      compatibility?.level ===
-        'INCOMPATIBLE'
-    ) {
-      setProjectError(
-        'Esta peça é incompatível com o veículo selecionado.',
-      )
-
-      return
-    }
-
-    const alreadyAdded = projectParts.some(
-      (projectPart) =>
-        projectPart.partId === part.id,
+async function handleAddPart(part) {
+  if (!token || !currentProject) {
+    setProjectError(
+      'Faça login e crie um projeto primeiro.',
     )
+    return
+  }
 
-    if (alreadyAdded) {
-      setProjectError(
-        'Esta peça já está no projeto.',
-      )
-      return
-    }
+  const compatibility =
+    compatibilities[part.id]
 
-    try {
-      setProjectError('')
+  const isRealProject =
+    currentProject.mode === 'REAL'
 
-      const data = await addPartToProject(
+  const isMissingCompatibility =
+    isRealProject &&
+    !compatibility
+
+  const isIncompatible =
+    compatibility?.level ===
+    'INCOMPATIBLE'
+
+  if (isMissingCompatibility) {
+    setProjectError(
+      'A compatibilidade desta peça ainda não foi cadastrada para o veículo.',
+    )
+    return
+  }
+
+  if (isIncompatible) {
+    setProjectError(
+      'Esta peça é incompatível com o veículo selecionado.',
+    )
+    return
+  }
+
+  const alreadyAdded = projectParts.some(
+    (projectPart) =>
+      projectPart.partId === part.id,
+  )
+
+  if (alreadyAdded) {
+    setProjectError(
+      'Esta peça já está no projeto.',
+    )
+    return
+  }
+
+  try {
+    setProjectError('')
+
+    const data =
+      await addPartToProject(
         token,
         currentProject.id,
         part.id,
         1,
       )
 
-      setProjectParts((current) => [
-        ...current,
-        data.projectPart,
-      ])
+    setProjectParts((current) => [
+      ...current,
+      data.projectPart,
+    ])
 
-      setProjectPartDetails((current) => ({
-        ...current,
-        [part.id]: part,
-      }))
-    } catch (error) {
-      console.error(error)
+    setProjectPartDetails((current) => ({
+      ...current,
+      [part.id]: part,
+    }))
+  } catch (error) {
+    console.error(error)
 
-      setProjectError(
-        error.message ||
-          'Erro ao adicionar peça ao projeto.',
-      )
-    }
+    setProjectError(
+      error.message ||
+        'Erro ao adicionar peça ao projeto.',
+    )
   }
+}
+
+
+  async function handleUpdatePartQuantity(
+  partId,
+  quantity,
+) {
+  if (!token || !currentProject) {
+    return
+  }
+
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1
+  ) {
+    return
+  }
+
+  try {
+    const data =
+      await updateProjectPartQuantity(
+        token,
+        currentProject.id,
+        partId,
+        quantity,
+      )
+
+    setProjectParts((currentParts) =>
+      currentParts.map(
+        (projectPart) => {
+          if (
+            projectPart.partId !== partId
+          ) {
+            return projectPart
+          }
+
+          return {
+            ...projectPart,
+            ...data.projectPart,
+          }
+        },
+      ),
+    )
+
+    setProjectError('')
+  } catch (error) {
+    console.error(error)
+
+    setProjectError(
+      error.message ||
+        'Erro ao atualizar quantidade',
+    )
+  }
+}
 
   // =========================
   // REMOVER PEÇA
@@ -700,11 +784,19 @@ function App() {
   // TOTAL DO PROJETO
   // =========================
 
-  const projectTotal = projectParts.reduce(
-    (total, projectPart) =>
-      total +
-      Number(projectPart.priceAtTime) *
-        Number(projectPart.quantity),
+  const projectTotal =
+  projectParts.reduce(
+    (total, projectPart) => {
+      return (
+        total +
+        Number(
+          projectPart.priceAtTime || 0,
+        ) *
+          Number(
+            projectPart.quantity || 0,
+          )
+      )
+    },
     0,
   )
 
@@ -718,56 +810,98 @@ function App() {
       String(selectedVehicle),
   )
 
-    async function handleOpenProject(projectId) {
-    if (!token) {
-      return
-    }
+async function handleOpenProject(projectId) {
+  if (!token) {
+    return
+  }
 
-    try {
-      setProjectError('')
-      setError('')
+  setLoadingProject(true)
+  setProjectError('')
+  setAuthMessage('')
 
-      const data = await getProject(
-        token,
-        projectId,
-      )
+  try {
+    const projectData = await getProject(
+      token,
+      projectId,
+    )
 
-      const project = data.project
+    const project = projectData.project
 
-      setCurrentProject(project)
-
-      const partsData = await getProjectParts(
+    const [
+      partsData,
+      categoriesData,
+      compatibilitiesData,
+    ] = await Promise.all([
+      getProjectParts(
         token,
         project.id,
-      )
+      ),
+      getPartCategories(),
+      getCompatibilitiesByVehicle(
+        project.vehicleId,
+      ),
+    ])
 
-      setProjectParts(partsData.parts)
+    const compatibilityMap = {}
 
-      setProjectPartDetails({})
+    compatibilitiesData.compatibilities.forEach(
+      (compatibility) => {
+        compatibilityMap[
+          compatibility.partId
+        ] = compatibility
+      },
+    )
 
-      setProjectName(project.name)
-      setProjectMode(project.mode)
+    const detailsMap = {}
 
-      setSelectedVehicle(
-        String(project.vehicleId),
-      )
+    partsData.parts.forEach(
+      (projectPart) => {
+        if (projectPart.part) {
+          detailsMap[
+            projectPart.partId
+          ] = projectPart.part
+        }
+      },
+    )
 
-      setSelectedCategory('')
-      setParts([])
+    setCurrentProject(project)
+    setProjectName(project.name)
+    setProjectMode(project.mode)
 
-      const categoriesData =
-        await getPartCategories()
+    setSelectedVehicle(
+      String(project.vehicleId),
+    )
 
-      setCategories(categoriesData.categories)
-    } catch (error) {
-      console.error(error)
+    setCategories(
+      categoriesData.categories || [],
+    )
 
-      setProjectError(
-        error.message ||
-          'Não foi possível abrir o projeto.',
-      )
-    }
+    setCompatibilities(
+      compatibilityMap,
+    )
+
+    setProjectParts(
+      partsData.parts || [],
+    )
+
+    setProjectPartDetails(
+      detailsMap,
+    )
+
+    setSelectedCategory('')
+    setParts([])
+    setProjectError('')
+  } catch (error) {
+    console.error(error)
+
+    setProjectError(
+      error.message ||
+        'Erro ao abrir projeto',
+    )
+  } finally {
+    setLoadingProject(false)
   }
+}
 
     function handleNewProject() {
   setCurrentProject(null)
@@ -1364,6 +1498,10 @@ function App() {
                       const isRealProject =
                         currentProject.mode === 'REAL'
 
+                      const isMissingCompatibility =
+                        isRealProject &&
+                        !compatibility  
+
                       const isIncompatible =
                         isRealProject &&
                         compatibility?.level ===
@@ -1440,7 +1578,8 @@ function App() {
                           type="button"
                           disabled={
                             alreadyAdded ||
-                            isIncompatible
+                            isIncompatible ||
+                            isMissingCompatibility
                           }
                           onClick={() =>
                             handleAddPart(part)
@@ -1485,38 +1624,52 @@ function App() {
           {projectParts.length > 0 && (
             <div>
               {projectParts.map(
-                (projectPart) => {
-                  const part =
-                    projectPartDetails[
-                      projectPart.partId
-                    ]
+              (projectPart) => {
+                const part =
+                  projectPart.part ||
+                  projectPartDetails[
+                    projectPart.partId
+                  ]
 
-                  return (
-                    <article
-                      key={projectPart.id}
-                    >
-                      <h3>
-                        {part
-                          ? part.name
-                          : `Peça #${projectPart.partId}`}
-                      </h3>
+                const quantity =
+                  projectPart.quantity
 
-                      <p>
-                        Quantidade:{' '}
-                        {projectPart.quantity}
-                      </p>
+                const unitPrice =
+                  Number(
+                    projectPart.priceAtTime || 0,
+                  )
 
-                      <p>
-                        Preço: R${' '}
-                        {Number(
-                          projectPart.priceAtTime,
-                        ).toLocaleString(
-                          'pt-BR',
-                          {
-                            minimumFractionDigits: 2,
-                          },
+                const subtotal =
+                  unitPrice * quantity
+
+                return (
+                  <div
+                    key={projectPart.id}
+                    className="border rounded-lg p-4"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h4 className="font-semibold">
+                          {part?.name ||
+                            `Peça #${projectPart.partId}`}
+                        </h4>
+
+                        {part?.brand && (
+                          <p className="text-sm">
+                            Marca: {part.brand}
+                          </p>
                         )}
-                      </p>
+
+                        <p className="text-sm">
+                          Preço unitário:{' '}
+                          {formatCurrency(unitPrice)}
+                        </p>
+
+                        <p className="text-sm font-medium">
+                          Subtotal:{' '}
+                          {formatCurrency(subtotal)}
+                        </p>
+                      </div>
 
                       <button
                         type="button"
@@ -1528,23 +1681,46 @@ function App() {
                       >
                         Remover
                       </button>
-                    </article>
-                  )
-                },
-              )}
+                    </div>
+
+                    <div className="flex items-center gap-3 mt-4">
+                     <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdatePartQuantity(
+                          projectPart.partId,
+                          quantity - 1,
+                        )
+                      }
+                      disabled={quantity <= 1}
+                    >
+                      −
+                    </button>
+
+                    <span>{quantity}</span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleUpdatePartQuantity(
+                          projectPart.partId,
+                          quantity + 1,
+                        )
+                      }
+                    >
+                      +
+                    </button>
+                    </div>
+                  </div>
+                )
+              },
+            )}
             </div>
           )}
 
           <h3>
-            Total estimado:{' '}
-            {projectTotal.toLocaleString(
-              'pt-BR',
-              {
-                style: 'currency',
-                currency: 'BRL',
-              },
-            )}
-          </h3>
+  Total estimado: {formatCurrency(projectTotal)}
+</h3>
         </section>
       )}
 
