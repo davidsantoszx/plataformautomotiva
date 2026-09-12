@@ -1,0 +1,98 @@
+[
+  {
+    "partSlug": "jogo-rodas-aro-18",
+    "partCategorySlug": "rodas-pneus",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "pneus-esportivos-225-40-r18",
+    "partCategorySlug": "rodas-pneus",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "kit-suspensao-esportiva",
+    "partCategorySlug": "suspensao",
+    "vehicleId": 1,
+    "level": "ADAPTATION",
+    "requiresAdaptation": true,
+    "notes": "Necessita adaptação."
+  },
+  {
+    "partSlug": "molas-esportivas",
+    "partCategorySlug": "suspensao",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "kit-pastilhas-esportivas",
+    "partCategorySlug": "freios",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "discos-freio-perfurados",
+    "partCategorySlug": "freios",
+    "vehicleId": 1,
+    "level": "ADAPTATION",
+    "requiresAdaptation": true,
+    "notes": "Necessita adaptação."
+  },
+  {
+    "partSlug": "filtro-ar-esportivo",
+    "partCategorySlug": "motor",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "kit-turbo",
+    "partCategorySlug": "motor",
+    "vehicleId": 1,
+    "level": "ADAPTATION",
+    "requiresAdaptation": true,
+    "notes": "Necessita adaptações no conjunto do motor."
+  },
+  {
+    "partSlug": "cat-back-esportivo",
+    "partCategorySlug": "escapamento",
+    "vehicleId": 1,
+    "level": "ADAPTATION",
+    "requiresAdaptation": true,
+    "notes": "Necessita adaptação."
+  },
+  {
+    "partSlug": "ponteira-esportiva",
+    "partCategorySlug": "escapamento",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "aerofolio-traseiro-esportivo",
+    "partCategorySlug": "exterior",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  },
+  {
+    "partSlug": "kit-saias-laterais",
+    "partCategorySlug": "exterior",
+    "vehicleId": 1,
+    "level": "COMPATIBLE",
+    "requiresAdaptation": false,
+    "notes": null
+  }
+]

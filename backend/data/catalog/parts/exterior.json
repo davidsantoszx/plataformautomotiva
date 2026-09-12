@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Aerofólio traseiro esportivo",
+    "slug": "aerofolio-traseiro-esportivo",
+    "brand": "TRD",
+    "description": "Aerofólio traseiro esportivo",
+    "estimatedPrice": 2400,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Kit de saias laterais",
+    "slug": "kit-saias-laterais",
+    "brand": "TRD",
+    "description": "Kit de saias laterais esportivas",
+    "estimatedPrice": 3100,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]

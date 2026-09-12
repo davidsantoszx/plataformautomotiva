@@ -1,0 +1,26 @@
+[
+  {
+    "name": "Rodas e Pneus",
+    "slug": "rodas-pneus"
+  },
+  {
+    "name": "Suspensão",
+    "slug": "suspensao"
+  },
+  {
+    "name": "Freios",
+    "slug": "freios"
+  },
+  {
+    "name": "Motor",
+    "slug": "motor"
+  },
+  {
+    "name": "Escapamento",
+    "slug": "escapamento"
+  },
+  {
+    "name": "Exterior",
+    "slug": "exterior"
+  }
+]

@@ -8,6 +8,10 @@ import {
   getPart,
   postPart,
   getCompatibilitiesByVehicle,
+  getCompatibilitiesByPart,
+  postCompatibility,
+  patchCompatibility,
+  deleteCompatibility,
 } from './parts.controller'
 
 const router = Router()
@@ -23,11 +27,33 @@ router.get(
   getPartsByCategory,
 )
 
+// Compatibilidades
 router.get(
   '/vehicles/:vehicleId/compatibilities',
   getCompatibilitiesByVehicle,
 )
 
+router.get(
+  '/parts/:partId/compatibilities',
+  getCompatibilitiesByPart,
+)
+
+router.post(
+  '/compatibilities',
+  postCompatibility,
+)
+
+router.patch(
+  '/compatibilities/:id',
+  patchCompatibility,
+)
+
+router.delete(
+  '/compatibilities/:id',
+  deleteCompatibility,
+)
+
+// Peças
 router.get('/parts/:id', getPart)
 
 router.post('/parts', postPart)

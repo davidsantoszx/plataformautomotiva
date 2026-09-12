@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Kit de pastilhas esportivas",
+    "slug": "kit-pastilhas-esportivas",
+    "brand": "Ferodo",
+    "description": "Pastilhas de freio esportivas",
+    "estimatedPrice": 950,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Discos de freio perfurados",
+    "slug": "discos-freio-perfurados",
+    "brand": "Powerbrakes",
+    "description": "Discos de freio perfurados esportivos",
+    "estimatedPrice": 2200,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]

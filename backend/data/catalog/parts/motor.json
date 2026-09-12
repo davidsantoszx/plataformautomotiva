@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Filtro de ar esportivo",
+    "slug": "filtro-ar-esportivo",
+    "brand": "K&N",
+    "description": "Filtro de ar esportivo de alto fluxo",
+    "estimatedPrice": 650,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Kit turbo",
+    "slug": "kit-turbo",
+    "brand": "Garrett",
+    "description": "Kit turbo para preparação do motor",
+    "estimatedPrice": 12500,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]

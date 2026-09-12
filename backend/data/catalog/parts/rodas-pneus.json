@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Jogo de rodas aro 18",
+    "slug": "jogo-rodas-aro-18",
+    "brand": "Enkei",
+    "description": "Jogo de rodas esportivas aro 18",
+    "estimatedPrice": 4500,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Pneus esportivos 225/40 R18",
+    "slug": "pneus-esportivos-225-40-r18",
+    "brand": "Michelin",
+    "description": "Pneus esportivos para rodas aro 18",
+    "estimatedPrice": 3200,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]

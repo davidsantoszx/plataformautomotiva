@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Kit de suspensão esportiva",
+    "slug": "kit-suspensao-esportiva",
+    "brand": "Coilover",
+    "description": "Kit de suspensão esportiva",
+    "estimatedPrice": 4800,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Molas esportivas",
+    "slug": "molas-esportivas",
+    "brand": "Eibach",
+    "description": "Molas esportivas para redução de altura",
+    "estimatedPrice": 1800,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]

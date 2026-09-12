@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Cat-back esportivo",
+    "slug": "cat-back-esportivo",
+    "brand": "Magnaflow",
+    "description": "Sistema de escapamento cat-back esportivo",
+    "estimatedPrice": 5200,
+    "imageUrl": null,
+    "modelUrl": null
+  },
+  {
+    "name": "Ponteira esportiva",
+    "slug": "ponteira-esportiva",
+    "brand": "Inox",
+    "description": "Ponteira esportiva em inox",
+    "estimatedPrice": 850,
+    "imageUrl": null,
+    "modelUrl": null
+  }
+]
