@@ -66,8 +66,10 @@ function App() {
   const [selectedBrand, setSelectedBrand] = useState('')
   const [selectedModel, setSelectedModel] = useState('')
   const [selectedGeneration, setSelectedGeneration] = useState('')
+  const [selectedYear, setSelectedYear] = useState('')
   const [selectedVehicle, setSelectedVehicle] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('')
+  
 
   const [loadingBrands, setLoadingBrands] = useState(true)
   const [loadingModels, setLoadingModels] = useState(false)
@@ -193,61 +195,62 @@ function App() {
     }
   }
 
-  async function handleModelChange(event) {
-    const modelId = event.target.value
+async function handleModelChange(event) {
+  const modelId = event.target.value
 
-    setSelectedModel(modelId)
-    setSelectedGeneration('')
-    setSelectedVehicle('')
-    setSelectedCategory('')
-    setGenerations([])
-    setVehicles([])
-    setCategories([])
-    setParts([])
-    clearProjectSelection()
-    setError('')
-    setProjectError('')
+  setSelectedModel(modelId)
+  setSelectedGeneration('')
+  setSelectedYear('')
+  setSelectedVehicle('')
+  setGenerations([])
+  setVehicles([])
+  setCategories([])
+  setParts([])
+  clearProjectSelection()
+  setError('')
+  setProjectError('')
 
-    if (!modelId) return
+  if (!modelId) return
 
-    try {
-      setLoadingGenerations(true)
-      const data = await getGenerationsByModel(modelId)
-      setGenerations(data.generations || [])
-    } catch (error) {
-      console.error(error)
-      setError('Não foi possível carregar as gerações.')
-    } finally {
-      setLoadingGenerations(false)
-    }
+  try {
+    setLoadingVehicles(true)
+
+    const data = await getGenerationsByModel(modelId)
+    const generationsData = data.generations || []
+
+    setGenerations(generationsData)
+
+    const vehicleResponses = await Promise.all(
+      generationsData.map((generation) =>
+        getVehiclesByGeneration(generation.id),
+      ),
+    )
+
+    const modelVehicles = vehicleResponses.flatMap(
+      (response) => response.vehicles || [],
+    )
+
+    setVehicles(modelVehicles)
+  } catch (error) {
+    console.error(error)
+    setError('Não foi possível carregar os veículos.')
+  } finally {
+    setLoadingVehicles(false)
   }
+}
 
-  async function handleGenerationChange(event) {
-    const generationId = event.target.value
+function handleYearChange(event) {
+  const year = event.target.value
 
-    setSelectedGeneration(generationId)
-    setSelectedVehicle('')
-    setSelectedCategory('')
-    setVehicles([])
-    setCategories([])
-    setParts([])
-    clearProjectSelection()
-    setError('')
-    setProjectError('')
+  setSelectedYear(year)
+  setSelectedVehicle('')
+  setSelectedCategory('')
+  setParts([])
+  clearProjectSelection()
+  setError('')
+  setProjectError('')
+}
 
-    if (!generationId) return
-
-    try {
-      setLoadingVehicles(true)
-      const data = await getVehiclesByGeneration(generationId)
-      setVehicles(data.vehicles || [])
-    } catch (error) {
-      console.error(error)
-      setError('Não foi possível carregar os veículos.')
-    } finally {
-      setLoadingVehicles(false)
-    }
-  }
 
   async function handleVehicleChange(event) {
     const vehicleId = event.target.value
@@ -566,6 +569,7 @@ function App() {
             setGenerations(generationsData.generations || [])
             setSelectedGeneration(String(generation.id))
             setVehicles(vehiclesData.vehicles || [])
+            setSelectedYear(String(vehicle.year))
             setSelectedVehicle(String(vehicle.id))
             return vehicle
           }
@@ -797,6 +801,22 @@ function App() {
     }
   }
 
+
+  const availableYears = [
+  ...new Set(
+    vehicles
+      .map((vehicle) => Number(vehicle.year))
+      .filter((year) => Number.isFinite(year)),
+  ),
+].sort((a, b) => b - a)
+
+const visibleVehicles = selectedYear
+  ? vehicles.filter(
+      (vehicle) =>
+        String(vehicle.year) === String(selectedYear),
+    )
+  : []
+
   const selectedVehicleData = vehicles.find(
     (vehicle) =>
       String(vehicle.id) === String(selectedVehicle),
@@ -843,22 +863,21 @@ function App() {
         />
 
         <VehicleSelector
-          brands={brands}
-          models={models}
-          generations={generations}
-          vehicles={vehicles}
-          selectedBrand={selectedBrand}
-          selectedModel={selectedModel}
-          selectedGeneration={selectedGeneration}
-          selectedVehicle={selectedVehicle}
-          loadingBrands={loadingBrands}
-          loadingModels={loadingModels}
-          loadingGenerations={loadingGenerations}
-          loadingVehicles={loadingVehicles}
-          onBrandChange={handleBrandChange}
-          onModelChange={handleModelChange}
-          onGenerationChange={handleGenerationChange}
-          onVehicleChange={handleVehicleChange}
+        brands={brands}
+        models={models}
+        years={availableYears}
+        vehicles={visibleVehicles}
+        selectedBrand={selectedBrand}
+        selectedModel={selectedModel}
+        selectedYear={selectedYear}
+        selectedVehicle={selectedVehicle}
+        loadingBrands={loadingBrands}
+        loadingModels={loadingModels}
+        loadingVehicles={loadingVehicles}
+        onBrandChange={handleBrandChange}
+        onModelChange={handleModelChange}
+        onYearChange={handleYearChange}
+        onVehicleChange={handleVehicleChange}
         />
 
         {selectedVehicle && (

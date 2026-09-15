@@ -1,0 +1,322 @@
+{
+  "ref": "09-2026",
+  "versao": {
+    "id": 21121,
+    "nome": "Corolla ALTIS/A.Premiu. 2.0 Flex 16V Aut",
+    "marca": "Toyota",
+    "modelo": "Corolla"
+  },
+  "ano": "2011",
+  "fonte": {
+    "fonte": "checktudo-ficha-tecnica-2026-07",
+    "em": "2026-07-13"
+  },
+  "secoes": [
+    {
+      "titulo": "Geral",
+      "itens": [
+        {
+          "label": "Carroceria (configuração)",
+          "valor": "Sedã"
+        },
+        {
+          "label": "Número de portas",
+          "valor": "4"
+        },
+        {
+          "label": "Número de lugares",
+          "valor": "5"
+        },
+        {
+          "label": "Procedência (nacional/importado)",
+          "valor": "Nacional"
+        },
+        {
+          "label": "Combustível",
+          "valor": "Flex"
+        },
+        {
+          "label": "Porte",
+          "valor": "Médio"
+        },
+        {
+          "label": "Posição/instalação do motor",
+          "valor": "Dianteira"
+        },
+        {
+          "label": "Disposição do motor (transversal/longitudinal)",
+          "valor": "Transversal"
+        },
+        {
+          "label": "Código do motor",
+          "valor": "3ZR-FBE"
+        }
+      ]
+    },
+    {
+      "titulo": "Garantia e Custos",
+      "itens": [
+        {
+          "label": "Garantia do veículo (anos + km)",
+          "valor": "3 anos"
+        },
+        {
+          "label": "Capacidade da bateria auxiliar 12V (Ah)",
+          "valor": "60"
+        },
+        {
+          "label": "Viscosidade do óleo do motor",
+          "valor": "5W30"
+        },
+        {
+          "label": "Especificação/norma do óleo do motor",
+          "valor": "Semissintético"
+        },
+        {
+          "label": "Capacidade de óleo do motor (cárter) (l)",
+          "valor": "4,2"
+        }
+      ]
+    },
+    {
+      "titulo": "Dimensões e pesos",
+      "itens": [
+        {
+          "label": "Comprimento (mm)",
+          "valor": "4540"
+        },
+        {
+          "label": "Largura (mm)",
+          "valor": "1760"
+        },
+        {
+          "label": "Altura (mm)",
+          "valor": "1480"
+        },
+        {
+          "label": "Distância entre-eixos (mm)",
+          "valor": "2600"
+        },
+        {
+          "label": "Vão livre do solo (mm)",
+          "valor": "155"
+        },
+        {
+          "label": "Carga útil (kg)",
+          "valor": "375"
+        },
+        {
+          "label": "Volume do porta-malas (l)",
+          "valor": "470"
+        },
+        {
+          "label": "Bitola (mm)",
+          "valor": "1519"
+        }
+      ]
+    },
+    {
+      "titulo": "Desempenho",
+      "itens": [
+        {
+          "label": "Aceleração 0-100 km/h (s)",
+          "valor": "11,6"
+        },
+        {
+          "label": "Velocidade máxima (km/h)",
+          "valor": "193"
+        }
+      ]
+    },
+    {
+      "titulo": "Motor a combustão",
+      "itens": [
+        {
+          "label": "Potência máxima (motor a combustão) (cv)",
+          "valor": "153"
+        },
+        {
+          "label": "Torque máximo (motor a combustão) (kgfm)",
+          "valor": "20,7 kgfm (A) 19,8 kgfm (G) a 4800 rpm"
+        },
+        {
+          "label": "Cilindrada (cm³)",
+          "valor": "1986"
+        },
+        {
+          "label": "Aspiração",
+          "valor": "Natural"
+        },
+        {
+          "label": "Sistema de alimentação/injeção",
+          "valor": "Injeção Multiponto"
+        },
+        {
+          "label": "Válvulas por cilindro",
+          "valor": "4"
+        },
+        {
+          "label": "Diâmetro dos cilindros (mm)",
+          "valor": "80,5"
+        },
+        {
+          "label": "Curso dos pistões (mm)",
+          "valor": "97,6"
+        },
+        {
+          "label": "Razão de compressão (:1)",
+          "valor": "12"
+        },
+        {
+          "label": "Comando de válvulas (arquitetura)",
+          "valor": "Duplo no cabeçote, corrente"
+        },
+        {
+          "label": "Acionamento do comando (corrente/correia)",
+          "valor": "Corrente"
+        },
+        {
+          "label": "Variação do comando de válvulas",
+          "valor": "Admissão e escape"
+        },
+        {
+          "label": "Tuchos (hidráulicos/mecânicos)",
+          "valor": "Hidráulicos"
+        },
+        {
+          "label": "Número de cilindros",
+          "valor": "4 em linha"
+        }
+      ]
+    },
+    {
+      "titulo": "Transmissão e tração",
+      "itens": [
+        {
+          "label": "Câmbio (tipo)",
+          "valor": "Automático"
+        },
+        {
+          "label": "Número de marchas",
+          "valor": "4"
+        },
+        {
+          "label": "Tração",
+          "valor": "Dianteira (FWD)"
+        }
+      ]
+    },
+    {
+      "titulo": "Chassi, direção, freios e rodas",
+      "itens": [
+        {
+          "label": "Assistência da direção",
+          "valor": "Elétrica (EPS)"
+        },
+        {
+          "label": "Tipo de freios (dianteiro/traseiro)",
+          "valor": "Disco ventilado"
+        },
+        {
+          "label": "Medida dos pneus",
+          "valor": "205/55 R16"
+        },
+        {
+          "label": "Suspensão dianteira (tipo)",
+          "valor": "Independente, McPherson"
+        },
+        {
+          "label": "Suspensão traseira (tipo)",
+          "valor": "Eixo de torção"
+        },
+        {
+          "label": "Diâmetro de giro (m)",
+          "valor": "10,6"
+        }
+      ]
+    },
+    {
+      "titulo": "Consumo e eficiência",
+      "itens": [
+        {
+          "label": "Consumo urbano (km/l)",
+          "valor": "6,1 km/l (A) / 8,2 km/l (G)"
+        },
+        {
+          "label": "Consumo rodoviário (km/l)",
+          "valor": "9 km/l (A) / 12,8 km/l (G)"
+        },
+        {
+          "label": "Tanque de combustível (l)",
+          "valor": "60"
+        },
+        {
+          "label": "Coeficiente de arrasto (Cx)",
+          "valor": "0,29"
+        },
+        {
+          "label": "Área frontal (m2)",
+          "valor": "2,21 m2"
+        }
+      ]
+    },
+    {
+      "titulo": "ADAS",
+      "itens": [
+        {
+          "label": "Câmera de ré",
+          "valor": "Sim"
+        }
+      ]
+    },
+    {
+      "titulo": "Conforto, multimídia e iluminação",
+      "itens": [
+        {
+          "label": "Piloto automático",
+          "valor": "convencional"
+        }
+      ]
+    },
+    {
+      "titulo": "Exterior e iluminação",
+      "itens": [
+        {
+          "label": "Tecnologia dos faróis",
+          "valor": "HB3"
+        }
+      ]
+    }
+  ],
+  "consumo": {
+    "kml_cidade": 11.6,
+    "kml_estrada": 14.6,
+    "selo": "C",
+    "fonte": "PBEV/Inmetro"
+  },
+  "porte": {
+    "rotulo": "Médio",
+    "criterio": "comprimento e carroceria — critério próprio Carpedia, ver /metodologia/porte",
+    "comprimento_mm": 4540,
+    "carroceria": "Sedã"
+  },
+  "anosDisponiveis": [
+    2026,
+    2025,
+    2024,
+    2023,
+    2022,
+    2021,
+    2020,
+    2019,
+    2018,
+    2017,
+    2016,
+    2015,
+    2014,
+    2013,
+    2012,
+    2011,
+    2010
+  ]
+}

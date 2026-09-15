@@ -1,19 +1,18 @@
 export default function VehicleSelector({
   brands,
   models,
-  generations,
+  years,
   vehicles,
   selectedBrand,
   selectedModel,
-  selectedGeneration,
+  selectedYear,
   selectedVehicle,
   loadingBrands,
   loadingModels,
-  loadingGenerations,
   loadingVehicles,
   onBrandChange,
   onModelChange,
-  onGenerationChange,
+  onYearChange,
   onVehicleChange,
 }) {
   return (
@@ -86,48 +85,49 @@ export default function VehicleSelector({
         </div>
 
         <div className="select-field">
-          <label>Geração</label>
+          <label>Ano</label>
 
           <select
-            value={selectedGeneration}
-            onChange={onGenerationChange}
+            value={selectedYear}
+            onChange={onYearChange}
             disabled={
               !selectedModel ||
-              loadingGenerations
+              loadingVehicles ||
+              years.length === 0
             }
           >
             <option value="">
-              {loadingGenerations
+              {loadingVehicles
                 ? 'Carregando...'
-                : 'Selecione uma geração'}
+                : 'Selecione um ano'}
             </option>
 
-            {generations.map((generation) => (
+            {years.map((year) => (
               <option
-                key={generation.id}
-                value={generation.id}
+                key={year}
+                value={year}
               >
-                {generation.name}
+                {year}
               </option>
             ))}
           </select>
         </div>
 
         <div className="select-field">
-          <label>Veículo</label>
+          <label>Versão</label>
 
           <select
             value={selectedVehicle}
             onChange={onVehicleChange}
             disabled={
-              !selectedGeneration ||
+              !selectedYear ||
               loadingVehicles
             }
           >
             <option value="">
               {loadingVehicles
                 ? 'Carregando...'
-                : 'Selecione um veículo'}
+                : 'Selecione uma versão'}
             </option>
 
             {vehicles.map((vehicle) => (
@@ -135,8 +135,7 @@ export default function VehicleSelector({
                 key={vehicle.id}
                 value={vehicle.id}
               >
-                {vehicle.year}{' '}
-                {vehicle.version || ''}
+                {vehicle.version || 'Versão não informada'}
               </option>
             ))}
           </select>

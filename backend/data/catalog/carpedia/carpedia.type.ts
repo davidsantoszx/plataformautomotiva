@@ -6,16 +6,16 @@ export interface CarpediaPagination {
 }
 
 export interface CarpediaBrand {
-  slug: string;
-  nome: string;
-  tipos: string[];
-  modelos: number;
+  slug: string
+  nome: string
+  tipos?: string[]
+  modelos?: number
 }
 
 export interface CarpediaBrandsResponse {
-  ref: string;
-  marcas: CarpediaBrand[];
-  paginacao: CarpediaPagination;
+  ref: string
+  marcas: CarpediaBrand[]
+  paginacao: CarpediaPagination
 }
 
 export interface CarpediaModelImage {
@@ -29,11 +29,11 @@ export interface CarpediaModelImage {
 }
 
 export interface CarpediaModel {
-  slug: string;
-  nome: string;
-  tipos: string[];
-  versoes: number;
-  imagem?: CarpediaModelImage;
+  slug: string
+  nome: string
+  tipos?: string[]
+  versoes?: number
+  imagem?: CarpediaModelImage
 }
 
 export interface CarpediaModelsResponse {

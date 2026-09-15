@@ -1,0 +1,321 @@
+{
+  "ref": "09-2026",
+  "versao": {
+    "id": 21830,
+    "nome": "Corolla Altis Prem. 1.8 Aut. (Híbrido)",
+    "marca": "Toyota",
+    "modelo": "Corolla"
+  },
+  "ano": "2023",
+  "fonte": {
+    "fonte": "checktudo-ficha-tecnica-2026-07",
+    "em": "2026-07-13"
+  },
+  "secoes": [
+    {
+      "titulo": "Geral",
+      "itens": [
+        {
+          "label": "Carroceria (configuração)",
+          "valor": "Sedã"
+        },
+        {
+          "label": "Número de portas",
+          "valor": "4"
+        },
+        {
+          "label": "Número de lugares",
+          "valor": "5"
+        },
+        {
+          "label": "Procedência (nacional/importado)",
+          "valor": "Nacional"
+        },
+        {
+          "label": "Combustível",
+          "valor": "Híbrido (Flex, Eletricidade)"
+        },
+        {
+          "label": "Geração do modelo",
+          "valor": "12"
+        },
+        {
+          "label": "Porte",
+          "valor": "Médio"
+        },
+        {
+          "label": "Posição/instalação do motor",
+          "valor": "Dianteira"
+        },
+        {
+          "label": "Disposição do motor (transversal/longitudinal)",
+          "valor": "Transversal"
+        },
+        {
+          "label": "Código do motor",
+          "valor": "2ZR-FXB"
+        }
+      ]
+    },
+    {
+      "titulo": "Garantia e Custos",
+      "itens": [
+        {
+          "label": "Garantia do veículo (anos + km)",
+          "valor": "5 anos"
+        },
+        {
+          "label": "Capacidade da bateria auxiliar 12V (Ah)",
+          "valor": "45"
+        },
+        {
+          "label": "Viscosidade do óleo do motor",
+          "valor": "0W20"
+        },
+        {
+          "label": "Especificação/norma do óleo do motor",
+          "valor": "Sintético"
+        },
+        {
+          "label": "Capacidade de óleo do motor (cárter) (l)",
+          "valor": "4,2"
+        }
+      ]
+    },
+    {
+      "titulo": "Dimensões e pesos",
+      "itens": [
+        {
+          "label": "Comprimento (mm)",
+          "valor": "4630"
+        },
+        {
+          "label": "Largura (mm)",
+          "valor": "1780"
+        },
+        {
+          "label": "Altura (mm)",
+          "valor": "1455"
+        },
+        {
+          "label": "Distância entre-eixos (mm)",
+          "valor": "2700"
+        },
+        {
+          "label": "Vão livre do solo (mm)",
+          "valor": "148"
+        },
+        {
+          "label": "Carga útil (kg)",
+          "valor": "410"
+        },
+        {
+          "label": "Volume do porta-malas (l)",
+          "valor": "470"
+        },
+        {
+          "label": "Capacidade de reboque com freio (kg)",
+          "valor": "400"
+        },
+        {
+          "label": "Capacidade de reboque sem freio (kg)",
+          "valor": "400"
+        },
+        {
+          "label": "Bitola (mm)",
+          "valor": "1531"
+        }
+      ]
+    },
+    {
+      "titulo": "Desempenho",
+      "itens": [
+        {
+          "label": "Aceleração 0-100 km/h (s)",
+          "valor": "12"
+        },
+        {
+          "label": "Velocidade máxima (km/h)",
+          "valor": "170"
+        }
+      ]
+    },
+    {
+      "titulo": "Motor a combustão",
+      "itens": [
+        {
+          "label": "Potência máxima (motor a combustão) (cv)",
+          "valor": "101"
+        },
+        {
+          "label": "Torque máximo (motor a combustão) (kgfm)",
+          "valor": "14,5 kgfm (A) 14,5 kgfm (G) a 3600 rpm"
+        },
+        {
+          "label": "Cilindrada (cm³)",
+          "valor": "1798"
+        },
+        {
+          "label": "Aspiração",
+          "valor": "Natural"
+        },
+        {
+          "label": "Sistema de alimentação/injeção",
+          "valor": "Injeção Multiponto"
+        },
+        {
+          "label": "Válvulas por cilindro",
+          "valor": "4"
+        },
+        {
+          "label": "Diâmetro dos cilindros (mm)",
+          "valor": "80,5"
+        },
+        {
+          "label": "Curso dos pistões (mm)",
+          "valor": "88,3"
+        },
+        {
+          "label": "Razão de compressão (:1)",
+          "valor": "13"
+        },
+        {
+          "label": "Comando de válvulas (arquitetura)",
+          "valor": "Duplo no cabeçote"
+        },
+        {
+          "label": "Acionamento do comando (corrente/correia)",
+          "valor": "corrente"
+        },
+        {
+          "label": "Variação do comando de válvulas",
+          "valor": "Admissão"
+        },
+        {
+          "label": "Número de cilindros",
+          "valor": "4 em linha"
+        }
+      ]
+    },
+    {
+      "titulo": "Motor Elétrico",
+      "itens": [
+        {
+          "label": "Capacidade da bateria de tração (kWh)",
+          "valor": "1,3"
+        },
+        {
+          "label": "Potência máxima do sistema (combinada) (cv)",
+          "valor": "122"
+        },
+        {
+          "label": "Potência do motor elétrico (por posição) (cv)",
+          "valor": "72"
+        }
+      ]
+    },
+    {
+      "titulo": "Transmissão e tração",
+      "itens": [
+        {
+          "label": "Câmbio (tipo)",
+          "valor": "Automático (CVT)"
+        },
+        {
+          "label": "Número de marchas",
+          "valor": "0"
+        },
+        {
+          "label": "Tração",
+          "valor": "Dianteira (FWD)"
+        },
+        {
+          "label": "Acoplamento da transmissão",
+          "valor": "Engrenagem epicicloidal"
+        },
+        {
+          "label": "Código do câmbio",
+          "valor": "P610"
+        }
+      ]
+    },
+    {
+      "titulo": "Chassi, direção, freios e rodas",
+      "itens": [
+        {
+          "label": "Assistência da direção",
+          "valor": "Elétrica (EPS)"
+        },
+        {
+          "label": "Tipo de freios (dianteiro/traseiro)",
+          "valor": "Disco ventilado"
+        },
+        {
+          "label": "Medida dos pneus",
+          "valor": "225/45 R17"
+        },
+        {
+          "label": "Suspensão dianteira (tipo)",
+          "valor": "Independente, McPherson"
+        },
+        {
+          "label": "Suspensão traseira (tipo)",
+          "valor": "Independente, multibraço"
+        },
+        {
+          "label": "Diâmetro de giro (m)",
+          "valor": "11,6"
+        }
+      ]
+    },
+    {
+      "titulo": "Consumo e eficiência",
+      "itens": [
+        {
+          "label": "Consumo urbano (km/l)",
+          "valor": "10,9 km/l (A) 16,3 km/l (G)"
+        },
+        {
+          "label": "Consumo rodoviário (km/l)",
+          "valor": "9,9 km/l (A) 14,5 km/l (G)"
+        },
+        {
+          "label": "Tanque de combustível (l)",
+          "valor": "43"
+        },
+        {
+          "label": "Coeficiente de arrasto (Cx)",
+          "valor": "0,28"
+        },
+        {
+          "label": "Área frontal (m2)",
+          "valor": "2,2 m2"
+        }
+      ]
+    },
+    {
+      "titulo": "Exterior e iluminação",
+      "itens": [
+        {
+          "label": "Tecnologia dos faróis",
+          "valor": "HB3"
+        }
+      ]
+    }
+  ],
+  "porte": {
+    "rotulo": "Médio",
+    "criterio": "comprimento e carroceria — critério próprio Carpedia, ver /metodologia/porte",
+    "comprimento_mm": 4630,
+    "carroceria": "Sedã"
+  },
+  "anosDisponiveis": [
+    2026,
+    2025,
+    2024,
+    2023,
+    2022,
+    2021,
+    2020
+  ]
+}

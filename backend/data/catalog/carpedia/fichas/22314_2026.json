@@ -1,0 +1,353 @@
+{
+  "ref": "09-2026",
+  "versao": {
+    "id": 22314,
+    "nome": "bZ4X AWD",
+    "marca": "Toyota",
+    "modelo": "bZ4X"
+  },
+  "ano": "2026",
+  "fonte": {
+    "fonte": "checktudo-ficha-tecnica-2026-07",
+    "em": "2026-07-13"
+  },
+  "secoes": [
+    {
+      "titulo": "Geral",
+      "itens": [
+        {
+          "label": "Carroceria (configuração)",
+          "valor": "SUV"
+        },
+        {
+          "label": "Procedência (nacional/importado)",
+          "valor": "Importado"
+        },
+        {
+          "label": "Combustível",
+          "valor": "Elétrico"
+        },
+        {
+          "label": "Tipo de propulsão",
+          "valor": "100% Elétrico"
+        },
+        {
+          "label": "Plataforma do veículo",
+          "valor": "e-TNGA"
+        }
+      ]
+    },
+    {
+      "titulo": "Garantia e Custos",
+      "itens": [
+        {
+          "label": "Garantia do veículo (anos + km)",
+          "valor": "60 meses (particular, sem limite de km); uso comercial 60 meses ou 100.000 km — o que ocorrer primeiro; extensível por mais 12 meses/10.000 km por vez, renovável até 60 meses adicionais (total até 10 anos / até 200.000 km particular ou até 100.000 km comercial), condicionado a revisões na rede autorizada"
+        },
+        {
+          "label": "Custo das revisões programadas (R$ até km)",
+          "valor": "R$ 899 (1ª revisão) / R$ 1.099 (revisões seguintes), até 60 mil km"
+        },
+        {
+          "label": "Garantia da bateria de tração (anos/km)",
+          "valor": "8 anos"
+        }
+      ]
+    },
+    {
+      "titulo": "Dimensões e pesos",
+      "itens": [
+        {
+          "label": "Comprimento (mm)",
+          "valor": "4690"
+        },
+        {
+          "label": "Largura (mm)",
+          "valor": "1860"
+        },
+        {
+          "label": "Altura (mm)",
+          "valor": "1650"
+        },
+        {
+          "label": "Distância entre-eixos (mm)",
+          "valor": "2850"
+        },
+        {
+          "label": "Vão livre do solo (mm)",
+          "valor": "180"
+        },
+        {
+          "label": "Volume do porta-malas (l)",
+          "valor": "452"
+        },
+        {
+          "label": "Porta-malas dianteiro (frunk) (l)",
+          "valor": "0"
+        },
+        {
+          "label": "Peso (kg)",
+          "valor": "2110"
+        },
+        {
+          "label": "Peso bruto total (PBT) (kg)",
+          "valor": "2585"
+        }
+      ]
+    },
+    {
+      "titulo": "Desempenho",
+      "itens": [
+        {
+          "label": "Aceleração 0-100 km/h (s)",
+          "valor": "5,5"
+        },
+        {
+          "label": "Velocidade máxima (km/h)",
+          "valor": "160"
+        }
+      ]
+    },
+    {
+      "titulo": "Motor Elétrico",
+      "itens": [
+        {
+          "label": "Capacidade da bateria de tração (kWh)",
+          "valor": "73,1"
+        },
+        {
+          "label": "Autonomia elétrica (km)",
+          "valor": "361"
+        },
+        {
+          "label": "Potência máxima do sistema (combinada) (cv)",
+          "valor": "343"
+        },
+        {
+          "label": "Tipo/química da bateria de tração",
+          "valor": "Íon de lítio"
+        },
+        {
+          "label": "Número de motores elétricos",
+          "valor": "2"
+        },
+        {
+          "label": "Potência do motor elétrico (por posição) (cv)",
+          "valor": "227"
+        },
+        {
+          "label": "Torque do motor elétrico (por posição) (kgfm)",
+          "valor": "27,4"
+        }
+      ]
+    },
+    {
+      "titulo": "Transmissão e tração",
+      "itens": [
+        {
+          "label": "Câmbio (tipo)",
+          "valor": "Redução de relação fixa (marcha única)"
+        },
+        {
+          "label": "Tração",
+          "valor": "Integral (AWD)"
+        }
+      ]
+    },
+    {
+      "titulo": "Chassi, direção, freios e rodas",
+      "itens": [
+        {
+          "label": "Assistência da direção",
+          "valor": "Elétrica progressiva"
+        },
+        {
+          "label": "Tipo de freios (dianteiro/traseiro)",
+          "valor": "Disco ventilado com ABS, EBD e BAS"
+        },
+        {
+          "label": "Medida dos pneus",
+          "valor": "235/50R20"
+        },
+        {
+          "label": "Suspensão dianteira (tipo)",
+          "valor": "MacPherson"
+        },
+        {
+          "label": "Suspensão traseira (tipo)",
+          "valor": "Double Wishbone"
+        },
+        {
+          "label": "Solução em caso de furo",
+          "valor": "Kit de reparo"
+        },
+        {
+          "label": "Material da roda",
+          "valor": "Liga leve"
+        },
+        {
+          "label": "Aro da roda (pol)",
+          "valor": "20"
+        }
+      ]
+    },
+    {
+      "titulo": "Recarga",
+      "itens": [
+        {
+          "label": "Potência máxima de recarga DC (kW)",
+          "valor": "150"
+        },
+        {
+          "label": "Potência máxima de recarga AC (kW)",
+          "valor": "22"
+        },
+        {
+          "label": "Tempo de recarga rápida DC (10/30→80%) (min)",
+          "valor": "30"
+        },
+        {
+          "label": "Tempo de recarga AC (10→100%) (h)",
+          "valor": "10,4"
+        },
+        {
+          "label": "Padrões de recarga aceitos (AC/DC)",
+          "valor": "AC e DC"
+        },
+        {
+          "label": "Tipo de conector de recarga",
+          "valor": "CCS2"
+        }
+      ]
+    },
+    {
+      "titulo": "Consumo e eficiência",
+      "itens": [
+        {
+          "label": "Autonomia total (km)",
+          "valor": "361"
+        },
+        {
+          "label": "Consumo elétrico (km/kWh)",
+          "valor": "4,9"
+        },
+        {
+          "label": "Consumo energético (MJ/km)",
+          "valor": "0,53009585"
+        }
+      ]
+    },
+    {
+      "titulo": "ADAS",
+      "itens": [
+        {
+          "label": "Nível de assistência à condução",
+          "valor": "Toyota Safety Sense 3.0 (TSS 3.0)"
+        },
+        {
+          "label": "Frenagem automática de emergência (AEB)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Controle de cruzeiro adaptativo (ACC)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Monitor de ponto cego (BSD)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Câmera de ré",
+          "valor": "Sim"
+        },
+        {
+          "label": "Sensores de estacionamento traseiros",
+          "valor": "Sim"
+        },
+        {
+          "label": "Sensores de estacionamento dianteiros",
+          "valor": "Sim"
+        },
+        {
+          "label": "Alerta de colisão frontal (FCW)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Alerta de saída de faixa (LDW)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Alerta de tráfego cruzado traseiro (RCTA)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Câmera de visão 360°",
+          "valor": "Sim"
+        },
+        {
+          "label": "Assistente de partida em rampa (HSA)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Monitoramento de pressão dos pneus (TPMS)",
+          "valor": "true"
+        },
+        {
+          "label": "Automação do farol alto",
+          "valor": "Adaptativo (AHS)"
+        },
+        {
+          "label": "Alerta de saída segura (portas)",
+          "valor": "Sim"
+        },
+        {
+          "label": "Assistente de estacionamento automático",
+          "valor": "Sim"
+        },
+        {
+          "label": "Pacote ADAS de marca (nome)",
+          "valor": "Toyota Safety Sense (TSS 3.0)"
+        },
+        {
+          "label": "Assistente de frenagem de emergência (BAS)",
+          "valor": "Sim"
+        }
+      ]
+    },
+    {
+      "titulo": "Conforto, multimídia e iluminação",
+      "itens": [
+        {
+          "label": "Piloto automático",
+          "valor": "adaptativo"
+        },
+        {
+          "label": "Central multimídia (tela, polegadas) (polegadas)",
+          "valor": "14"
+        },
+        {
+          "label": "Cores disponíveis",
+          "valor": "Branco Lunar/Preto, Azul Topázio/Preto, Precious Metal/Preto, Preto Atitude"
+        }
+      ]
+    },
+    {
+      "titulo": "Exterior e iluminação",
+      "itens": [
+        {
+          "label": "Tecnologia dos faróis",
+          "valor": "LED"
+        }
+      ]
+    }
+  ],
+  "porte": {
+    "rotulo": "SUV médio",
+    "criterio": "comprimento e carroceria — critério próprio Carpedia, ver /metodologia/porte",
+    "comprimento_mm": 4690,
+    "carroceria": "SUV"
+  },
+  "anosDisponiveis": [
+    2026
+  ]
+}
