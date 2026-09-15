@@ -1108,6 +1108,27 @@
           },
           "Vehicle": {
             "fields": {
+              "bodyType": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "consumptionCity": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "consumptionHighway": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1115,7 +1136,49 @@
                   "kind": "scalar"
                 }
               },
+              "displacementCc": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "doors": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "drivetrain": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "engine": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "externalId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fipeCode": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "fuel": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
@@ -1129,10 +1192,52 @@
                   "kind": "scalar"
                 }
               },
+              "heightMm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "lengthMm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "powerHp": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
+                  "kind": "scalar"
+                }
+              },
+              "seats": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "source": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "torqueNm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/float8@1",
                   "kind": "scalar"
                 }
               },
@@ -1154,6 +1259,27 @@
                 "nullable": true,
                 "type": {
                   "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "weightKg": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "wheelbaseMm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "widthMm": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
                   "kind": "scalar"
                 }
               },
@@ -1214,17 +1340,62 @@
             },
             "storage": {
               "fields": {
+                "bodyType": {
+                  "column": "bodyType"
+                },
+                "consumptionCity": {
+                  "column": "consumptionCity"
+                },
+                "consumptionHighway": {
+                  "column": "consumptionHighway"
+                },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "displacementCc": {
+                  "column": "displacementCc"
+                },
+                "doors": {
+                  "column": "doors"
+                },
+                "drivetrain": {
+                  "column": "drivetrain"
                 },
                 "engine": {
                   "column": "engine"
                 },
+                "externalId": {
+                  "column": "externalId"
+                },
+                "fipeCode": {
+                  "column": "fipeCode"
+                },
+                "fuel": {
+                  "column": "fuel"
+                },
                 "generationId": {
                   "column": "generationId"
                 },
+                "heightMm": {
+                  "column": "heightMm"
+                },
                 "id": {
                   "column": "id"
+                },
+                "lengthMm": {
+                  "column": "lengthMm"
+                },
+                "powerHp": {
+                  "column": "powerHp"
+                },
+                "seats": {
+                  "column": "seats"
+                },
+                "source": {
+                  "column": "source"
+                },
+                "torqueNm": {
+                  "column": "torqueNm"
                 },
                 "transmission": {
                   "column": "transmission"
@@ -1234,6 +1405,15 @@
                 },
                 "version": {
                   "column": "version"
+                },
+                "weightKg": {
+                  "column": "weightKg"
+                },
+                "wheelbaseMm": {
+                  "column": "wheelbaseMm"
+                },
+                "widthMm": {
+                  "column": "widthMm"
                 },
                 "year": {
                   "column": "year"
@@ -2096,6 +2276,21 @@
             },
             "vehicle": {
               "columns": {
+                "bodyType": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "consumptionCity": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "consumptionHighway": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -2105,7 +2300,37 @@
                   "nativeType": "timestamptz",
                   "nullable": false
                 },
+                "displacementCc": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "doors": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "drivetrain": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "engine": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "externalId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fipeCode": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "fuel": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": true
@@ -2115,6 +2340,11 @@
                   "nativeType": "int4",
                   "nullable": false
                 },
+                "heightMm": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -2123,6 +2353,31 @@
                   },
                   "nativeType": "int4",
                   "nullable": false
+                },
+                "lengthMm": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "powerHp": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
+                },
+                "seats": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "source": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
+                "torqueNm": {
+                  "codecId": "pg/float8@1",
+                  "nativeType": "float8",
+                  "nullable": true
                 },
                 "transmission": {
                   "codecId": "pg/text@1",
@@ -2137,6 +2392,21 @@
                 "version": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
+                  "nullable": true
+                },
+                "weightKg": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "wheelbaseMm": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "widthMm": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
                   "nullable": true
                 },
                 "year": {
@@ -2185,6 +2455,12 @@
                     "year",
                     "version"
                   ]
+                },
+                {
+                  "columns": [
+                    "source",
+                    "externalId"
+                  ]
                 }
               ]
             }
@@ -2211,7 +2487,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "22676cf6e9b40804b19447efb6bf49bc0a38cd2df8698cd9a7b41ddfd52d85c4"
+    "storageHash": "25e92f41c8b5c12f93c78f5aa6e4db8030921f4dfa54cf158af51a3df6c5d3af"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

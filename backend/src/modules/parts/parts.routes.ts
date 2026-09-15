@@ -4,9 +4,13 @@ import {
   getCategories,
   getCategory,
   postCategory,
+  patchCategory,
+  deleteCategoryController,
   getPartsByCategory,
   getPart,
   postPart,
+  patchPart,
+  deletePartController,
   getCompatibilitiesByVehicle,
   getCompatibilitiesByPart,
   postCompatibility,
@@ -14,20 +18,31 @@ import {
   deleteCompatibility,
 } from './parts.controller'
 
+import { authMiddleware } from '../../middlewares/auth.middleware'
+
 const router = Router()
 
-router.get('/categories', getCategories)
+// Consultas públicas
+router.get(
+  '/categories',
+  getCategories,
+)
 
-router.get('/categories/:id', getCategory)
-
-router.post('/categories', postCategory)
+router.get(
+  '/categories/:id',
+  getCategory,
+)
 
 router.get(
   '/categories/:categoryId/parts',
   getPartsByCategory,
 )
 
-// Compatibilidades
+router.get(
+  '/parts/:id',
+  getPart,
+)
+
 router.get(
   '/vehicles/:vehicleId/compatibilities',
   getCompatibilitiesByVehicle,
@@ -38,24 +53,61 @@ router.get(
   getCompatibilitiesByPart,
 )
 
+// Administração de categorias
+router.post(
+  '/categories',
+  authMiddleware,
+  postCategory,
+)
+
+router.patch(
+  '/categories/:id',
+  authMiddleware,
+  patchCategory,
+)
+
+router.delete(
+  '/categories/:id',
+  authMiddleware,
+  deleteCategoryController,
+)
+
+// Administração de peças
+router.post(
+  '/parts',
+  authMiddleware,
+  postPart,
+)
+
+router.patch(
+  '/parts/:id',
+  authMiddleware,
+  patchPart,
+)
+
+router.delete(
+  '/parts/:id',
+  authMiddleware,
+  deletePartController,
+)
+
+// Administração de compatibilidades
 router.post(
   '/compatibilities',
+  authMiddleware,
   postCompatibility,
 )
 
 router.patch(
   '/compatibilities/:id',
+  authMiddleware,
   patchCompatibility,
 )
 
 router.delete(
   '/compatibilities/:id',
+  authMiddleware,
   deleteCompatibility,
 )
-
-// Peças
-router.get('/parts/:id', getPart)
-
-router.post('/parts', postPart)
 
 export default router

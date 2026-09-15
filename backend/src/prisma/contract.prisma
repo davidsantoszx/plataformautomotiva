@@ -67,22 +67,47 @@ model CarGeneration {
 model Vehicle {
   id           Int       @id @default(autoincrement())
   generationId Int
+
   year         Int
   version      String?
+
   engine       String?
   transmission String?
+  fuel         String?
+  bodyType     String?
+  drivetrain   String?
 
-  generation   CarGeneration @relation(fields: [generationId], references: [id])
+  doors        Int?
+  seats        Int?
 
-  projects     Project[]
+  displacementCc Int?
+  powerHp       Float?
+  torqueNm      Float?
+
+  lengthMm      Int?
+  widthMm       Int?
+  heightMm      Int?
+  wheelbaseMm   Int?
+  weightKg      Int?
+
+  consumptionCity    Float?
+  consumptionHighway Float?
+
+  source     String?
+  externalId String?
+  fipeCode   String?
+
+  generation      CarGeneration @relation(fields: [generationId], references: [id])
+
+  projects        Project[]
   compatibilities PartCompatibility[]
 
   createdAt    TimestamptzString @default(now())
   updatedAt    temporal.updatedAtString()
 
   @@unique([generationId, year, version])
+  @@unique([source, externalId])
 }
-
 model PartCategory {
   id        Int       @id @default(autoincrement())
   name      String    @unique

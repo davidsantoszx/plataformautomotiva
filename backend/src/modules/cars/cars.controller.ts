@@ -391,13 +391,31 @@ export async function postVehicle(
   res: Response,
 ) {
   try {
-    const {
-      generationId,
-      year,
-      version,
-      engine,
-      transmission,
-    } = req.body
+  const {
+    generationId,
+    year,
+    version,
+    engine,
+    transmission,
+    fuel,
+    bodyType,
+    drivetrain,
+    doors,
+    seats,
+    displacementCc,
+    powerHp,
+    torqueNm,
+    lengthMm,
+    widthMm,
+    heightMm,
+    wheelbaseMm,
+    weightKg,
+    consumptionCity,
+    consumptionHighway,
+    source,
+    externalId,
+    fipeCode,
+  } = req.body
 
     if (!generationId || !year) {
       return res.status(400).json({
@@ -411,6 +429,23 @@ export async function postVehicle(
       version?.trim(),
       engine?.trim(),
       transmission?.trim(),
+      fuel?.trim(),
+      bodyType?.trim(),
+      drivetrain?.trim(),
+      doors !== undefined ? Number(doors) : undefined,
+      seats !== undefined ? Number(seats) : undefined,
+      displacementCc !== undefined ? Number(displacementCc) : undefined,
+      powerHp !== undefined ? Number(powerHp) : undefined,
+      torqueNm !== undefined ? Number(torqueNm) : undefined,
+      lengthMm !== undefined ? Number(lengthMm) : undefined,
+      widthMm !== undefined ? Number(widthMm) : undefined,
+      heightMm !== undefined ? Number(heightMm) : undefined,
+      wheelbaseMm !== undefined ? Number(wheelbaseMm) : undefined,
+      weightKg !== undefined ? Number(weightKg) : undefined,
+      consumptionCity !== undefined ? Number(consumptionCity) : undefined,
+      consumptionHighway !== undefined ? Number(consumptionHighway) : undefined,
+      source?.trim(),
+      externalId?.trim(),
     )
 
     return res.status(201).json({

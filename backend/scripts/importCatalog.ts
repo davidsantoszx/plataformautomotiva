@@ -55,6 +55,11 @@ const compatibilitiesPath = path.join(
   'compatibilities',
 )
 
+const vehiclesPath = path.join(
+  catalogPath,
+  'vehicles',
+) 
+
 async function readJsonFile<T>(
   filePath: string,
 ): Promise<T> {
@@ -555,6 +560,209 @@ async function importCompatibilities() {
   }
 }
 
+async function importVehicles() {
+  console.log(
+    '\n🚗 Importando veículos...',
+  )
+
+  try {
+    await fs.access(vehiclesPath)
+  } catch {
+    console.log(
+      '  ⚠️ Diretório de veículos não encontrado. Importação ignorada.',
+    )
+
+    return
+  }
+
+  const files =
+    await getJsonFiles(
+      vehiclesPath,
+    )
+
+  for (const filePath of files) {
+    const fileName =
+      path.basename(
+        filePath,
+        '.json',
+      )
+
+    const vehicles =
+      await readJsonFile<
+        Array<{
+          generationId: number
+          year: number
+          version?: string | null
+          engine?: string | null
+          transmission?: string | null
+          fuel?: string | null
+          bodyType?: string | null
+          drivetrain?: string | null
+          doors?: number | null
+          seats?: number | null
+          displacementCc?: number | null
+          powerHp?: number | null
+          torqueNm?: number | null
+          lengthMm?: number | null
+          widthMm?: number | null
+          heightMm?: number | null
+          wheelbaseMm?: number | null
+          weightKg?: number | null
+          consumptionCity?: number | null
+          consumptionHighway?: number | null
+          source?: string | null
+          externalId?: string | null
+          fipeCode?: string | null
+        }>
+      >(filePath)
+
+    if (!Array.isArray(vehicles)) {
+      throw new Error(
+        `VEHICLES_INVALID_FORMAT: ${fileName}`,
+      )
+    }
+
+    console.log(
+      `\n  📄 ${fileName}`,
+    )
+
+    for (const vehicle of vehicles) {
+      if (
+        !Number.isInteger(
+          vehicle.generationId,
+        ) ||
+        !Number.isInteger(
+          vehicle.year,
+        )
+      ) {
+        throw new Error(
+          `VEHICLE_INVALID_DATA: ${fileName}`,
+        )
+      }
+
+      const generation =
+        await db.orm.public.CarGeneration.first(
+          {
+            id: vehicle.generationId,
+          },
+        )
+
+      if (!generation) {
+        console.log(
+          `     ⚠️ Geração não encontrada: ${vehicle.generationId}`,
+        )
+
+        continue
+      }
+
+      const existing =
+        await db.orm.public.Vehicle.first(
+          {
+            generationId:
+              vehicle.generationId,
+            year: vehicle.year,
+            version:
+              vehicle.version ??
+              undefined,
+          },
+        )
+
+      const vehicleData = {
+        generationId:
+          vehicle.generationId,
+        year:
+          vehicle.year,
+        version:
+          vehicle.version ??
+          undefined,
+        engine:
+          vehicle.engine ??
+          undefined,
+        transmission:
+          vehicle.transmission ??
+          undefined,
+        fuel:
+          vehicle.fuel ??
+          undefined,
+        bodyType:
+          vehicle.bodyType ??
+          undefined,
+        drivetrain:
+          vehicle.drivetrain ??
+          undefined,
+        doors:
+          vehicle.doors ??
+          undefined,
+        seats:
+          vehicle.seats ??
+          undefined,
+        displacementCc:
+          vehicle.displacementCc ??
+          undefined,
+        powerHp:
+          vehicle.powerHp ??
+          undefined,
+        torqueNm:
+          vehicle.torqueNm ??
+          undefined,
+        lengthMm:
+          vehicle.lengthMm ??
+          undefined,
+        widthMm:
+          vehicle.widthMm ??
+          undefined,
+        heightMm:
+          vehicle.heightMm ??
+          undefined,
+        wheelbaseMm:
+          vehicle.wheelbaseMm ??
+          undefined,
+        weightKg:
+          vehicle.weightKg ??
+          undefined,
+        consumptionCity:
+          vehicle.consumptionCity ??
+          undefined,
+        consumptionHighway:
+          vehicle.consumptionHighway ??
+          undefined,
+        source:
+          vehicle.source ??
+          undefined,
+        externalId:
+          vehicle.externalId ??
+          undefined,
+        fipeCode:
+          vehicle.fipeCode ??
+          undefined,
+      }
+
+      if (existing) {
+        await db.orm.public.Vehicle
+          .where({
+            id: existing.id,
+          })
+          .update(vehicleData)
+
+        console.log(
+          `     ✓ Atualizado: ${vehicle.version ?? vehicle.year}`,
+        )
+
+        continue
+      }
+
+      await db.orm.public.Vehicle.create(
+        vehicleData,
+      )
+
+      console.log(
+        `     + Criado: ${vehicle.version ?? vehicle.year}`,
+      )
+    }
+  }
+}
+
+
 async function main() {
   console.log(
     '🚗 ========================================',
@@ -567,10 +775,9 @@ async function main() {
   )
 
   await importCategories()
-
   await importParts()
-
   await importCompatibilities()
+  await importVehicles()
 
   console.log(
     '\n✅ ========================================',
@@ -592,3 +799,5 @@ main()
 
     process.exit(1)
   })
+
+  

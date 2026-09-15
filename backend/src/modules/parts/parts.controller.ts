@@ -12,6 +12,10 @@ import {
   listCompatibilitiesByVehicle,
   listPartsByCategory,
   updateCompatibility,
+  updateCategory,
+  deleteCategory,
+  updatePart,
+  deletePart,
 } from './parts.service'
 
 export async function getCategories(
@@ -125,6 +129,140 @@ export async function postCategory(
 
     return res.status(500).json({
       message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchCategory(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+
+    const { name, slug } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID da categoria inválido',
+      })
+    }
+
+    if (
+      typeof name !== 'string' ||
+      typeof slug !== 'string' ||
+      !name.trim() ||
+      !slug.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          'Nome e slug são obrigatórios',
+      })
+    }
+
+    const category =
+      await updateCategory(
+        id,
+        name.trim(),
+        slug.trim().toLowerCase(),
+      )
+
+    return res.json({
+      message:
+        'Categoria atualizada com sucesso',
+      category,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        'CATEGORY_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Categoria não encontrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'CATEGORY_NAME_ALREADY_EXISTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'Categoria já cadastrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'CATEGORY_SLUG_ALREADY_EXISTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'Slug da categoria já cadastrado',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function deleteCategoryController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID da categoria inválido',
+      })
+    }
+
+    await deleteCategory(id)
+
+    return res.json({
+      message:
+        'Categoria excluída com sucesso',
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        'CATEGORY_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Categoria não encontrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'CATEGORY_HAS_PARTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'Não é possível excluir uma categoria que possui peças cadastradas',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -316,6 +454,213 @@ export async function postPart(
 
     return res.status(500).json({
       message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchPart(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+
+    const {
+      categoryId,
+      name,
+      slug,
+      brand,
+      description,
+      estimatedPrice,
+      imageUrl,
+      modelUrl,
+    } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID da peça inválido',
+      })
+    }
+
+    if (
+      categoryId === undefined ||
+      typeof name !== 'string' ||
+      typeof slug !== 'string' ||
+      estimatedPrice === undefined
+    ) {
+      return res.status(400).json({
+        message:
+          'categoryId, name, slug e estimatedPrice são obrigatórios',
+      })
+    }
+
+    const numericCategoryId =
+      Number(categoryId)
+
+    const numericEstimatedPrice =
+      Number(estimatedPrice)
+
+    if (
+      !Number.isInteger(
+        numericCategoryId,
+      )
+    ) {
+      return res.status(400).json({
+        message:
+          'categoryId inválido',
+      })
+    }
+
+    if (
+      !Number.isFinite(
+        numericEstimatedPrice,
+      ) ||
+      numericEstimatedPrice < 0
+    ) {
+      return res.status(400).json({
+        message:
+          'estimatedPrice deve ser um número maior ou igual a zero',
+      })
+    }
+
+    const part =
+      await updatePart(
+        id,
+        numericCategoryId,
+        name.trim(),
+        slug.trim().toLowerCase(),
+        numericEstimatedPrice,
+        typeof brand === 'string'
+          ? brand.trim() || undefined
+          : undefined,
+        typeof description === 'string'
+          ? description.trim() ||
+            undefined
+          : undefined,
+        typeof imageUrl === 'string'
+          ? imageUrl.trim() || undefined
+          : undefined,
+        typeof modelUrl === 'string'
+          ? modelUrl.trim() || undefined
+          : undefined,
+      )
+
+    return res.json({
+      message:
+        'Peça atualizada com sucesso',
+      part,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        'PART_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Peça não encontrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'CATEGORY_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Categoria não encontrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'PART_SLUG_ALREADY_EXISTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'Slug da peça já cadastrado nessa categoria',
+        })
+      }
+
+      if (
+        error.message ===
+        'INVALID_ESTIMATED_PRICE'
+      ) {
+        return res.status(400).json({
+          message:
+            'estimatedPrice inválido',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function deletePartController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID da peça inválido',
+      })
+    }
+
+    await deletePart(id)
+
+    return res.json({
+      message:
+        'Peça excluída com sucesso',
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        'PART_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Peça não encontrada',
+        })
+      }
+
+      if (
+        error.message ===
+        'PART_HAS_COMPATIBILITIES'
+      ) {
+        return res.status(409).json({
+          message:
+            'Não é possível excluir uma peça que possui compatibilidades cadastradas',
+        })
+      }
+
+      if (
+        error.message ===
+        'PART_HAS_PROJECTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'Não é possível excluir uma peça que está sendo utilizada em projetos',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
     })
   }
 }

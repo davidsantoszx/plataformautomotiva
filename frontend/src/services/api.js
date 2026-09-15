@@ -335,3 +335,138 @@ export async function getCompatibilitiesByVehicle(
 
   return data
 }
+
+export async function updateProject(
+  token,
+  projectId,
+  name,
+  mode,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        name,
+        mode,
+      }),
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Erro ao atualizar projeto',
+    )
+  }
+
+  return data
+}
+
+export async function deleteProject(
+  token,
+  projectId,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}`,
+    {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Erro ao excluir projeto',
+    )
+  }
+
+  return data
+}
+
+export async function duplicateProject(
+  token,
+  projectId,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/duplicate`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Erro ao duplicar projeto',
+    )
+  }
+
+  return data
+}
+
+export async function updateProjectPublication(
+  token,
+  projectId,
+  isPublic,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/${projectId}/publication`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        isPublic,
+      }),
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Erro ao alterar publicação do projeto',
+    )
+  }
+
+  return data
+}
+
+export async function getPublicProject(
+  shareToken,
+) {
+  const response = await fetch(
+    `${API_URL}/projects/share/${shareToken}`,
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(
+      data.message ||
+        'Projeto público não encontrado',
+    )
+  }
+
+  return data
+}

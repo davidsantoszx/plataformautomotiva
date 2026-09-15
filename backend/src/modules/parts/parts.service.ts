@@ -12,7 +12,9 @@ export async function listCategories() {
     .all()
 }
 
-export async function getCategoryById(id: number) {
+export async function getCategoryById(
+  id: number,
+) {
   return db.orm.public.PartCategory
     .select(
       'id',
@@ -58,6 +60,91 @@ export async function createCategory(
   })
 }
 
+export async function updateCategory(
+  id: number,
+  name: string,
+  slug: string,
+) {
+  const category =
+    await db.orm.public.PartCategory.first({
+      id,
+    })
+
+  if (!category) {
+    throw new Error('CATEGORY_NOT_FOUND')
+  }
+
+  const existingName =
+    await db.orm.public.PartCategory.first({
+      name,
+    })
+
+  if (
+    existingName &&
+    existingName.id !== id
+  ) {
+    throw new Error(
+      'CATEGORY_NAME_ALREADY_EXISTS',
+    )
+  }
+
+  const existingSlug =
+    await db.orm.public.PartCategory.first({
+      slug,
+    })
+
+  if (
+    existingSlug &&
+    existingSlug.id !== id
+  ) {
+    throw new Error(
+      'CATEGORY_SLUG_ALREADY_EXISTS',
+    )
+  }
+
+  return db.orm.public.PartCategory
+    .where({
+      id,
+    })
+    .update({
+      name,
+      slug,
+    })
+}
+
+export async function deleteCategory(
+  id: number,
+) {
+  const category =
+    await db.orm.public.PartCategory.first({
+      id,
+    })
+
+  if (!category) {
+    throw new Error('CATEGORY_NOT_FOUND')
+  }
+
+  const parts =
+    await db.orm.public.Part
+      .select('id')
+      .where({
+        categoryId: id,
+      })
+      .all()
+
+  if (parts.length > 0) {
+    throw new Error(
+      'CATEGORY_HAS_PARTS',
+    )
+  }
+
+  return db.orm.public.PartCategory
+    .where({
+      id,
+    })
+    .delete()
+}
+
 export async function listPartsByCategory(
   categoryId: number,
 ) {
@@ -81,7 +168,9 @@ export async function listPartsByCategory(
     .all()
 }
 
-export async function getPartById(id: number) {
+export async function getPartById(
+  id: number,
+) {
   return db.orm.public.Part
     .select(
       'id',
@@ -117,14 +206,18 @@ export async function createPart(
     })
 
   if (!category) {
-    throw new Error('CATEGORY_NOT_FOUND')
+    throw new Error(
+      'CATEGORY_NOT_FOUND',
+    )
   }
 
   if (
     !Number.isFinite(estimatedPrice) ||
     estimatedPrice < 0
   ) {
-    throw new Error('INVALID_ESTIMATED_PRICE')
+    throw new Error(
+      'INVALID_ESTIMATED_PRICE',
+    )
   }
 
   const existingSlug =
@@ -151,6 +244,124 @@ export async function createPart(
   })
 }
 
+export async function updatePart(
+  id: number,
+  categoryId: number,
+  name: string,
+  slug: string,
+  estimatedPrice: number,
+  brand?: string,
+  description?: string,
+  imageUrl?: string,
+  modelUrl?: string,
+) {
+  const part =
+    await db.orm.public.Part.first({
+      id,
+    })
+
+  if (!part) {
+    throw new Error('PART_NOT_FOUND')
+  }
+
+  const category =
+    await db.orm.public.PartCategory.first({
+      id: categoryId,
+    })
+
+  if (!category) {
+    throw new Error(
+      'CATEGORY_NOT_FOUND',
+    )
+  }
+
+  if (
+    !Number.isFinite(estimatedPrice) ||
+    estimatedPrice < 0
+  ) {
+    throw new Error(
+      'INVALID_ESTIMATED_PRICE',
+    )
+  }
+
+  const existingSlug =
+    await db.orm.public.Part.first({
+      categoryId,
+      slug,
+    })
+
+  if (
+    existingSlug &&
+    existingSlug.id !== id
+  ) {
+    throw new Error(
+      'PART_SLUG_ALREADY_EXISTS',
+    )
+  }
+
+  return db.orm.public.Part
+    .where({
+      id,
+    })
+    .update({
+      categoryId,
+      name,
+      slug,
+      brand,
+      description,
+      estimatedPrice,
+      imageUrl,
+      modelUrl,
+    })
+}
+
+export async function deletePart(
+  id: number,
+) {
+  const part =
+    await db.orm.public.Part.first({
+      id,
+    })
+
+  if (!part) {
+    throw new Error('PART_NOT_FOUND')
+  }
+
+  const compatibilities =
+    await db.orm.public.PartCompatibility
+      .select('id')
+      .where({
+        partId: id,
+      })
+      .all()
+
+  if (compatibilities.length > 0) {
+    throw new Error(
+      'PART_HAS_COMPATIBILITIES',
+    )
+  }
+
+  const projectParts =
+    await db.orm.public.ProjectPart
+      .select('id')
+      .where({
+        partId: id,
+      })
+      .all()
+
+  if (projectParts.length > 0) {
+    throw new Error(
+      'PART_HAS_PROJECTS',
+    )
+  }
+
+  return db.orm.public.Part
+    .where({
+      id,
+    })
+    .delete()
+}
+
 export async function listCompatibilitiesByVehicle(
   vehicleId: number,
 ) {
@@ -160,7 +371,9 @@ export async function listCompatibilitiesByVehicle(
     })
 
   if (!vehicle) {
-    throw new Error('VEHICLE_NOT_FOUND')
+    throw new Error(
+      'VEHICLE_NOT_FOUND',
+    )
   }
 
   return db.orm.public.PartCompatibility
@@ -189,7 +402,9 @@ export async function listCompatibilitiesByPart(
     })
 
   if (!part) {
-    throw new Error('PART_NOT_FOUND')
+    throw new Error(
+      'PART_NOT_FOUND',
+    )
   }
 
   return db.orm.public.PartCompatibility
@@ -225,7 +440,9 @@ export async function createCompatibility(
     })
 
   if (!part) {
-    throw new Error('PART_NOT_FOUND')
+    throw new Error(
+      'PART_NOT_FOUND',
+    )
   }
 
   const vehicle =
@@ -234,7 +451,9 @@ export async function createCompatibility(
     })
 
   if (!vehicle) {
-    throw new Error('VEHICLE_NOT_FOUND')
+    throw new Error(
+      'VEHICLE_NOT_FOUND',
+    )
   }
 
   const existing =

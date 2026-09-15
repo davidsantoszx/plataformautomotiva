@@ -1,14 +1,21 @@
 import type { Response } from 'express'
 
-import type { AuthenticatedRequest } from '../../middlewares/auth.middleware'
+import type {
+  AuthenticatedRequest,
+} from '../../middlewares/auth.middleware'
 
 import {
   addPartToProject,
   createProject,
+  deleteProject,
+  duplicateProject,
   getProjectById,
+  getPublicProject,
   listProjectParts,
   listProjectsByUser,
+  publishProject,
   removePartFromProject,
+  updateProject,
   updateProjectPartQuantity,
 } from './projects.service'
 
@@ -17,7 +24,10 @@ export async function getProjects(
   res: Response,
 ) {
   try {
-    const projects = await listProjectsByUser(req.userId!)
+    const projects =
+      await listProjectsByUser(
+        req.userId!,
+      )
 
     return res.json({
       projects,
@@ -26,7 +36,8 @@ export async function getProjects(
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -36,22 +47,27 @@ export async function getProject(
   res: Response,
 ) {
   try {
-    const id = Number(req.params.id)
+    const id = Number(
+      req.params.id,
+    )
 
     if (!Number.isInteger(id)) {
       return res.status(400).json({
-        message: 'ID do projeto inválido',
+        message:
+          'ID do projeto inválido',
       })
     }
 
-    const project = await getProjectById(
-      id,
-      req.userId!,
-    )
+    const project =
+      await getProjectById(
+        id,
+        req.userId!,
+      )
 
     if (!project) {
       return res.status(404).json({
-        message: 'Projeto não encontrado',
+        message:
+          'Projeto não encontrado',
       })
     }
 
@@ -62,7 +78,8 @@ export async function getProject(
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -89,45 +106,364 @@ export async function postProject(
       })
     }
 
-    const parsedVehicleId = Number(vehicleId)
+    const parsedVehicleId =
+      Number(vehicleId)
 
-    if (!Number.isInteger(parsedVehicleId)) {
+    if (
+      !Number.isInteger(
+        parsedVehicleId,
+      )
+    ) {
       return res.status(400).json({
-        message: 'vehicleId inválido',
+        message:
+          'vehicleId inválido',
       })
     }
 
-    if (mode !== 'REAL' && mode !== 'FREE') {
+    if (
+      mode !== 'REAL' &&
+      mode !== 'FREE'
+    ) {
       return res.status(400).json({
-        message: 'mode deve ser REAL ou FREE',
+        message:
+          'mode deve ser REAL ou FREE',
       })
     }
 
-    const project = await createProject(
-      req.userId!,
-      parsedVehicleId,
-      name.trim(),
-      mode,
-    )
+    const project =
+      await createProject(
+        req.userId!,
+        parsedVehicleId,
+        name.trim(),
+        mode,
+      )
 
     return res.status(201).json({
-      message: 'Projeto criado com sucesso',
+      message:
+        'Projeto criado com sucesso',
       project,
     })
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message === 'VEHICLE_NOT_FOUND'
+      error.message ===
+        'VEHICLE_NOT_FOUND'
     ) {
       return res.status(404).json({
-        message: 'Veículo não encontrado',
+        message:
+          'Veículo não encontrado',
       })
     }
 
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchProject(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(
+      req.params.id,
+    )
+
+    const {
+      name,
+      mode,
+    } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID do projeto inválido',
+      })
+    }
+
+    if (
+      typeof name !== 'string' ||
+      !name.trim()
+    ) {
+      return res.status(400).json({
+        message:
+          'name é obrigatório',
+      })
+    }
+
+    if (
+      mode !== 'REAL' &&
+      mode !== 'FREE'
+    ) {
+      return res.status(400).json({
+        message:
+          'mode deve ser REAL ou FREE',
+      })
+    }
+
+    const project =
+      await updateProject(
+        id,
+        req.userId!,
+        name.trim(),
+        mode,
+      )
+
+    return res.json({
+      message:
+        'Projeto atualizado com sucesso',
+      project,
+    })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (
+        error.message ===
+        'PROJECT_NOT_FOUND'
+      ) {
+        return res.status(404).json({
+          message:
+            'Projeto não encontrado',
+        })
+      }
+
+      if (
+        error.message ===
+        'PROJECT_HAS_INCOMPATIBLE_PARTS'
+      ) {
+        return res.status(409).json({
+          message:
+            'O projeto possui peças incompatíveis ou sem compatibilidade cadastrada para o modo Projeto Real.',
+        })
+      }
+
+      if (
+        error.message ===
+        'INVALID_PROJECT_NAME'
+      ) {
+        return res.status(400).json({
+          message:
+            'Nome do projeto inválido',
+        })
+      }
+
+      if (
+        error.message ===
+        'INVALID_PROJECT_MODE'
+      ) {
+        return res.status(400).json({
+          message:
+            'Modo do projeto inválido',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function deleteProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(
+      req.params.id,
+    )
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID do projeto inválido',
+      })
+    }
+
+    await deleteProject(
+      id,
+      req.userId!,
+    )
+
+    return res.json({
+      message:
+        'Projeto excluído com sucesso',
+    })
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message:
+          'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function duplicateProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(
+      req.params.id,
+    )
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID do projeto inválido',
+      })
+    }
+
+    const project =
+      await duplicateProject(
+        id,
+        req.userId!,
+      )
+
+    return res.status(201).json({
+      message:
+        'Projeto duplicado com sucesso',
+      project,
+    })
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message:
+          'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchProjectPublication(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(
+      req.params.id,
+    )
+
+    const { isPublic } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message:
+          'ID do projeto inválido',
+      })
+    }
+
+    if (
+      typeof isPublic !== 'boolean'
+    ) {
+      return res.status(400).json({
+        message:
+          'isPublic deve ser booleano',
+      })
+    }
+
+    const project =
+      await publishProject(
+        id,
+        req.userId!,
+        isPublic,
+      )
+
+    return res.json({
+      message: isPublic
+        ? 'Projeto publicado com sucesso'
+        : 'Projeto despublicado com sucesso',
+      project,
+    })
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message ===
+        'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message:
+          'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
+    })
+  }
+}
+
+export async function getPublicProjectController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+      const token = req.params.shareToken
+
+      if (Array.isArray(token)) {
+        return res.status(400).json({
+          message:
+            'Token de compartilhamento inválido',
+        })
+      }
+
+      const data =
+        await getPublicProject(token)
+
+    return res.json(data)
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      (
+        error.message ===
+          'PUBLIC_PROJECT_NOT_FOUND' ||
+        error.message ===
+          'SHARE_TOKEN_INVALID'
+      )
+    ) {
+      return res.status(404).json({
+        message:
+          'Projeto público não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -137,18 +473,22 @@ export async function getProjectParts(
   res: Response,
 ) {
   try {
-    const projectId = Number(req.params.projectId)
+    const projectId = Number(
+      req.params.projectId,
+    )
 
     if (!Number.isInteger(projectId)) {
       return res.status(400).json({
-        message: 'ID do projeto inválido',
+        message:
+          'ID do projeto inválido',
       })
     }
 
-    const parts = await listProjectParts(
-      projectId,
-      req.userId!,
-    )
+    const parts =
+      await listProjectParts(
+        projectId,
+        req.userId!,
+      )
 
     return res.json({
       parts,
@@ -156,17 +496,20 @@ export async function getProjectParts(
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message === 'PROJECT_NOT_FOUND'
+      error.message ===
+        'PROJECT_NOT_FOUND'
     ) {
       return res.status(404).json({
-        message: 'Projeto não encontrado',
+        message:
+          'Projeto não encontrado',
       })
     }
 
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -176,7 +519,9 @@ export async function postProjectPart(
   res: Response,
 ) {
   try {
-    const projectId = Number(req.params.projectId)
+    const projectId = Number(
+      req.params.projectId,
+    )
 
     const {
       partId,
@@ -185,15 +530,22 @@ export async function postProjectPart(
 
     if (!Number.isInteger(projectId)) {
       return res.status(400).json({
-        message: 'ID do projeto inválido',
+        message:
+          'ID do projeto inválido',
       })
     }
 
-    const parsedPartId = Number(partId)
+    const parsedPartId =
+      Number(partId)
 
-    if (!Number.isInteger(parsedPartId)) {
+    if (
+      !Number.isInteger(
+        parsedPartId,
+      )
+    ) {
       return res.status(400).json({
-        message: 'partId é obrigatório',
+        message:
+          'partId é obrigatório',
       })
     }
 
@@ -203,7 +555,9 @@ export async function postProjectPart(
         : Number(quantity)
 
     if (
-      !Number.isInteger(parsedQuantity) ||
+      !Number.isInteger(
+        parsedQuantity,
+      ) ||
       parsedQuantity < 1
     ) {
       return res.status(400).json({
@@ -227,26 +581,40 @@ export async function postProjectPart(
     })
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === 'PROJECT_NOT_FOUND') {
+      if (
+        error.message ===
+        'PROJECT_NOT_FOUND'
+      ) {
         return res.status(404).json({
-          message: 'Projeto não encontrado',
+          message:
+            'Projeto não encontrado',
         })
       }
 
-      if (error.message === 'PART_NOT_FOUND') {
+      if (
+        error.message ===
+        'PART_NOT_FOUND'
+      ) {
         return res.status(404).json({
-          message: 'Peça não encontrada',
+          message:
+            'Peça não encontrada',
         })
       }
 
-      if (error.message === 'PART_NOT_COMPATIBLE') {
+      if (
+        error.message ===
+        'PART_NOT_COMPATIBLE'
+      ) {
         return res.status(409).json({
           message:
             'Peça incompatível com o veículo no modo Projeto Real',
         })
       }
 
-      if (error.message === 'INVALID_QUANTITY') {
+      if (
+        error.message ===
+        'INVALID_QUANTITY'
+      ) {
         return res.status(400).json({
           message:
             'Quantidade deve ser um número inteiro maior que zero',
@@ -257,7 +625,8 @@ export async function postProjectPart(
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -267,9 +636,17 @@ export async function patchProjectPart(
   res: Response,
 ) {
   try {
-    const projectId = Number(req.params.projectId)
-    const partId = Number(req.params.partId)
-    const quantity = Number(req.body.quantity)
+    const projectId = Number(
+      req.params.projectId,
+    )
+
+    const partId = Number(
+      req.params.partId,
+    )
+
+    const quantity = Number(
+      req.body.quantity,
+    )
 
     if (
       !Number.isInteger(projectId) ||
@@ -299,14 +676,19 @@ export async function patchProjectPart(
       )
 
     return res.json({
-      message: 'Quantidade atualizada',
+      message:
+        'Quantidade atualizada',
       projectPart,
     })
   } catch (error) {
     if (error instanceof Error) {
-      if (error.message === 'PROJECT_NOT_FOUND') {
+      if (
+        error.message ===
+        'PROJECT_NOT_FOUND'
+      ) {
         return res.status(404).json({
-          message: 'Projeto não encontrado',
+          message:
+            'Projeto não encontrado',
         })
       }
 
@@ -315,11 +697,15 @@ export async function patchProjectPart(
         'PROJECT_PART_NOT_FOUND'
       ) {
         return res.status(404).json({
-          message: 'Peça não encontrada no projeto',
+          message:
+            'Peça não encontrada no projeto',
         })
       }
 
-      if (error.message === 'INVALID_QUANTITY') {
+      if (
+        error.message ===
+        'INVALID_QUANTITY'
+      ) {
         return res.status(400).json({
           message:
             'Quantidade deve ser um número inteiro maior que zero',
@@ -330,7 +716,8 @@ export async function patchProjectPart(
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }
@@ -340,8 +727,13 @@ export async function deleteProjectPart(
   res: Response,
 ) {
   try {
-    const projectId = Number(req.params.projectId)
-    const partId = Number(req.params.partId)
+    const projectId = Number(
+      req.params.projectId,
+    )
+
+    const partId = Number(
+      req.params.partId,
+    )
 
     if (
       !Number.isInteger(projectId) ||
@@ -359,22 +751,26 @@ export async function deleteProjectPart(
     )
 
     return res.json({
-      message: 'Peça removida do projeto',
+      message:
+        'Peça removida do projeto',
     })
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message === 'PROJECT_NOT_FOUND'
+      error.message ===
+        'PROJECT_NOT_FOUND'
     ) {
       return res.status(404).json({
-        message: 'Projeto não encontrado',
+        message:
+          'Projeto não encontrado',
       })
     }
 
     console.error(error)
 
     return res.status(500).json({
-      message: 'Erro interno do servidor',
+      message:
+        'Erro interno do servidor',
     })
   }
 }

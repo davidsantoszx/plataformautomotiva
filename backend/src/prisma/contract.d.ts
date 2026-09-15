@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'22676cf6e9b40804b19447efb6bf49bc0a38cd2df8698cd9a7b41ddfd52d85c4'>;
+  StorageHashBase<'25e92f41c8b5c12f93c78f5aa6e4db8030921f4dfa54cf158af51a3df6c5d3af'>;
 export type ExecutionHash =
   ExecutionHashBase<'5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab'>;
 export type ProfileHash =
@@ -331,6 +331,24 @@ export type FieldOutputTypes = {
       readonly version: CodecTypes['pg/text@1']['output'] | null;
       readonly engine: CodecTypes['pg/text@1']['output'] | null;
       readonly transmission: CodecTypes['pg/text@1']['output'] | null;
+      readonly fuel: CodecTypes['pg/text@1']['output'] | null;
+      readonly bodyType: CodecTypes['pg/text@1']['output'] | null;
+      readonly drivetrain: CodecTypes['pg/text@1']['output'] | null;
+      readonly doors: CodecTypes['pg/int4@1']['output'] | null;
+      readonly seats: CodecTypes['pg/int4@1']['output'] | null;
+      readonly displacementCc: CodecTypes['pg/int4@1']['output'] | null;
+      readonly powerHp: CodecTypes['pg/float8@1']['output'] | null;
+      readonly torqueNm: CodecTypes['pg/float8@1']['output'] | null;
+      readonly lengthMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly widthMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly heightMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly wheelbaseMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly weightKg: CodecTypes['pg/int4@1']['output'] | null;
+      readonly consumptionCity: CodecTypes['pg/float8@1']['output'] | null;
+      readonly consumptionHighway: CodecTypes['pg/float8@1']['output'] | null;
+      readonly source: CodecTypes['pg/text@1']['output'] | null;
+      readonly externalId: CodecTypes['pg/text@1']['output'] | null;
+      readonly fipeCode: CodecTypes['pg/text@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
     };
@@ -428,6 +446,24 @@ export type FieldInputTypes = {
       readonly version: CodecTypes['pg/text@1']['input'] | null;
       readonly engine: CodecTypes['pg/text@1']['input'] | null;
       readonly transmission: CodecTypes['pg/text@1']['input'] | null;
+      readonly fuel: CodecTypes['pg/text@1']['input'] | null;
+      readonly bodyType: CodecTypes['pg/text@1']['input'] | null;
+      readonly drivetrain: CodecTypes['pg/text@1']['input'] | null;
+      readonly doors: CodecTypes['pg/int4@1']['input'] | null;
+      readonly seats: CodecTypes['pg/int4@1']['input'] | null;
+      readonly displacementCc: CodecTypes['pg/int4@1']['input'] | null;
+      readonly powerHp: CodecTypes['pg/float8@1']['input'] | null;
+      readonly torqueNm: CodecTypes['pg/float8@1']['input'] | null;
+      readonly lengthMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly widthMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly heightMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly wheelbaseMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly weightKg: CodecTypes['pg/int4@1']['input'] | null;
+      readonly consumptionCity: CodecTypes['pg/float8@1']['input'] | null;
+      readonly consumptionHighway: CodecTypes['pg/float8@1']['input'] | null;
+      readonly source: CodecTypes['pg/text@1']['input'] | null;
+      readonly externalId: CodecTypes['pg/text@1']['input'] | null;
+      readonly fipeCode: CodecTypes['pg/text@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
@@ -519,13 +555,31 @@ export type StorageColumnTypes = {
       readonly username: CodecTypes['pg/text@1']['output'] | null;
     };
     readonly vehicle: {
+      readonly bodyType: CodecTypes['pg/text@1']['output'] | null;
+      readonly consumptionCity: CodecTypes['pg/float8@1']['output'] | null;
+      readonly consumptionHighway: CodecTypes['pg/float8@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
+      readonly displacementCc: CodecTypes['pg/int4@1']['output'] | null;
+      readonly doors: CodecTypes['pg/int4@1']['output'] | null;
+      readonly drivetrain: CodecTypes['pg/text@1']['output'] | null;
       readonly engine: CodecTypes['pg/text@1']['output'] | null;
+      readonly externalId: CodecTypes['pg/text@1']['output'] | null;
+      readonly fipeCode: CodecTypes['pg/text@1']['output'] | null;
+      readonly fuel: CodecTypes['pg/text@1']['output'] | null;
       readonly generationId: CodecTypes['pg/int4@1']['output'];
+      readonly heightMm: CodecTypes['pg/int4@1']['output'] | null;
       readonly id: CodecTypes['pg/int4@1']['output'];
+      readonly lengthMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly powerHp: CodecTypes['pg/float8@1']['output'] | null;
+      readonly seats: CodecTypes['pg/int4@1']['output'] | null;
+      readonly source: CodecTypes['pg/text@1']['output'] | null;
+      readonly torqueNm: CodecTypes['pg/float8@1']['output'] | null;
       readonly transmission: CodecTypes['pg/text@1']['output'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly version: CodecTypes['pg/text@1']['output'] | null;
+      readonly weightKg: CodecTypes['pg/int4@1']['output'] | null;
+      readonly wheelbaseMm: CodecTypes['pg/int4@1']['output'] | null;
+      readonly widthMm: CodecTypes['pg/int4@1']['output'] | null;
       readonly year: CodecTypes['pg/int4@1']['output'];
     };
   };
@@ -616,13 +670,31 @@ export type StorageColumnInputTypes = {
       readonly username: CodecTypes['pg/text@1']['input'] | null;
     };
     readonly vehicle: {
+      readonly bodyType: CodecTypes['pg/text@1']['input'] | null;
+      readonly consumptionCity: CodecTypes['pg/float8@1']['input'] | null;
+      readonly consumptionHighway: CodecTypes['pg/float8@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
+      readonly displacementCc: CodecTypes['pg/int4@1']['input'] | null;
+      readonly doors: CodecTypes['pg/int4@1']['input'] | null;
+      readonly drivetrain: CodecTypes['pg/text@1']['input'] | null;
       readonly engine: CodecTypes['pg/text@1']['input'] | null;
+      readonly externalId: CodecTypes['pg/text@1']['input'] | null;
+      readonly fipeCode: CodecTypes['pg/text@1']['input'] | null;
+      readonly fuel: CodecTypes['pg/text@1']['input'] | null;
       readonly generationId: CodecTypes['pg/int4@1']['input'];
+      readonly heightMm: CodecTypes['pg/int4@1']['input'] | null;
       readonly id: CodecTypes['pg/int4@1']['input'];
+      readonly lengthMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly powerHp: CodecTypes['pg/float8@1']['input'] | null;
+      readonly seats: CodecTypes['pg/int4@1']['input'] | null;
+      readonly source: CodecTypes['pg/text@1']['input'] | null;
+      readonly torqueNm: CodecTypes['pg/float8@1']['input'] | null;
       readonly transmission: CodecTypes['pg/text@1']['input'] | null;
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly version: CodecTypes['pg/text@1']['input'] | null;
+      readonly weightKg: CodecTypes['pg/int4@1']['input'] | null;
+      readonly wheelbaseMm: CodecTypes['pg/int4@1']['input'] | null;
+      readonly widthMm: CodecTypes['pg/int4@1']['input'] | null;
       readonly year: CodecTypes['pg/int4@1']['input'];
     };
   };
@@ -1322,6 +1394,96 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly fuel: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly bodyType: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly drivetrain: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly doors: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly seats: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly displacementCc: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly powerHp: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
+                readonly torqueNm: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
+                readonly lengthMm: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly widthMm: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly heightMm: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly wheelbaseMm: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly weightKg: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: true;
+                };
+                readonly consumptionCity: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
+                readonly consumptionHighway: {
+                  readonly nativeType: 'float8';
+                  readonly codecId: 'pg/float8@1';
+                  readonly nullable: true;
+                };
+                readonly source: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly externalId: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
+                readonly fipeCode: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: true;
+                };
                 readonly createdAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-string@1';
@@ -1337,6 +1499,7 @@ type ContractBase = Omit<
               primaryKey: { readonly columns: readonly ['id'] };
               uniques: readonly [
                 { readonly columns: readonly ['generationId', 'year', 'version'] },
+                { readonly columns: readonly ['source', 'externalId'] },
               ];
               indexes: readonly [
                 {
@@ -2097,6 +2260,78 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly fuel: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly bodyType: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly drivetrain: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly doors: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly seats: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly displacementCc: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly powerHp: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly torqueNm: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly lengthMm: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly widthMm: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly heightMm: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly wheelbaseMm: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly weightKg: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
+              };
+              readonly consumptionCity: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly consumptionHighway: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/float8@1' };
+              };
+              readonly source: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly externalId: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly fipeCode: {
+                readonly nullable: true;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly createdAt: {
                 readonly nullable: false;
                 readonly type: {
@@ -2157,6 +2392,24 @@ type ContractBase = Omit<
                 readonly version: { readonly column: 'version' };
                 readonly engine: { readonly column: 'engine' };
                 readonly transmission: { readonly column: 'transmission' };
+                readonly fuel: { readonly column: 'fuel' };
+                readonly bodyType: { readonly column: 'bodyType' };
+                readonly drivetrain: { readonly column: 'drivetrain' };
+                readonly doors: { readonly column: 'doors' };
+                readonly seats: { readonly column: 'seats' };
+                readonly displacementCc: { readonly column: 'displacementCc' };
+                readonly powerHp: { readonly column: 'powerHp' };
+                readonly torqueNm: { readonly column: 'torqueNm' };
+                readonly lengthMm: { readonly column: 'lengthMm' };
+                readonly widthMm: { readonly column: 'widthMm' };
+                readonly heightMm: { readonly column: 'heightMm' };
+                readonly wheelbaseMm: { readonly column: 'wheelbaseMm' };
+                readonly weightKg: { readonly column: 'weightKg' };
+                readonly consumptionCity: { readonly column: 'consumptionCity' };
+                readonly consumptionHighway: { readonly column: 'consumptionHighway' };
+                readonly source: { readonly column: 'source' };
+                readonly externalId: { readonly column: 'externalId' };
+                readonly fipeCode: { readonly column: 'fipeCode' };
                 readonly createdAt: { readonly column: 'createdAt' };
                 readonly updatedAt: { readonly column: 'updatedAt' };
               };
