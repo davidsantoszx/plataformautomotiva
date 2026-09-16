@@ -33,6 +33,7 @@ import PartsCatalog from './components/PartsCatalog'
 import CurrentProject from './components/CurrentProject'
 import LandingPage from './pages/LandingPage'
 import PublicProjectPage from './pages/PublicProjectPage'
+import CarViewer3D from './components/CarViewer3D'
 
 const TOKEN_KEY = 'plataforma_automotiva_token'
 const USER_KEY = 'plataforma_automotiva_user'
@@ -882,6 +883,10 @@ const visibleVehicles = selectedYear
 
         {selectedVehicle && (
           <>
+
+              <CarViewer3D
+              modelUrl="/models/cars/porsche-911.glb"
+              />
             <ProjectBuilder
               token={token}
               selectedVehicleData={selectedVehicleData}
@@ -911,6 +916,9 @@ const visibleVehicles = selectedYear
               />
             )}
           </>
+
+            
+
         )}
 
         {currentProject && (
