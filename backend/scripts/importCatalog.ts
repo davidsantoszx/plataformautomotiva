@@ -338,39 +338,74 @@ async function importParts() {
           .trim()
           .toLowerCase()
 
-      const existing =
-        await db.orm.public.Part.first(
-          {
+      /*
+       * Busca todas as peças da categoria
+       * e encontra a peça pelo slug.
+       *
+       * Isso evita depender do comportamento
+       * de filtros compostos do .first().
+       */
+      const categoryParts =
+        await db.orm.public.Part
+          .where({
             categoryId:
               category.id,
-            slug,
-          },
+          })
+          .all()
+
+      const matchingParts =
+        categoryParts.filter(
+          (item) =>
+            item.slug === slug,
         )
+
+      const existing =
+        matchingParts[0]
+
+      /*
+       * Se existirem duplicatas antigas,
+       * usamos o primeiro registro como
+       * registro principal.
+       */
+      if (matchingParts.length > 1) {
+        console.log(
+          `  ⚠️ Duplicatas encontradas: ${part.name} (${matchingParts.length})`,
+        )
+      }
+
+      const partData = {
+        name:
+          part.name.trim(),
+
+        slug,
+
+        brand:
+          part.brand?.trim() ||
+          undefined,
+
+        description:
+          part.description
+            ?.trim() ||
+          undefined,
+
+        estimatedPrice:
+          part.estimatedPrice,
+
+        imageUrl:
+          part.imageUrl?.trim() ||
+          undefined,
+
+        modelUrl:
+          part.modelUrl?.trim() ||
+          undefined,
+      }
 
       if (existing) {
         await db.orm.public.Part
           .where({
             id: existing.id,
           })
-          .update({
-            name:
-              part.name.trim(),
-            brand:
-              part.brand?.trim() ||
-              undefined,
-            description:
-              part.description
-                ?.trim() ||
-              undefined,
-            estimatedPrice:
-              part.estimatedPrice,
-            imageUrl:
-              part.imageUrl?.trim() ||
-              undefined,
-            modelUrl:
-              part.modelUrl?.trim() ||
-              undefined,
-          })
+          .update(partData)
 
         console.log(
           `     ✓ Atualizada: ${part.name}`,
@@ -383,24 +418,7 @@ async function importParts() {
         {
           categoryId:
             category.id,
-          name:
-            part.name.trim(),
-          slug,
-          brand:
-            part.brand?.trim() ||
-            undefined,
-          description:
-            part.description
-              ?.trim() ||
-            undefined,
-          estimatedPrice:
-            part.estimatedPrice,
-          imageUrl:
-            part.imageUrl?.trim() ||
-            undefined,
-          modelUrl:
-            part.modelUrl?.trim() ||
-            undefined,
+          ...partData,
         },
       )
 

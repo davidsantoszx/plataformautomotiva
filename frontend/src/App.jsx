@@ -34,6 +34,8 @@ import CurrentProject from './components/CurrentProject'
 import LandingPage from './pages/LandingPage'
 import PublicProjectPage from './pages/PublicProjectPage'
 import CarViewer3D from './components/CarViewer3D'
+import { getVehicle3DModel } from './data/vehicle3dModels'
+import { getPart3DModel } from './data/part3dModels'
 
 const TOKEN_KEY = 'plataforma_automotiva_token'
 const USER_KEY = 'plataforma_automotiva_user'
@@ -823,6 +825,26 @@ const visibleVehicles = selectedYear
       String(vehicle.id) === String(selectedVehicle),
   )
 
+
+  
+  const selectedVehicle3DModel =
+  getVehicle3DModel(selectedVehicleData)
+
+  const selected3DParts = Object.values(projectPartDetails)
+  .map((part) => {
+    const model = getPart3DModel(part)
+
+    if (!model) {
+      return null
+    }
+
+    return {
+      key: String(part.id),
+      ...model,
+    }
+  })
+  .filter(Boolean)
+
   const projectTotal = projectParts.reduce(
     (total, projectPart) =>
       total +
@@ -885,7 +907,8 @@ const visibleVehicles = selectedYear
           <>
 
               <CarViewer3D
-              modelUrl="/models/cars/porsche-911.glb"
+              modelUrl={selectedVehicle3DModel}
+              parts={selected3DParts}
               />
             <ProjectBuilder
               token={token}
