@@ -7,9 +7,48 @@ import {
   OrbitControls,
   useGLTF,
 } from '@react-three/drei'
+import { Box3, Vector3 } from 'three'
 
 function CarModel({ modelUrl }) {
   const { scene } = useGLTF(modelUrl)
+
+  console.log('ESTRUTURA DO CARRO 3D:')
+
+  scene.traverse((object) => {
+    console.log({
+      name: object.name,
+      type: object.type,
+      isMesh: object.isMesh,
+      visible: object.visible,
+    })
+
+    if (
+      object.isMesh &&
+      object.name.toLowerCase().includes('gum')
+    ) {
+      const box = new Box3().setFromObject(object)
+      const center = new Vector3()
+      const size = new Vector3()
+
+      box.getCenter(center)
+      box.getSize(size)
+
+      console.log('OBJETO GUM:', {
+        name: object.name,
+        parent: object.parent?.name,
+        center: {
+          x: center.x,
+          y: center.y,
+          z: center.z,
+        },
+        size: {
+          x: size.x,
+          y: size.y,
+          z: size.z,
+        },
+      })
+    }
+  })
 
   return (
     <primitive
@@ -21,15 +60,21 @@ function CarModel({ modelUrl }) {
 
 function CarPartModel({
   modelUrl,
-  position = [0, 0, 0],
+  position = [5, 0, 0],
   rotation = [0, 0, 0],
   scale = 1,
 }) {
   const { scene } = useGLTF(modelUrl)
 
+  scene.traverse((object) => {
+    if (object.isMesh) {
+      object.visible = true
+    }
+  })
+
   return (
     <primitive
-      object={scene.clone()}
+      object={scene}
       position={position}
       rotation={rotation}
       scale={scale}
