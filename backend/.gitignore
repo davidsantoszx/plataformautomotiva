@@ -4,3 +4,6 @@ dist/
 .env
 .env.*
 !.env.example
+
+# FIPEX dataset local
+backend/data/catalog/fipex/dataset/*.parquet
