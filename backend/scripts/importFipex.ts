@@ -675,6 +675,8 @@ async function main(): Promise<void> {
     }
   }
 
+
+  
   console.log('');
   console.log('==========================================');
   console.log('             IMPORTAÇÃO FINAL');
