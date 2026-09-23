@@ -7,49 +7,6 @@ const BASE_URL =
 
 const SOURCE = 'tabelafipe'
 
-const brands = [
-  'VW - VolksWagen',
-  'GM - Chevrolet',
-  'Ford',
-  'Fiat',
-  'Mercedes-Benz',
-  'Renault',
-  'BMW',
-  'Audi',
-  'Peugeot',
-  'Toyota',
-  'Mitsubishi',
-  'Citroën',
-  'Hyundai',
-  'Nissan',
-  'Volvo',
-  'Porsche',
-  'Land Rover',
-  'Honda',
-  'Kia Motors',
-  'Subaru',
-  'Suzuki',
-  'Jeep',
-  'Jaguar',
-  'Chery',
-  'Caoa Chery',
-  'JAC',
-  'Lexus',
-  'RAM',
-  'Dodge',
-  'Chrysler',
-  'Mini',
-  'BYD',
-  'GWM',
-  'MG',
-  'Alfa Romeo',
-  'Maserati',
-  'Ferrari',
-  'Lamborghini',
-  'Bentley',
-  'Aston Martin',
-]
-
 type ApiBrand = {
   slug: string
   name: string
@@ -223,13 +180,15 @@ async function getJson<T>(
   )
 }
 
-async function getApiBrands() {
+async function getApiBrands(): Promise<
+  ApiBrand[]
+> {
   const data =
     await getJson<ApiBrandsResponse>(
       '/carros/marcas',
     )
 
-  return data.brands
+  return data.brands ?? []
 }
 
 function resolveBrand(
@@ -265,28 +224,6 @@ function resolveBrand(
 
   if (bySlug) {
     return bySlug
-  }
-
-  /*
-   * A API não possui uma marca "Chery"
-   * separada no retorno atual.
-   *
-   * O catálogo disponibiliza:
-   * "Caoa Chery/Chery".
-   */
-  if (
-    selectedName
-      .trim()
-      .toLowerCase() ===
-    'chery'
-  ) {
-    return (
-      apiBrands.find(
-        (brand) =>
-          brand.slug ===
-          'caoa-chery-chery',
-      ) ?? null
-    )
   }
 
   return null
@@ -545,10 +482,24 @@ async function importFamily(
   const endpoint =
     `/carros/${apiBrand.slug}/familia/${family.slug}/precos`
 
-  const data =
-    await getJson<ApiPricesResponse>(
-      endpoint,
+  let data: ApiPricesResponse
+
+  try {
+    data =
+      await getJson<ApiPricesResponse>(
+        endpoint,
+      )
+  } catch (error) {
+    console.log(
+      `  ⚠️ ${apiBrand.name} / ${family.name}: preços não disponíveis. Família ignorada.`,
     )
+
+    return {
+      models: 0,
+      created: 0,
+      updated: 0,
+    }
+  }
 
   const prices =
     data.precos ?? []
@@ -681,23 +632,39 @@ async function main(): Promise<void> {
   const apiBrands =
     await getApiBrands()
 
-  const selected =
-    brandArg
-      ? brands.filter(
-          (brand) =>
-            brand
-              .toLowerCase() ===
-            brandArg,
-        )
-      : brands
+  console.log(
+    `Marcas disponíveis na API: ${apiBrands.length}`,
+  )
 
-  if (
-    brandArg &&
-    selected.length === 0
-  ) {
-    throw new Error(
-      `Marca "${brandArg}" não está entre as 40 marcas selecionadas.`,
-    )
+  /*
+   * Sem --brand:
+   * importa TODAS as marcas retornadas
+   * pela API.
+   *
+   * Com --brand:
+   * importa somente a marca solicitada.
+   */
+  let selectedBrands: ApiBrand[]
+
+  if (brandArg) {
+    const selectedBrand =
+      resolveBrand(
+        brandArg,
+        apiBrands,
+      )
+
+    if (!selectedBrand) {
+      throw new Error(
+        `Marca "${brandArg}" não foi encontrada na API.`,
+      )
+    }
+
+    selectedBrands = [
+      selectedBrand,
+    ]
+  } else {
+    selectedBrands =
+      apiBrands
   }
 
   let totalFamilies = 0
@@ -706,31 +673,28 @@ async function main(): Promise<void> {
   let totalSkippedBrands = 0
 
   for (
-    const selectedBrand of selected
+    const apiBrand of selectedBrands
   ) {
-    const apiBrand =
-      resolveBrand(
-        selectedBrand,
-        apiBrands,
-      )
+    console.log(
+      `\n[MARCA] ${apiBrand.name}`,
+    )
 
-    if (!apiBrand) {
+    let modelsData: ApiModelsResponse
+
+    try {
+      modelsData =
+        await getJson<ApiModelsResponse>(
+          `/carros/${apiBrand.slug}/modelos`,
+        )
+    } catch (error) {
       console.log(
-        `\n⚠️ Marca não encontrada na API: ${selectedBrand}`,
+        `  ⚠️ Não foi possível consultar modelos de ${apiBrand.name}. Marca ignorada.`,
       )
 
       totalSkippedBrands++
+
       continue
     }
-
-    console.log(
-      `\n[MARCA] ${selectedBrand} → ${apiBrand.name}`,
-    )
-
-    const modelsData =
-      await getJson<ApiModelsResponse>(
-        `/carros/${apiBrand.slug}/modelos`,
-      )
 
     let families =
       modelsData.families ?? []
@@ -770,8 +734,8 @@ async function main(): Promise<void> {
       )
 
       /*
-       * A API permite 60 requisições/minuto.
-       * Mantemos aproximadamente 57/minuto.
+       * Mantemos aproximadamente
+       * 57 requisições por minuto.
        */
       await sleep(1050)
     }
@@ -788,6 +752,9 @@ async function main(): Promise<void> {
     '==========================================',
   )
   console.log(
+    `Marcas processadas: ${selectedBrands.length}`,
+  )
+  console.log(
     `Famílias importadas: ${totalFamilies}`,
   )
   console.log(
@@ -797,7 +764,7 @@ async function main(): Promise<void> {
     `Veículos atualizados: ${totalUpdated}`,
   )
   console.log(
-    `Marcas não encontradas: ${totalSkippedBrands}`,
+    `Marcas ignoradas: ${totalSkippedBrands}`,
   )
   console.log(
     '==========================================',
