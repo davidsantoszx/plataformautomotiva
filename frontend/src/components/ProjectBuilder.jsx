@@ -8,7 +8,6 @@ export default function ProjectBuilder({
   onProjectNameChange,
   onProjectModeChange,
   onCreate,
-  onNewProject,
 }) {
   return (
     <section className="dashboard-section builder-section">
@@ -127,24 +126,20 @@ export default function ProjectBuilder({
         </form>
       ) : (
         <div className="active-project-box">
-          <span>PROJETO ATUAL</span>
+  <span>PROJETO ATUAL</span>
 
-          <h3>{currentProject.name}</h3>
+  <h3>{currentProject.name}</h3>
 
-          <p>
-            {currentProject.mode === 'REAL'
-              ? 'Projeto Real'
-              : 'Projeto Livre'}
-          </p>
+  <p>
+    {currentProject.mode === 'REAL'
+      ? 'Projeto Real'
+      : 'Projeto Livre'}
+  </p>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onNewProject}
-          >
-            Criar outro projeto
-          </button>
-        </div>
+  <small>
+    Continue adicionando e ajustando as peças do seu projeto.
+  </small>
+</div>
       )}
 
       {projectError && (

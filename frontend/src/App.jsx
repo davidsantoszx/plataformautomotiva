@@ -641,6 +641,12 @@ function handleYearChange(event) {
     setError('')
   }
 
+  function handleCloseProject() {
+  clearProjectSelection()
+  setProjectError('')
+  setError('')
+}
+
   function handleStartEditProject() {
     if (!currentProject) return
 
@@ -921,7 +927,7 @@ const visibleVehicles = selectedYear
               onProjectNameChange={setProjectName}
               onProjectModeChange={setProjectMode}
               onCreate={handleCreateProject}
-              onNewProject={handleNewProject}
+              onCloseProject={handleCloseProject}
             />
 
             {currentProject && (
@@ -936,6 +942,7 @@ const visibleVehicles = selectedYear
                 projectParts={projectParts}
                 onCategoryChange={handleCategoryChange}
                 onAddPart={handleAddPart}
+                onCloseProject={handleCloseProject}
               />
             )}
           </>

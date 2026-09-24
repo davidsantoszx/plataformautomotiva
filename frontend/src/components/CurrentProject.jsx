@@ -26,6 +26,7 @@ export default function CurrentProject({
   onCopyShareLink,
   onUpdateQuantity,
   onRemovePart,
+  onCloseProject,
 }) {
   return (
     <section className="dashboard-section current-project-section">
@@ -58,56 +59,68 @@ export default function CurrentProject({
       </div>
 
       {!editingProject ? (
-        <div className="project-actions">
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onStartEdit}
-            disabled={projectActionLoading}
-          >
-            Editar
-          </button>
+       <div className="project-actions">
+  <div className="project-actions-main">
+    <button
+      className="primary-button"
+      type="button"
+      onClick={onStartEdit}
+      disabled={projectActionLoading}
+    >
+      Editar
+    </button>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onDuplicate}
-            disabled={projectActionLoading}
-          >
-            Duplicar
-          </button>
+    <button
+      className="secondary-button"
+      type="button"
+      onClick={onDuplicate}
+      disabled={projectActionLoading}
+    >
+      Duplicar
+    </button>
 
-          <button
-            className="danger-button"
-            type="button"
-            onClick={onDelete}
-            disabled={projectActionLoading}
-          >
-            Excluir
-          </button>
+    <button
+      className="secondary-button"
+      type="button"
+      onClick={onTogglePublication}
+      disabled={projectActionLoading}
+    >
+      {currentProject.isPublic
+        ? 'Despublicar'
+        : 'Publicar'}
+    </button>
 
-          <button
-            className="secondary-button"
-            type="button"
-            onClick={onTogglePublication}
-            disabled={projectActionLoading}
-          >
-            {currentProject.isPublic
-              ? 'Despublicar'
-              : 'Publicar'}
-          </button>
+    {currentProject.isPublic &&
+      currentProject.shareToken && (
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={onCopyShareLink}
+          disabled={projectActionLoading}
+        >
+          Copiar link
+        </button>
+      )}
 
-          {currentProject.isPublic &&
-            currentProject.shareToken && (
-              <button
-                className="secondary-button"
-                type="button"
-                onClick={onCopyShareLink}
-              >
-                Copiar link
-              </button>
-            )}
-        </div>
+    <button
+      className="danger-button"
+      type="button"
+      onClick={onDelete}
+      disabled={projectActionLoading}
+    >
+      Excluir
+    </button>
+  </div>
+
+  <button
+    className="secondary-button project-close-button"
+    type="button"
+    onClick={onCloseProject}
+    disabled={projectActionLoading}
+  >
+    Fechar projeto
+  </button>
+</div>
       ) : (
         <form
           className="project-edit-form"
