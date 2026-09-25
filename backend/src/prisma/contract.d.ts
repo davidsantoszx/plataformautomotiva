@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'25e92f41c8b5c12f93c78f5aa6e4db8030921f4dfa54cf158af51a3df6c5d3af'>;
+  StorageHashBase<'b2e2ea35c6399faf2c46644acad97012ede2cd49c1df21781961dbffbc323ea7'>;
 export type ExecutionHash =
   ExecutionHashBase<'5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab'>;
 export type ProfileHash =
@@ -252,6 +252,7 @@ export type FieldOutputTypes = {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly modelId: CodecTypes['pg/int4@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
+      readonly slug: CodecTypes['pg/text@1']['output'];
       readonly yearStart: CodecTypes['pg/int4@1']['output'];
       readonly yearEnd: CodecTypes['pg/int4@1']['output'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -367,6 +368,7 @@ export type FieldInputTypes = {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly modelId: CodecTypes['pg/int4@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
+      readonly slug: CodecTypes['pg/text@1']['input'];
       readonly yearStart: CodecTypes['pg/int4@1']['input'];
       readonly yearEnd: CodecTypes['pg/int4@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -483,6 +485,7 @@ export type StorageColumnTypes = {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly modelId: CodecTypes['pg/int4@1']['output'];
       readonly name: CodecTypes['pg/text@1']['output'];
+      readonly slug: CodecTypes['pg/text@1']['output'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly yearEnd: CodecTypes['pg/int4@1']['output'] | null;
       readonly yearStart: CodecTypes['pg/int4@1']['output'];
@@ -598,6 +601,7 @@ export type StorageColumnInputTypes = {
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly modelId: CodecTypes['pg/int4@1']['input'];
       readonly name: CodecTypes['pg/text@1']['input'];
+      readonly slug: CodecTypes['pg/text@1']['input'];
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly yearEnd: CodecTypes['pg/int4@1']['input'] | null;
       readonly yearStart: CodecTypes['pg/int4@1']['input'];
@@ -779,6 +783,11 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: false;
                 };
+                readonly slug: {
+                  readonly nativeType: 'text';
+                  readonly codecId: 'pg/text@1';
+                  readonly nullable: false;
+                };
                 readonly yearStart: {
                   readonly nativeType: 'int4';
                   readonly codecId: 'pg/int4@1';
@@ -802,7 +811,7 @@ type ContractBase = Omit<
                 };
               };
               primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [];
+              uniques: readonly [{ readonly columns: readonly ['modelId', 'slug'] }];
               indexes: readonly [
                 {
                   readonly name: 'carGeneration_modelId_idx_a8222b0e';
@@ -1640,6 +1649,10 @@ type ContractBase = Omit<
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly slug: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
               readonly yearStart: {
                 readonly nullable: false;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
@@ -1694,6 +1707,7 @@ type ContractBase = Omit<
                 readonly id: { readonly column: 'id' };
                 readonly modelId: { readonly column: 'modelId' };
                 readonly name: { readonly column: 'name' };
+                readonly slug: { readonly column: 'slug' };
                 readonly yearStart: { readonly column: 'yearStart' };
                 readonly yearEnd: { readonly column: 'yearEnd' };
                 readonly createdAt: { readonly column: 'createdAt' };

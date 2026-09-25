@@ -54,6 +54,7 @@ model CarGeneration {
   id          Int       @id @default(autoincrement())
   modelId     Int
   name        String
+  slug        String
   yearStart   Int
   yearEnd     Int?
 
@@ -62,6 +63,8 @@ model CarGeneration {
 
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
+
+  @@unique([modelId, slug])
 }
 
 model Vehicle {

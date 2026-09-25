@@ -188,6 +188,13 @@
                   "kind": "scalar"
                 }
               },
+              "slug": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -255,6 +262,9 @@
                 },
                 "name": {
                   "column": "name"
+                },
+                "slug": {
+                  "column": "slug"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1518,6 +1528,11 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "slug": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -1567,7 +1582,14 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "modelId",
+                    "slug"
+                  ]
+                }
+              ]
             },
             "carModel": {
               "columns": {
@@ -2487,7 +2509,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "25e92f41c8b5c12f93c78f5aa6e4db8030921f4dfa54cf158af51a3df6c5d3af"
+    "storageHash": "b2e2ea35c6399faf2c46644acad97012ede2cd49c1df21781961dbffbc323ea7"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",
