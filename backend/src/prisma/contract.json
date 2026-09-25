@@ -1223,6 +1223,13 @@
                   "kind": "scalar"
                 }
               },
+              "model3dUrl": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "powerHp": {
                 "nullable": true,
                 "type": {
@@ -1394,6 +1401,9 @@
                 },
                 "lengthMm": {
                   "column": "lengthMm"
+                },
+                "model3dUrl": {
+                  "column": "model3dUrl"
                 },
                 "powerHp": {
                   "column": "powerHp"
@@ -2381,6 +2391,11 @@
                   "nativeType": "int4",
                   "nullable": true
                 },
+                "model3dUrl": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "powerHp": {
                   "codecId": "pg/float8@1",
                   "nativeType": "float8",
@@ -2509,7 +2524,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "b2e2ea35c6399faf2c46644acad97012ede2cd49c1df21781961dbffbc323ea7"
+    "storageHash": "bf6dbe5003b48886dd9344aeab04d4134ca6353b95d1049625de0b35bc4176a8"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

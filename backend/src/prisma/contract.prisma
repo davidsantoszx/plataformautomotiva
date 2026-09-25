@@ -73,6 +73,7 @@ model Vehicle {
 
   year         Int
   version      String?
+  model3dUrl   String?
 
   engine       String?
   transmission String?
