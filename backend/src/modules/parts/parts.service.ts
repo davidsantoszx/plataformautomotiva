@@ -366,7 +366,9 @@ export async function listCompatibilitiesByVehicle(
   vehicleId: number,
 ) {
   const vehicle =
-    await db.orm.public.Vehicle.first({
+  await db.orm.public.Vehicle
+    .select('id')
+    .first({
       id: vehicleId,
     })
 

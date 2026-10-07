@@ -160,9 +160,18 @@ export async function createGeneration(
     throw new Error('MODEL_NOT_FOUND')
   }
 
+  const slug = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
   return db.orm.public.CarGeneration.create({
     modelId,
     name,
+    slug,
     yearStart,
     yearEnd,
   })
@@ -177,6 +186,7 @@ export async function listVehiclesByGeneration(
       'generationId',
       'year',
       'version',
+      'model3dUrl',
       'engine',
       'transmission',
       'fuel',
@@ -213,6 +223,7 @@ export async function getVehicleById(id: number) {
       'generationId',
       'year',
       'version',
+      'model3dUrl',
       'engine',
       'transmission',
       'fuel',

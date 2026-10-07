@@ -358,6 +358,7 @@ async function importGeneration(
         {
           modelId,
           name: generationName,
+          slug: slugify(generationName),
           yearStart,
           yearEnd,
         },
