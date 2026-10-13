@@ -12,43 +12,27 @@ import { Box3, Vector3 } from 'three'
 function CarModel({ modelUrl }) {
   const { scene } = useGLTF(modelUrl)
 
-  console.log('ESTRUTURA DO CARRO 3D:')
+console.log('ESTRUTURA COMPLETA DO ASTRA:')
 
-  scene.traverse((object) => {
-    console.log({
-      name: object.name,
-      type: object.type,
-      isMesh: object.isMesh,
-      visible: object.visible,
-    })
+scene.traverse((object) => {
+  const box = new Box3().setFromObject(object)
+  const size = new Vector3()
+  const center = new Vector3()
 
-    if (
-      object.isMesh &&
-      object.name.toLowerCase().includes('gum')
-    ) {
-      const box = new Box3().setFromObject(object)
-      const center = new Vector3()
-      const size = new Vector3()
+  box.getSize(size)
+  box.getCenter(center)
 
-      box.getCenter(center)
-      box.getSize(size)
-
-      console.log('OBJETO GUM:', {
-        name: object.name,
-        parent: object.parent?.name,
-        center: {
-          x: center.x,
-          y: center.y,
-          z: center.z,
-        },
-        size: {
-          x: size.x,
-          y: size.y,
-          z: size.z,
-        },
-      })
-    }
+  console.log({
+    name: object.name,
+    type: object.type,
+    isMesh: object.isMesh,
+    parent: object.parent?.name,
+    position: object.position.toArray(),
+    size: size.toArray(),
+    center: center.toArray(),
+    visible: object.visible,
   })
+})
 
   return (
     <primitive
