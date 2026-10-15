@@ -912,10 +912,36 @@ const visibleVehicles = selectedYear
         {selectedVehicle && (
           <>
 
-              <CarViewer3D
-              modelUrl={selectedVehicle3DModel}
-              parts={selected3DParts}
-              />
+                           
+<CarViewer3D
+  modelUrl={
+    currentProject &&
+    selectedVehicleData?.model3dUrl?.includes('astra.glb')
+      ? '/models/cars/chevrolet/astra/astra-base.glb'
+      : selectedVehicle3DModel
+  }
+  parts={[
+    ...selected3DParts.filter(
+      (part) => !part.key || part.modelUrl !== '/models/parts/wheels/4rodas.glb'
+    ),
+    ...(currentProject &&
+    selectedVehicleData?.model3dUrl?.includes('astra.glb') &&
+    Object.values(projectPartDetails).some((part) =>
+      String(part.name || '').toLowerCase().includes('roda')
+    )
+      ? [
+          {
+            key: 'astra-4rodas',
+            modelUrl: '/models/parts/wheels/4rodas.glb',
+            position: [0, 0, 0],
+            rotation: [0, 0, 0],
+            scale: 1,
+          },
+        ]
+      : []),
+  ]}
+/>
+
             <ProjectBuilder
               token={token}
               selectedVehicleData={selectedVehicleData}
