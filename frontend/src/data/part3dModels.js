@@ -8,7 +8,7 @@ const part3dModels = {
   },
 
     wheel: {
-    modelUrl: "/models/cars/toyota/roda.glb",
+    modelUrl: "/models/parts/wheels/4rodas.glb",
     position: [5, 0, 0],
     rotation: [0, 0, 0],
     scale: 1,
