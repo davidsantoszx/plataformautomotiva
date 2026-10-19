@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+
+@import "./base.css";
+@import "./landing.css";
+@import "./layout.css";
+@import "./projects.css";
+@import "./project-page.css";
+@import "./vehicle.css";
+@import "./parts.css";
+@import "./auth.css";
+@import "./configurator.css";
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

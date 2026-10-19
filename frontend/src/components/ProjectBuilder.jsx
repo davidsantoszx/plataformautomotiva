@@ -1,21 +1,17 @@
 export default function ProjectBuilder({
   selectedVehicleData,
-  currentProject,
   projectName,
   projectMode,
-  loadingProject,
+  loading,
   projectError,
   onProjectNameChange,
   onProjectModeChange,
-  onCreate,
+  onGoToModifications,
 }) {
   return (
     <section className="dashboard-section builder-section">
       <div className="section-heading">
-        <span className="section-eyebrow">
-          PROJETO
-        </span>
-
+        <span className="section-eyebrow">PROJETO</span>
         <h2>Montar projeto</h2>
       </div>
 
@@ -24,129 +20,64 @@ export default function ProjectBuilder({
           <span>VEÍCULO SELECIONADO</span>
 
           <strong>
-            {selectedVehicleData.year}{' '}
-            {selectedVehicleData.version || ''}
+            {selectedVehicleData.year} {selectedVehicleData.version || ""}
           </strong>
         </div>
       )}
 
-      {!currentProject ? (
-        <form
-          className="project-create-form"
-          onSubmit={onCreate}
-        >
-          <div className="form-field">
-            <label htmlFor="project-name">
-              Nome do projeto
+      <div className="project-create-form">
+        <div className="form-field">
+          <label htmlFor="project-name">Nome do projeto</label>
+
+          <input
+            id="project-name"
+            value={projectName}
+            onChange={(event) => onProjectNameChange(event.target.value)}
+            placeholder="Ex.: Corolla XEi 2023"
+          />
+        </div>
+
+        <div className="mode-selector">
+          <span>Modo do projeto</span>
+
+          <div className="mode-options">
+            <label className={projectMode === "REAL" ? "selected" : ""}>
+              <input
+                type="radio"
+                name="project-mode"
+                value="REAL"
+                checked={projectMode === "REAL"}
+                onChange={(event) => onProjectModeChange(event.target.value)}
+              />
+              <strong>Projeto Real</strong>
+              <small>Respeita compatibilidades.</small>
             </label>
 
-            <input
-              id="project-name"
-              value={projectName}
-              onChange={(event) =>
-                onProjectNameChange(
-                  event.target.value,
-                )
-              }
-              placeholder="Ex.: Corolla XEi 2023"
-            />
+            <label className={projectMode === "FREE" ? "selected" : ""}>
+              <input
+                type="radio"
+                name="project-mode"
+                value="FREE"
+                checked={projectMode === "FREE"}
+                onChange={(event) => onProjectModeChange(event.target.value)}
+              />
+              <strong>Projeto Livre</strong>
+              <small>Permite combinações livres.</small>
+            </label>
           </div>
+        </div>
 
-          <div className="mode-selector">
-            <span>Modo do projeto</span>
+        <button
+          className="primary-button"
+          type="button"
+          onClick={onGoToModifications}
+          disabled={loading}
+        >
+          {loading ? "Criando projeto..." : "Ir para modificações"}
+        </button>
+      </div>
 
-            <div className="mode-options">
-              <label
-                className={
-                  projectMode === 'REAL'
-                    ? 'selected'
-                    : ''
-                }
-              >
-                <input
-                  type="radio"
-                  name="project-mode"
-                  value="REAL"
-                  checked={
-                    projectMode === 'REAL'
-                  }
-                  onChange={(event) =>
-                    onProjectModeChange(
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <strong>Projeto Real</strong>
-
-                <small>
-                  Respeita compatibilidades.
-                </small>
-              </label>
-
-              <label
-                className={
-                  projectMode === 'FREE'
-                    ? 'selected'
-                    : ''
-                }
-              >
-                <input
-                  type="radio"
-                  name="project-mode"
-                  value="FREE"
-                  checked={
-                    projectMode === 'FREE'
-                  }
-                  onChange={(event) =>
-                    onProjectModeChange(
-                      event.target.value,
-                    )
-                  }
-                />
-
-                <strong>Projeto Livre</strong>
-
-                <small>
-                  Permite combinações livres.
-                </small>
-              </label>
-            </div>
-          </div>
-
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={loadingProject}
-          >
-            {loadingProject
-              ? 'Criando projeto...'
-              : 'Criar projeto'}
-          </button>
-        </form>
-      ) : (
-        <div className="active-project-box">
-  <span>PROJETO ATUAL</span>
-
-  <h3>{currentProject.name}</h3>
-
-  <p>
-    {currentProject.mode === 'REAL'
-      ? 'Projeto Real'
-      : 'Projeto Livre'}
-  </p>
-
-  <small>
-    Continue adicionando e ajustando as peças do seu projeto.
-  </small>
-</div>
-      )}
-
-      {projectError && (
-        <p className="message message-error">
-          {projectError}
-        </p>
-      )}
+      {projectError && <p className="message message-error">{projectError}</p>}
     </section>
-  )
+  );
 }

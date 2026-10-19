@@ -1,4 +1,4 @@
-import type { Response } from 'express'
+import type { Request, Response } from 'express'
 
 import type {
   AuthenticatedRequest,
@@ -9,14 +9,16 @@ import {
   createProject,
   deleteProject,
   duplicateProject,
-  getProjectById,
   getPublicProject,
+  getFeed,
   listProjectParts,
   listProjectsByUser,
   publishProject,
   removePartFromProject,
   updateProject,
   updateProjectPartQuantity,
+  getProjectById,
+  saveProjectCover,
 } from './projects.service'
 
 export async function getProjects(
@@ -81,6 +83,42 @@ export async function getProject(
       message:
         'Erro interno do servidor',
     })
+  }
+}
+
+export async function putProjectCoverController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+    const { image } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({ message: 'ID do projeto inválido' })
+    }
+
+    if (typeof image !== 'string') {
+      return res.status(400).json({ message: 'image é obrigatória' })
+    }
+
+       const project = await saveProjectCover(id, req.userId!, image)
+
+    return res.json({ coverUrl: project?.coverUrl ?? null })
+  } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'PROJECT_NOT_FOUND') {
+        return res.status(404).json({ message: 'Projeto não encontrado' })
+      }
+
+      if (error.message === 'INVALID_COVER') {
+        return res.status(400).json({ message: 'Imagem de capa inválida' })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({ message: 'Erro interno do servidor' })
   }
 }
 
@@ -369,34 +407,45 @@ export async function patchProjectPublication(
   res: Response,
 ) {
   try {
-    const id = Number(
-      req.params.id,
-    )
-
-    const { isPublic } = req.body
+    const id = Number(req.params.id)
+    const { isPublic, name, description } = req.body
 
     if (!Number.isInteger(id)) {
       return res.status(400).json({
-        message:
-          'ID do projeto inválido',
+        message: 'ID do projeto inválido',
+      })
+    }
+
+    if (typeof isPublic !== 'boolean') {
+      return res.status(400).json({
+        message: 'isPublic deve ser booleano',
       })
     }
 
     if (
-      typeof isPublic !== 'boolean'
+      name !== undefined &&
+      (typeof name !== 'string' || !name.trim())
     ) {
       return res.status(400).json({
-        message:
-          'isPublic deve ser booleano',
+        message: 'Nome do projeto inválido',
       })
     }
 
-    const project =
-      await publishProject(
-        id,
-        req.userId!,
-        isPublic,
-      )
+    if (
+      description !== undefined &&
+      (typeof description !== 'string' || description.length > 500)
+    ) {
+      return res.status(400).json({
+        message: 'A descrição deve ter no máximo 500 caracteres',
+      })
+    }
+
+    const project = await publishProject(
+      id,
+      req.userId!,
+      isPublic,
+      { name, description },
+    )
 
     return res.json({
       message: isPublic
@@ -407,20 +456,37 @@ export async function patchProjectPublication(
   } catch (error) {
     if (
       error instanceof Error &&
-      error.message ===
-        'PROJECT_NOT_FOUND'
+      error.message === 'PROJECT_NOT_FOUND'
     ) {
       return res.status(404).json({
-        message:
-          'Projeto não encontrado',
+        message: 'Projeto não encontrado',
       })
     }
 
     console.error(error)
 
     return res.status(500).json({
-      message:
-        'Erro interno do servidor',
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function getFeedController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    const page = Math.max(1, Number(req.query.page) || 1)
+    const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 12))
+
+    const feed = await getFeed(page, limit)
+
+    return res.json(feed)
+  } catch (error) {
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
     })
   }
 }

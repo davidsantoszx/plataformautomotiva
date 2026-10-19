@@ -6,6 +6,7 @@ import {
   deleteProjectController,
   deleteProjectPart,
   duplicateProjectController,
+  getFeedController,
   getProject,
   getProjectParts,
   getProjects,
@@ -15,6 +16,7 @@ import {
   patchProjectPublication,
   postProject,
   postProjectPart,
+  putProjectCoverController,
 } from './projects.controller'
 
 const router = Router()
@@ -23,16 +25,21 @@ const router = Router()
 // PROJETO PÚBLICO
 // =========================
 
+router.get('/feed', getFeedController)
+
 router.get(
   '/share/:shareToken',
   getPublicProjectController,
 )
+
 
 // =========================
 // PROJETOS AUTENTICADOS
 // =========================
 
 router.use(authMiddleware)
+
+router.put('/:id/cover', putProjectCoverController)
 
 router.get(
   '/',

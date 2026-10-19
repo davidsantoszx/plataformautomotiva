@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from "react";
+
 export default function PartsCatalog({
   categories,
   parts,
@@ -9,37 +11,38 @@ export default function PartsCatalog({
   projectParts,
   onCategoryChange,
   onAddPart,
+  onRemovePart,
 }) {
+  const gridRef = useRef(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  function updateArrows() {
+    const el = gridRef.current;
+    if (!el) return;
+
+    setCanScrollLeft(el.scrollLeft > 4);
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  }
+
+  function scrollParts(direction) {
+    gridRef.current?.scrollBy({ left: direction * 420, behavior: "smooth" });
+  }
+
+  useEffect(() => {
+    updateArrows();
+
+    const el = gridRef.current;
+    if (!el) return;
+
+    const observer = new ResizeObserver(updateArrows);
+    observer.observe(el);
+
+    return () => observer.disconnect();
+  }, [parts, loadingParts, selectedCategory]);
+
   return (
     <>
-      <section className="dashboard-section parts-section">
-        <div className="section-heading">
-          <span className="section-eyebrow">CATÁLOGO</span>
-
-          <h2>Adicionar peças</h2>
-
-          <p>Escolha uma categoria para visualizar as peças disponíveis.</p>
-        </div>
-
-        <div className="catalog-select">
-          {loadingCategories ? (
-            <div className="loading-field">
-              Carregando categorias de peças...
-            </div>
-          ) : (
-            <select value={selectedCategory} onChange={onCategoryChange}>
-              <option value="">Selecione uma categoria</option>
-
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-      </section>
-
       {selectedCategory && (
         <section className="dashboard-section">
           <div className="section-heading compact">
@@ -59,99 +62,134 @@ export default function PartsCatalog({
           )}
 
           {!loadingParts && (
-            <div className="parts-grid">
-              {parts.map((part) => {
-                const compatibility = compatibilities[part.id];
+            <div className="parts-carousel">
+              {canScrollLeft && (
+                <button
+                  type="button"
+                  className="parts-arrow parts-arrow-left"
+                  onClick={() => scrollParts(-1)}
+                  aria-label="Peças anteriores"
+                >
+                  ‹
+                </button>
+              )}
 
-                const alreadyAdded = projectParts.some(
-                  (item) => item.partId === part.id,
-                );
+              <div className="parts-grid" ref={gridRef} onScroll={updateArrows}>
+                {parts.map((part) => {
+                  const compatibility = compatibilities[part.id];
 
-                const isReal = currentProject
-                  ? currentProject.mode === "REAL"
-                  : false;
+                  const alreadyAdded = projectParts.some(
+                    (item) => item.partId === part.id,
+                  );
 
-                const missing = isReal && !compatibility;
+                  const isReal = currentProject
+                    ? currentProject.mode === "REAL"
+                    : projectMode === "REAL";
 
-                const incompatible =
-                  isReal && compatibility?.level === "INCOMPATIBLE";
+                  const missing = isReal && !compatibility;
 
-                const adaptation =
-                  isReal &&
-                  (compatibility?.level === "ADAPTATION" ||
-                    compatibility?.requiresAdaptation);
+                  const incompatible =
+                    isReal && compatibility?.level === "INCOMPATIBLE";
 
-                return (
-                  <article className="part-card" key={part.id}>
-                    <div className="part-card-image">
-                      {part.imageUrl ? (
-                        <img src={part.imageUrl} alt={part.name} />
-                      ) : (
-                        <span>PEÇA</span>
-                      )}
-                    </div>
+                  const adaptation =
+                    isReal &&
+                    (compatibility?.level === "ADAPTATION" ||
+                      compatibility?.requiresAdaptation);
 
-                    <div className="part-card-content">
-                      <span className="part-category">
-                        {part.brand || "CATÁLOGO"}
-                      </span>
-
-                      <h3>{part.name}</h3>
-
-                      {part.description && <p>{part.description}</p>}
-
-                      <strong className="part-price">
-                        {Number(part.estimatedPrice || 0).toLocaleString(
-                          "pt-BR",
-                          {
-                            style: "currency",
-                            currency: "BRL",
-                          },
+                  return (
+                    <article
+                      className={`part-card ${alreadyAdded ? "selected" : ""}`}
+                      key={part.id}
+                    >
+                      <div className="part-card-image">
+                        {part.imageUrl ? (
+                          <img src={part.imageUrl} alt={part.name} />
+                        ) : (
+                          <span>PEÇA</span>
                         )}
-                      </strong>
+                      </div>
 
-                      {isReal && (
-                        <div
-                          className={`compatibility ${
-                            incompatible
-                              ? "incompatible"
-                              : adaptation
-                                ? "adaptation"
-                                : compatibility
-                                  ? "compatible"
-                                  : "missing"
-                          }`}
-                        >
-                          {!compatibility
-                            ? "Compatibilidade não cadastrada"
-                            : compatibility.level === "COMPATIBLE"
-                              ? "Compatível"
-                              : compatibility.level === "ADAPTATION"
-                                ? "Requer adaptação"
-                                : "Incompatível"}
-                        </div>
-                      )}
+                      <div className="part-card-content">
+                        <span className="part-category">
+                          {part.brand || "CATÁLOGO"}
+                        </span>
 
-                      <button
-                        className="primary-button full-width"
-                        type="button"
-                        disabled={alreadyAdded || missing || incompatible}
-                        onClick={() => onAddPart(part)}
-                      >
-                        {alreadyAdded
-                          ? "Já adicionada"
-                          : incompatible
-                            ? "Incompatível"
-                            : missing
+                        <h3>{part.name}</h3>
+
+                        {part.description && <p>{part.description}</p>}
+
+                        <strong className="part-price">
+                          {Number(part.estimatedPrice || 0).toLocaleString(
+                            "pt-BR",
+                            {
+                              style: "currency",
+                              currency: "BRL",
+                            },
+                          )}
+                        </strong>
+
+                        {isReal && (
+                          <div
+                            className={`compatibility ${
+                              incompatible
+                                ? "incompatible"
+                                : adaptation
+                                  ? "adaptation"
+                                  : compatibility
+                                    ? "compatible"
+                                    : "missing"
+                            }`}
+                          >
+                            {!compatibility
                               ? "Compatibilidade não cadastrada"
-                              : adaptation
-                                ? "Adicionar com adaptação"
-                                : "Adicionar ao projeto"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+                              : compatibility.level === "COMPATIBLE"
+                                ? "Compatível"
+                                : compatibility.level === "ADAPTATION"
+                                  ? "Requer adaptação"
+                                  : "Incompatível"}
+                          </div>
+                        )}
+
+                        {alreadyAdded ? (
+                          <button
+                            className="danger-button full-width"
+                            type="button"
+                            onClick={() => onRemovePart?.(part.id)}
+                          >
+                            Remover peça
+                          </button>
+                        ) : (
+                          <button
+                            className="primary-button full-width"
+                            type="button"
+                            disabled={missing || incompatible}
+                            onClick={() => onAddPart(part)}
+                          >
+                            {incompatible
+                              ? "Incompatível"
+                              : missing
+                                ? "Compatibilidade não cadastrada"
+                                : adaptation
+                                  ? "Adicionar com adaptação"
+                                  : "Adicionar ao projeto"}
+                          </button>
+                        )}
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+
+              {canScrollRight && (
+                <button
+                  type="button"
+                  className="parts-arrow parts-arrow-right"
+                  onClick={() => scrollParts(1)}
+                  aria-label="Próximas peças"
+                >
+                  ›
+                </button>
+              )}
             </div>
           )}
         </section>

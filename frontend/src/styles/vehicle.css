@@ -1,0 +1,131 @@
+/* =========================
+   SELETOR DE VEÍCULO
+========================= */
+
+.vehicle-section {
+  border-bottom: 1px solid #171b20;
+}
+
+.vehicle-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.loading-field {
+  min-height: 46px;
+  display: flex;
+  align-items: center;
+  border: 1px solid #22272e;
+  border-radius: 9px;
+  padding: 0 13px;
+  background: #0d1014;
+  color: #666f7a;
+  font-size: 13px;
+}
+
+/* =========================
+   MONTAR PROJETO
+========================= */
+
+.builder-section {
+  border-bottom: 1px solid #171b20;
+  scroll-margin-top: 24px;
+}
+
+.selected-vehicle {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 28px;
+  padding: 17px 20px;
+  border-left: 3px solid #ff5a1f;
+  background: #0d1014;
+}
+
+.selected-vehicle span {
+  color: #69727d;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.selected-vehicle strong {
+  color: #e8eaed;
+}
+
+.project-create-form {
+  max-width: 700px;
+}
+
+.project-create-form .primary-button {
+  margin-top: 8px;
+}
+
+.mode-selector > span {
+  display: block;
+  margin-bottom: 12px;
+  color: #aab1ba;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.mode-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.mode-options label {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 190px;
+  padding: 16px;
+  border: 1px solid #252b32;
+  border-radius: 11px;
+  background: #0d1014;
+  color: #b9bec5;
+  cursor: pointer;
+}
+
+.mode-options label.selected {
+  border-color: rgba(255, 90, 31, 0.6);
+  background: rgba(255, 90, 31, 0.06);
+}
+
+.mode-options input {
+  accent-color: #ff5a1f;
+}
+
+.mode-options strong {
+  color: #e2e5e9;
+}
+
+.mode-options small {
+  color: #707984;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 950px) {
+  .vehicle-selector-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .vehicle-selector-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .mode-options {
+    flex-direction: column;
+  }
+
+  .mode-options label {
+    min-width: 0;
+  }
+}

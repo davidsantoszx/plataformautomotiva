@@ -1,0 +1,618 @@
+/* =========================
+   TELA CHEIA
+========================= */
+
+.configurator-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080a0c;
+}
+
+.configurator-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: #929ba6;
+}
+
+.configurator-toast {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  z-index: 20;
+  max-width: min(520px, 90vw);
+  padding: 10px 16px;
+  border: 1px solid rgba(220, 70, 60, 0.35);
+  border-radius: 10px;
+  background: rgba(30, 12, 10, 0.95);
+  color: #e58b82;
+  font-size: 13px;
+  transform: translateX(-50%);
+}
+
+/* =========================
+   TELA "MODELO INDISPONÍVEL"
+========================= */
+
+.car-viewer-3d {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 1400px;
+  height: 620px;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 1px solid #1c2229;
+  border-radius: 16px;
+  background: #07090b;
+}
+
+.car-viewer-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #07090b;
+}
+
+.car-viewer-empty span {
+  color: #ff5a1f;
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+}
+
+.car-viewer-empty p {
+  margin: 0;
+  color: #929ba6;
+  font-size: 13px;
+}
+
+/* =========================
+   CONFIGURADOR
+========================= */
+
+.configurator-screen {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 16px);
+  min-height: 0;
+  padding: 16px;
+  border: 1px solid #252a30;
+  border-radius: 12px;
+  background: #080a0c;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.configurator-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.configurator-header h2 {
+  margin: 4px 0 0;
+}
+
+.car-viewer-label {
+  position: absolute;
+  top: 22px;
+  left: 28px;
+  z-index: 2;
+  color: #ff5a1f;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  pointer-events: none;
+}
+
+.configurator-back-button {
+  border: 1px solid #303740;
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: #111519;
+  color: #fff;
+  cursor: pointer;
+}
+
+.configurator-workspace {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 190px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.configurator-panel-title {
+  color: #ff5722;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+/* ---------- categorias (esquerda) ---------- */
+
+.car-category-button {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  width: 150px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #272e36;
+  border-radius: 9px;
+  background: rgba(15, 19, 24, 0.94);
+  color: #b9c1ca;
+  text-align: left;
+  font-size: 12px;
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    color 0.18s;
+}
+
+.car-category-button:hover,
+.car-category-button.active {
+  border-color: #ff5a1f;
+  background: rgba(255, 90, 31, 0.14);
+  color: #fff;
+}
+
+.car-category-button.active svg {
+  color: #ff5a1f;
+}
+
+/* ---------- carro (centro) ---------- */
+
+.configurator-car {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #07090b;
+}
+
+.configurator-car canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* ---------- orçamento (direita) ---------- */
+
+.configurator-summary {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #252a30;
+  border-radius: 12px;
+  background: #0c0f12;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.configurator-summary p {
+  color: #a6adb7;
+  font-size: 13px;
+  margin: 0;
+}
+
+.configurator-summary strong {
+  color: #fff;
+  font-size: 23px;
+  overflow-wrap: anywhere;
+}
+
+.configurator-summary .summary-total {
+  display: block;
+}
+
+.summary-parts {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 12px;
+  border-top: 1px solid #1c2229;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.summary-parts::-webkit-scrollbar {
+  display: none;
+}
+
+.summary-empty {
+  color: #666f7a;
+  font-size: 12px;
+}
+
+.summary-part {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid #20252c;
+  border-radius: 9px;
+  background: #0d1014;
+}
+
+.summary-part-info {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.summary-part-name {
+  color: #e5e8eb;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.summary-part-price {
+  color: #ff7a49;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.summary-part-remove {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid #292f37;
+  border-radius: 6px;
+  background: #11151a;
+  color: #8b939d;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.summary-part-remove:hover {
+  border-color: #ff5a1f;
+  color: #fff;
+}
+
+.summary-continue {
+  margin-top: auto;
+  flex-shrink: 0;
+}
+
+/* =========================
+   CATÁLOGO COMO OVERLAY
+========================= */
+
+.configurator-catalog {
+  position: absolute;
+  /* alinhado com a coluna central: padding 16 + coluna 160/190 + gap 12 */
+  left: calc(16px + 160px + 12px);
+  right: calc(16px + 190px + 12px);
+  bottom: 16px;
+  z-index: 5;
+  flex: none;
+  overflow: visible;
+  max-height: none;
+  padding: 12px 14px 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(10, 13, 16, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  animation: catalog-slide-up 0.25s ease-out;
+}
+
+@keyframes catalog-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.configurator-catalog .catalog-select,
+.configurator-catalog .section-eyebrow,
+.configurator-catalog .section-heading > p {
+  display: none;
+}
+
+.configurator-catalog .dashboard-section {
+  height: auto;
+  max-width: none;
+  margin: 0 !important; /* precisa do !important por causa do layout.css */
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.configurator-catalog .section-heading {
+  padding-right: 40px;
+  margin-bottom: 10px;
+}
+
+.configurator-catalog .section-heading h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+.configurator-catalog .catalog-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #292f37;
+  border-radius: 8px;
+  background: #11151a;
+  color: #b8bec6;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.configurator-catalog .catalog-close:hover {
+  border-color: #ff5a1f;
+  color: #fff;
+}
+
+/* ---------- faixa horizontal com setas ---------- */
+
+.parts-carousel {
+  position: relative;
+}
+
+.configurator-catalog .parts-grid {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  height: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 2px 2px 12px;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+}
+
+.configurator-catalog .parts-grid::-webkit-scrollbar {
+  display: none;
+}
+
+.parts-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 6;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 3px;
+  border: 1px solid #292f37;
+  border-radius: 50%;
+  background: rgba(17, 21, 26, 0.95);
+  color: #e5e8eb;
+  font-size: 22px;
+  line-height: 1;
+  transform: translateY(-50%);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    color 0.18s;
+}
+
+.parts-arrow:hover {
+  border-color: #ff5a1f;
+  background: #ff5a1f;
+  color: #fff;
+}
+
+.parts-arrow-left {
+  left: -10px;
+}
+
+.parts-arrow-right {
+  right: -10px;
+}
+
+/* ---------- cards compactos ---------- */
+
+.configurator-catalog .part-card {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 200px;
+  width: 200px;
+  height: auto;
+  overflow: hidden;
+  transition:
+    border-color 0.18s,
+    transform 0.18s;
+}
+
+.configurator-catalog .part-card:hover {
+  border-color: #3a424c;
+  transform: translateY(-2px);
+}
+
+.configurator-catalog .part-card.selected {
+  border-color: #ff5a1f;
+}
+
+.configurator-catalog .part-card-image {
+  height: 72px;
+  flex-shrink: 0;
+}
+
+.configurator-catalog .part-card-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 12px;
+}
+
+.configurator-catalog .part-card h3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+  margin: 4px 0 6px;
+  font-size: 14px;
+}
+
+/* descrição escondida para manter o card compacto */
+.configurator-catalog .part-card-content > p {
+  display: none;
+}
+
+.configurator-catalog .part-price {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.configurator-catalog .compatibility {
+  margin-bottom: 8px;
+  padding: 5px 8px;
+  font-size: 10px;
+}
+
+/* botão colado no fundo do card */
+.configurator-catalog .part-card .primary-button,
+.configurator-catalog .part-card .secondary-button,
+.configurator-catalog .part-card .danger-button {
+  width: 100%;
+  margin-top: auto;
+  padding: 9px 12px;
+  font-size: 12px;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 900px) {
+  .configurator-screen {
+    height: auto;
+    min-height: 100vh;
+    overflow: visible;
+  }
+
+  .configurator-workspace {
+    grid-template-columns: 140px minmax(0, 1fr);
+  }
+
+  .configurator-summary {
+    grid-column: 1 / -1;
+  }
+
+  .configurator-car,
+  .configurator-car canvas {
+    min-height: 360px;
+  }
+
+  /* faixa fixa na largura toda */
+  .configurator-catalog {
+    position: fixed;
+    left: 10px;
+    right: 10px;
+    bottom: 10px;
+  }
+}
+
+@media (max-width: 700px) {
+  .car-viewer-3d {
+    height: 470px;
+    border-radius: 10px;
+  }
+
+  .car-viewer-label {
+    top: 17px;
+    left: 20px;
+  }
+
+  .car-category-button {
+    justify-content: center;
+    width: 46px;
+    min-height: 44px;
+    padding: 8px;
+  }
+
+  .car-category-button span {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .configurator-screen {
+    padding: 10px;
+  }
+
+  .configurator-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .configurator-categories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .configurator-panel-title {
+    grid-column: 1 / -1;
+  }
+
+  .configurator-car,
+  .configurator-car canvas {
+    min-height: 300px;
+  }
+}
+
+/* canvas invisível usado só para gerar a capa */
+.cover-capture {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  pointer-events: none;
+}
+
+.configurator-saving {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 12, 0.85);
+  color: #c7ccd3;
+  font-size: 15px;
+  font-weight: 700;
+}

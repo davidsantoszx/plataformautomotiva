@@ -425,28 +425,35 @@ export async function updateProjectPublication(
   token,
   projectId,
   isPublic,
+  details = {},
 ) {
-  const response = await fetch(
-    `${API_URL}/projects/${projectId}/publication`,
-    {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        isPublic,
-      }),
+  const response = await fetch(`${API_URL}/projects/${projectId}/publication`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ isPublic, ...details }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao alterar publicação do projeto')
+  }
+
+  return data
+}
+
+export async function getFeed({ page = 1, limit = 12 } = {}) {
+  const response = await fetch(
+    `${API_URL}/projects/feed?page=${page}&limit=${limit}`,
   )
 
   const data = await response.json()
 
   if (!response.ok) {
-    throw new Error(
-      data.message ||
-        'Erro ao alterar publicação do projeto',
-    )
+    throw new Error(data.message || 'Erro ao carregar o feed')
   }
 
   return data
@@ -466,6 +473,33 @@ export async function getPublicProject(
       data.message ||
         'Projeto público não encontrado',
     )
+  }
+
+  return data
+}
+
+
+const ASSET_URL = API_URL.replace(/\/api$/, '')
+
+export function assetUrl(path) {
+  if (!path) return ''
+  return path.startsWith('http') ? path : `${ASSET_URL}${path}`
+}
+
+export async function uploadProjectCover(token, projectId, image) {
+  const response = await fetch(`${API_URL}/projects/${projectId}/cover`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ image }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao salvar a capa do projeto')
   }
 
   return data

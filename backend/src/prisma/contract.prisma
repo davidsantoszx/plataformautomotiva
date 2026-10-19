@@ -167,9 +167,12 @@ model Project {
   userId      Int
   vehicleId   Int
   name        String
+  description String?
   mode        ProjectMode @default(REAL)
   isPublic    Boolean @default(false)
   shareToken  String?     @unique
+  publishedAt TimestamptzString?
+  coverUrl    String?
 
   user        User      @relation(fields: [userId], references: [id])
   vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
