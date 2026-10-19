@@ -9,6 +9,7 @@
 @import "./vehicle.css";
 @import "./parts.css";
 @import "./auth.css";
+@import "./feed.css";
 @import "./configurator.css";
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;

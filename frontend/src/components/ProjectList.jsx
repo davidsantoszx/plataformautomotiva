@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { CarFront, Search } from "lucide-react";
 import { assetUrl } from "../services/api";
+import { vehicleLabel } from "../utils/vehicleLabel";
 
 const FILTERS = [
   { id: "ALL", label: "Todos" },
@@ -178,7 +179,8 @@ export default function ProjectList({
                     </span>
 
                     <span className="project-vehicle">
-                      Veículo #{project.vehicleId}
+                      {vehicleLabel(project.vehicle) ||
+                        `Veículo #${project.vehicleId}`}
                     </span>
                   </div>
 

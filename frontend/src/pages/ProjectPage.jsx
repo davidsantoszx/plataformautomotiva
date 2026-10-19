@@ -6,7 +6,7 @@ import CarPreview3D from "../components/CarPreview3D";
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
-import { findVehicleById } from "../services/vehicleLookup";
+import { vehicleLabel } from "../utils/vehicleLabel";
 import {
   getProject,
   getProjectParts,
@@ -207,11 +207,11 @@ export default function ProjectPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish"
+  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish"
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  // carrega projeto e peças; o veículo (3D) carrega em segundo plano
+  // carrega projeto (já com o veículo) e peças
   useEffect(() => {
     let cancelled = false;
 
@@ -232,14 +232,11 @@ export default function ProjectPage() {
         });
 
         setProject(projectData.project);
+        // o veículo fica em estado próprio: PATCH de renomear/publicar
+        // devolve o projeto sem esse campo e não pode apagar o 3D
+        setVehicle(projectData.project.vehicle || null);
         setProjectParts(partsData.parts || []);
         setProjectPartDetails(details);
-
-        findVehicleById(projectData.project.vehicleId)
-          .then((found) => {
-            if (!cancelled) setVehicle(found);
-          })
-          .catch((err) => console.error(err));
       } catch (err) {
         if (!cancelled) setError(err.message || "Erro ao abrir projeto.");
       } finally {
@@ -342,45 +339,47 @@ export default function ProjectPage() {
     }
   }
 
-async function handlePublish(name, description) {
-  try {
-    setActionLoading(true);
-    setError("");
+  async function handlePublish(name, description) {
+    try {
+      setActionLoading(true);
+      setError("");
 
-    const wasPublic = project.isPublic;
-    const data = await updateProjectPublication(token, project.id, true, {
-      name,
-      description,
-    });
+      const wasPublic = project.isPublic;
+      const data = await updateProjectPublication(token, project.id, true, {
+        name,
+        description,
+      });
 
-    setProject(data.project);
-    setModal(null);
-    setNotice(wasPublic ? "Publicação atualizada." : "Projeto publicado no feed.");
-  } catch (err) {
-    setError(err.message || "Erro ao publicar projeto.");
-    setModal(null);
-  } finally {
-    setActionLoading(false);
+      setProject(data.project);
+      setModal(null);
+      setNotice(
+        wasPublic ? "Publicação atualizada." : "Projeto publicado no feed.",
+      );
+    } catch (err) {
+      setError(err.message || "Erro ao publicar projeto.");
+      setModal(null);
+    } finally {
+      setActionLoading(false);
+    }
   }
-}
 
-async function handleUnpublish() {
-  try {
-    setActionLoading(true);
-    setError("");
+  async function handleUnpublish() {
+    try {
+      setActionLoading(true);
+      setError("");
 
-    const data = await updateProjectPublication(token, project.id, false);
+      const data = await updateProjectPublication(token, project.id, false);
 
-    setProject(data.project);
-    setModal(null);
-    setNotice("Projeto despublicado.");
-  } catch (err) {
-    setError(err.message || "Erro ao despublicar projeto.");
-    setModal(null);
-  } finally {
-    setActionLoading(false);
+      setProject(data.project);
+      setModal(null);
+      setNotice("Projeto despublicado.");
+    } catch (err) {
+      setError(err.message || "Erro ao despublicar projeto.");
+      setModal(null);
+    } finally {
+      setActionLoading(false);
+    }
   }
-}
 
   async function handleCopyLink() {
     if (!shareUrl) return;
@@ -458,9 +457,9 @@ async function handleUnpublish() {
     );
   }
 
-  const vehicleLabel = vehicle
-    ? `${vehicle.year} ${vehicle.version || ""}`.trim()
-    : `Veículo #${project.vehicleId}`;
+  const vehicleText =
+    vehicleLabel(vehicle, { withVersion: true }) ||
+    `Veículo #${project.vehicleId}`;
 
   const updated = formatDate(project.updatedAt || project.createdAt);
 
@@ -489,7 +488,9 @@ async function handleUnpublish() {
               {project.isPublic ? "Público" : "Privado"}
             </span>
 
-            {updated && <span className="project-date">Atualizado em {updated}</span>}
+            {updated && (
+              <span className="project-date">Atualizado em {updated}</span>
+            )}
           </div>
         </div>
 
@@ -567,7 +568,7 @@ async function handleUnpublish() {
 
           <div className="project-preview-caption">
             <span>VEÍCULO</span>
-            <strong>{vehicleLabel}</strong>
+            <strong>{vehicleText}</strong>
           </div>
         </div>
 
@@ -596,7 +597,11 @@ async function handleUnpublish() {
 
             {shareUrl && (
               <div className="share-box">
-                <input readOnly value={shareUrl} onFocus={(e) => e.target.select()} />
+                <input
+                  readOnly
+                  value={shareUrl}
+                  onFocus={(e) => e.target.select()}
+                />
                 <button
                   type="button"
                   className="icon-button"
@@ -608,35 +613,35 @@ async function handleUnpublish() {
               </div>
             )}
 
-           {project.isPublic ? (
-  <div className="side-actions">
-    <button
-      className="secondary-button full-width"
-      type="button"
-      onClick={() => setModal("publish")}
-      disabled={actionLoading}
-    >
-      Editar publicação
-    </button>
-    <button
-      className="danger-button full-width"
-      type="button"
-      onClick={() => setModal("unpublish")}
-      disabled={actionLoading}
-    >
-      Despublicar
-    </button>
-  </div>
-) : (
-  <button
-    className="primary-button full-width"
-    type="button"
-    onClick={() => setModal("publish")}
-    disabled={actionLoading}
-  >
-    Publicar no feed
-  </button>
-)}
+            {project.isPublic ? (
+              <div className="side-actions">
+                <button
+                  className="secondary-button full-width"
+                  type="button"
+                  onClick={() => setModal("publish")}
+                  disabled={actionLoading}
+                >
+                  Editar publicação
+                </button>
+                <button
+                  className="danger-button full-width"
+                  type="button"
+                  onClick={() => setModal("unpublish")}
+                  disabled={actionLoading}
+                >
+                  Despublicar
+                </button>
+              </div>
+            ) : (
+              <button
+                className="primary-button full-width"
+                type="button"
+                onClick={() => setModal("publish")}
+                disabled={actionLoading}
+              >
+                Publicar no feed
+              </button>
+            )}
           </div>
         </aside>
       </div>
@@ -738,25 +743,25 @@ async function handleUnpublish() {
         />
       )}
 
-{modal === "publish" && (
-  <PublishModal
-    project={project}
-    loading={actionLoading}
-    onSubmit={handlePublish}
-    onClose={() => setModal(null)}
-  />
-)}
+      {modal === "publish" && (
+        <PublishModal
+          project={project}
+          loading={actionLoading}
+          onSubmit={handlePublish}
+          onClose={() => setModal(null)}
+        />
+      )}
 
-{modal === "unpublish" && (
-  <ConfirmModal
-    title="Despublicar projeto"
-    message="O link público deixará de funcionar e o projeto sai do feed. A descrição fica guardada."
-    confirmLabel="Despublicar"
-    loading={actionLoading}
-    onConfirm={handleUnpublish}
-    onCancel={() => setModal(null)}
-  />
-)}
+      {modal === "unpublish" && (
+        <ConfirmModal
+          title="Despublicar projeto"
+          message="O link público deixará de funcionar e o projeto sai do feed. A descrição fica guardada."
+          confirmLabel="Despublicar"
+          loading={actionLoading}
+          onConfirm={handleUnpublish}
+          onCancel={() => setModal(null)}
+        />
+      )}
 
       {notice && <div className="page-toast">{notice}</div>}
     </section>

@@ -19,6 +19,7 @@ model User {
   password  String
 
   projects  Project[]
+  likes     ProjectLike[]
 
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
@@ -177,6 +178,7 @@ model Project {
   user        User      @relation(fields: [userId], references: [id])
   vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
   parts       ProjectPart[]
+  likes       ProjectLike[]
 
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
@@ -196,4 +198,17 @@ model ProjectPart {
   updatedAt   temporal.updatedAtString()
 
   @@unique([projectId, partId])
+}
+
+model ProjectLike {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  projectId   Int
+
+  user        User      @relation(fields: [userId], references: [id])
+  project     Project   @relation(fields: [projectId], references: [id])
+
+  createdAt   TimestamptzString @default(now())
+
+  @@unique([userId, projectId])
 }

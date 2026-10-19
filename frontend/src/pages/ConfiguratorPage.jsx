@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CarViewer3D from "../components/CarViewer3D";
 import { useAuth } from "../context/AuthContext";
-import { findVehicleById } from "../services/vehicleLookup";
 import { build3DScene } from "../utils/build3DScene";
 import CoverCapture from "../components/CoverCapture";
 import {
@@ -59,12 +58,11 @@ export default function ConfiguratorPage() {
         const projectData = await getProject(token, id);
         const loadedProject = projectData.project;
 
-        const [partsData, categoriesData, compatibilitiesData, vehicleData] =
+        const [partsData, categoriesData, compatibilitiesData] =
           await Promise.all([
             getProjectParts(token, loadedProject.id),
             getPartCategories(),
             getCompatibilitiesByVehicle(loadedProject.vehicleId),
-            findVehicleById(loadedProject.vehicleId),
           ]);
 
         if (cancelled) return;
@@ -80,7 +78,8 @@ export default function ConfiguratorPage() {
         });
 
         setProject(loadedProject);
-        setVehicle(vehicleData);
+        // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
+        setVehicle(loadedProject.vehicle || null);
         setProjectParts(partsData.parts || []);
         setProjectPartDetails(details);
         setCategories(categoriesData.categories || []);
@@ -220,76 +219,76 @@ export default function ConfiguratorPage() {
     return total + price * Number(item.quantity ?? 1);
   }, 0);
 
-const backToProject = () => navigate(`/projetos/${project.id}`);
+  const backToProject = () => navigate(`/projetos/${project.id}`);
 
-function finish() {
-  if (finishingRef.current) return;
-  finishingRef.current = true;
+  function finish() {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
 
-  // sem modelo 3D não há o que fotografar
-  if (!vehicleModelUrl) {
+    // sem modelo 3D não há o que fotografar
+    if (!vehicleModelUrl) {
+      backToProject();
+      return;
+    }
+
+    setCapturing(true);
+  }
+
+  async function handleCoverCaptured(image) {
+    try {
+      if (image) await uploadProjectCover(token, project.id, image);
+    } catch (err) {
+      console.error(err); // falhar na capa não deve impedir de sair
+    }
+
     backToProject();
-    return;
   }
 
-  setCapturing(true);
-}
+  return (
+    <div className="configurator-fullscreen">
+      <CarViewer3D
+        modelUrl={vehicleModelUrl}
+        parts={visible3DParts}
+        selectedCategory={active3DCategory}
+        onCategoryChange={handleCategoryChange}
+        total={projectTotal}
+        onBack={finish}
+        onContinue={finish}
+        projectMode={project.mode}
+        categories={categories}
+        catalogParts={parts}
+        compatibilities={compatibilities}
+        currentProject={project}
+        selectedCategoryId={selectedCategoryId}
+        loadingCategories={false}
+        loadingParts={loadingParts}
+        projectParts={projectParts}
+        projectPartDetails={projectPartDetails}
+        onAddPart={handleAddPart}
+        onRemovePart={handleRemovePart}
+        onCatalogCategoryChange={handleCategoryChange}
+      />
 
-async function handleCoverCaptured(image) {
-  try {
-    if (image) await uploadProjectCover(token, project.id, image);
-  } catch (err) {
-    console.error(err); // falhar na capa não deve impedir de sair
-  }
+      {capturing && (
+        <>
+          <CoverCapture
+            modelUrl={vehicleModelUrl}
+            parts={visible3DParts}
+            onCapture={handleCoverCaptured}
+          />
+          <div className="configurator-saving">Salvando projeto...</div>
+        </>
+      )}
 
-  backToProject();
-}
-
-return (
-  <div className="configurator-fullscreen">
-    <CarViewer3D
-      modelUrl={vehicleModelUrl}
-      parts={visible3DParts}
-      selectedCategory={active3DCategory}
-      onCategoryChange={handleCategoryChange}
-      total={projectTotal}
-      onBack={finish}
-      onContinue={finish}
-      projectMode={project.mode}
-      categories={categories}
-      catalogParts={parts}
-      compatibilities={compatibilities}
-      currentProject={project}
-      selectedCategoryId={selectedCategoryId}
-      loadingCategories={false}
-      loadingParts={loadingParts}
-      projectParts={projectParts}
-      projectPartDetails={projectPartDetails}
-      onAddPart={handleAddPart}
-      onRemovePart={handleRemovePart}
-      onCatalogCategoryChange={handleCategoryChange}
-    />
-
-    {capturing && (
-      <>
-        <CoverCapture
-          modelUrl={vehicleModelUrl}
-          parts={visible3DParts}
-          onCapture={handleCoverCaptured}
-        />
-        <div className="configurator-saving">Salvando projeto...</div>
-      </>
-    )}
-
-    {error && (
-      <button
-        type="button"
-        className="configurator-toast"
-        onClick={() => setError("")}
-      >
-        {error} ✕
-      </button>
-    )}
-  </div>
-);
+      {error && (
+        <button
+          type="button"
+          className="configurator-toast"
+          onClick={() => setError("")}
+        >
+          {error} ✕
+        </button>
+      )}
+    </div>
+  );
 }

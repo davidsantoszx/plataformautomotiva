@@ -19,6 +19,12 @@ import {
   putProjectCoverController,
 } from './projects.controller'
 
+import {
+  deleteLikeController,
+  getLikedController,
+  putLikeController,
+} from './likes.controller'
+
 const router = Router()
 
 // =========================
@@ -38,6 +44,12 @@ router.get(
 // =========================
 
 router.use(authMiddleware)
+
+// precisa vir antes de GET /:id, senão "liked" seria lido como um id
+router.get('/liked', getLikedController)
+
+router.put('/:id/like', putLikeController)
+router.delete('/:id/like', deleteLikeController)
 
 router.put('/:id/cover', putProjectCoverController)
 

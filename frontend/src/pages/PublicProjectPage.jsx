@@ -5,8 +5,8 @@ import { Copy } from "lucide-react";
 import CarPreview3D from "../components/CarPreview3D";
 import { useAuth } from "../context/AuthContext";
 import { getPublicProject } from "../services/api";
-import { findVehicleById } from "../services/vehicleLookup";
 import { build3DScene } from "../utils/build3DScene";
+import { vehicleLabel } from "../utils/vehicleLabel";
 
 function formatCurrency(value) {
   return Number(value || 0).toLocaleString("pt-BR", {
@@ -37,7 +37,6 @@ export default function PublicProjectPage({ shareToken }) {
   const { token } = useAuth();
 
   const [data, setData] = useState(null);
-  const [vehicle3D, setVehicle3D] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
@@ -54,12 +53,6 @@ export default function PublicProjectPage({ shareToken }) {
         if (cancelled) return;
 
         setData(result);
-
-        findVehicleById(result.project.vehicleId)
-          .then((found) => {
-            if (!cancelled) setVehicle3D(found);
-          })
-          .catch((err) => console.error(err));
       } catch (err) {
         if (!cancelled) {
           setError(err.message || "Projeto público não encontrado.");
@@ -76,6 +69,9 @@ export default function PublicProjectPage({ shareToken }) {
     };
   }, [shareToken]);
 
+  // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
+  const vehicle = data?.project?.vehicle || null;
+
   const partDetails = useMemo(() => {
     const map = {};
     (data?.parts || []).forEach((item) => {
@@ -85,8 +81,8 @@ export default function PublicProjectPage({ shareToken }) {
   }, [data]);
 
   const scene = useMemo(
-    () => build3DScene(vehicle3D, partDetails),
-    [vehicle3D, partDetails],
+    () => build3DScene(vehicle, partDetails),
+    [vehicle, partDetails],
   );
 
   async function handleCopy() {
@@ -147,12 +143,8 @@ export default function PublicProjectPage({ shareToken }) {
     0,
   );
 
-  const vehicle = project.vehicle;
-  const vehicleName = vehicle
-    ? [vehicle.model?.brand?.name, vehicle.model?.name, vehicle.year]
-        .filter(Boolean)
-        .join(" ")
-    : `Veículo #${project.vehicleId}`;
+  const vehicleName =
+    vehicleLabel(vehicle) || `Veículo #${project.vehicleId}`;
 
   const authorName =
     project.author?.name?.trim() || project.author?.username || "usuário";
@@ -184,7 +176,11 @@ export default function PublicProjectPage({ shareToken }) {
             </div>
           </div>
 
-          <button className="secondary-button" type="button" onClick={handleCopy}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleCopy}
+          >
             <Copy size={14} /> {copied ? "Link copiado" : "Copiar link"}
           </button>
         </header>
@@ -194,16 +190,14 @@ export default function PublicProjectPage({ shareToken }) {
             <CarPreview3D
               modelUrl={scene.modelUrl}
               parts={scene.parts}
-              loading={!vehicle3D}
+              loading={!vehicle}
               zoomable
             />
 
             <div className="project-preview-caption">
               <span>VEÍCULO</span>
               <strong>
-                {vehicle?.version
-                  ? `${vehicleName} · ${vehicle.version}`
-                  : vehicleName}
+                {vehicleLabel(vehicle, { withVersion: true }) || vehicleName}
               </strong>
             </div>
           </div>
@@ -244,7 +238,10 @@ export default function PublicProjectPage({ shareToken }) {
               const unitPrice = Number(item.priceAtTime || 0);
 
               return (
-                <article className="project-part-row public-part-row" key={item.id}>
+                <article
+                  className="project-part-row public-part-row"
+                  key={item.id}
+                >
                   <div className="project-part-info">
                     <h4>{item.part?.name || `Peça #${item.partId}`}</h4>
                     {item.part?.brand && <span>{item.part.brand}</span>}

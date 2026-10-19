@@ -68,12 +68,15 @@ async function getAuthor(userId: number) {
   };
 }
 
+// Resumo do veículo: serve tanto para o rótulo ("Chevrolet Astra 2011")
+// quanto para o 3D (o frontend usa id e model3dUrl para achar o modelo).
 async function getVehicleSummary(vehicleId: number) {
   const vehicle = await db.orm.public.Vehicle.select(
     "id",
     "generationId",
     "year",
     "version",
+    "model3dUrl",
   ).first({ id: vehicleId });
 
   if (!vehicle) return null;
@@ -81,6 +84,7 @@ async function getVehicleSummary(vehicleId: number) {
   const generation = await db.orm.public.CarGeneration.select(
     "id",
     "modelId",
+    "name",
   ).first({ id: vehicle.generationId });
 
   const model = generation
@@ -96,8 +100,11 @@ async function getVehicleSummary(vehicleId: number) {
     : null;
 
   return {
+    id: vehicle.id,
     year: vehicle.year,
     version: vehicle.version,
+    model3dUrl: vehicle.model3dUrl,
+    generationName: generation?.name ?? null,
     model: model
       ? {
           name: model.name,
@@ -107,8 +114,22 @@ async function getVehicleSummary(vehicleId: number) {
   };
 }
 
+// Busca o resumo uma vez por veículo (vários projetos costumam repetir o carro).
+async function getVehicleSummaries(vehicleIds: number[]) {
+  const uniqueIds = [...new Set(vehicleIds)];
+
+  const entries = await Promise.all(
+    uniqueIds.map(
+      async (vehicleId) =>
+        [vehicleId, await getVehicleSummary(vehicleId)] as const,
+    ),
+  );
+
+  return new Map(entries);
+}
+
 export async function listProjectsByUser(userId: number) {
-  return db.orm.public.Project.select(
+  const projects = await db.orm.public.Project.select(
     "id",
     "userId",
     "vehicleId",
@@ -123,13 +144,28 @@ export async function listProjectsByUser(userId: number) {
   )
     .where({ userId })
     .all();
+
+  const summaries = await getVehicleSummaries(
+    projects.map((project) => project.vehicleId),
+  );
+
+  return projects.map((project) => ({
+    ...project,
+    vehicle: summaries.get(project.vehicleId) ?? null,
+  }));
 }
 
 export async function getProjectById(id: number, userId: number) {
-  return db.orm.public.Project.first({
+  const project = await db.orm.public.Project.first({
     id,
     userId,
   });
+
+  if (!project) return null;
+
+  const vehicle = await getVehicleSummary(project.vehicleId);
+
+  return { ...project, vehicle };
 }
 
 export async function createProject(
@@ -208,6 +244,7 @@ export async function deleteProject(id: number, userId: number) {
     throw new Error("PROJECT_NOT_FOUND");
   }
 
+  await db.orm.public.ProjectLike.where({ projectId: id }).delete();
   await db.orm.public.ProjectPart.where({ projectId: id }).delete();
 
   if (project.coverUrl) {
@@ -383,7 +420,7 @@ export async function getFeed(page: number, limit: number) {
     "vehicleId",
     "name",
     "description",
-    'coverUrl',
+    "coverUrl",
     "mode",
     "shareToken",
     "publishedAt",
@@ -405,10 +442,13 @@ export async function getFeed(page: number, limit: number) {
 
   const projects = await Promise.all(
     pageItems.map(async (project) => {
-      const [author, vehicle, projectParts] = await Promise.all([
+      const [author, vehicle, projectParts, likes] = await Promise.all([
         getAuthor(project.userId),
         getVehicleSummary(project.vehicleId),
         db.orm.public.ProjectPart.select("quantity", "priceAtTime")
+          .where({ projectId: project.id })
+          .all(),
+        db.orm.public.ProjectLike.select("id")
           .where({ projectId: project.id })
           .all(),
       ]);
@@ -429,6 +469,7 @@ export async function getFeed(page: number, limit: number) {
         author,
         vehicle,
         partsCount: projectParts.length,
+        likesCount: likes.length,
         total,
       };
     }),
