@@ -1,8 +1,10 @@
 import { useMemo, useState } from "react";
-import { CarFront, Search } from "lucide-react";
-import { assetUrl } from "../services/api";
-import { vehicleLabel } from "../utils/vehicleLabel";
+import { CarFront, Search, MoreHorizontal, Copy, Trash2 } from "lucide-react";
 
+import { assetUrl, duplicateProject, deleteProject } from "../services/api";
+import { vehicleLabel } from "../utils/vehicleLabel";
+import { useAuth } from "../context/AuthContext";
+import { ConfirmModal } from "../components/Modal";
 const FILTERS = [
   { id: "ALL", label: "Todos" },
   { id: "REAL", label: "Reais" },
@@ -29,17 +31,29 @@ export default function ProjectList({
   error,
   onOpen,
   onCreate,
+  onRefresh,
 }) {
+  const { token } = useAuth();
+
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
+  const [openMenuId, setOpenMenuId] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState("");
 
   const filteredProjects = useMemo(() => {
     const search = query.trim().toLowerCase();
 
     return projects.filter((project) => {
-      if (search && !project.name.toLowerCase().includes(search)) return false;
+      if (search && !project.name.toLowerCase().includes(search)) {
+        return false;
+      }
 
-      if (filter === "REAL" || filter === "FREE") return project.mode === filter;
+      if (filter === "REAL" || filter === "FREE") {
+        return project.mode === filter;
+      }
+
       if (filter === "PUBLIC") return project.isPublic;
 
       return true;
@@ -48,6 +62,53 @@ export default function ProjectList({
 
   const hasProjects = projects.length > 0;
 
+ async function handleDuplicate(project) {
+  setOpenMenuId(null);
+  setActionError("");
+
+  try {
+    setActionLoading(true);
+
+    const data = await duplicateProject(token, project.id);
+
+    if (onRefresh) {
+      await onRefresh();
+    }
+
+  } catch (err) {
+    setActionError(err.message || "Erro ao duplicar projeto.");
+  } finally {
+    setActionLoading(false);
+  }
+}
+
+function handleDelete(project) {
+  if (project) {
+    setModal({ type: "delete", project });
+    setOpenMenuId(null);
+  }
+}
+
+async function confirmDelete() {
+  if (!modal?.project || actionLoading) return;
+
+  setActionError("");
+
+  try {
+    setActionLoading(true);
+
+    await deleteProject(token, modal.project.id);
+    setModal(null);
+
+    if (onRefresh) {
+      await onRefresh();
+    }
+  } catch (err) {
+    setActionError(err.message || "Erro ao excluir projeto.");
+  } finally {
+    setActionLoading(false);
+  }
+}
   return (
     <section className="dashboard-section projects-section">
       <div className="section-heading section-heading-row">
@@ -113,6 +174,7 @@ export default function ProjectList({
           <div className="empty-icon">
             <CarFront size={20} />
           </div>
+
           <h3>Nenhum projeto ainda</h3>
           <p>Escolha um veículo e monte seu primeiro projeto.</p>
 
@@ -146,10 +208,17 @@ export default function ProjectList({
                 key={project.id}
                 role="link"
                 tabIndex={0}
-                style={{ animationDelay: `${Math.min(index, 8) * 45}ms` }}
+                style={{
+                  animationDelay: `${Math.min(index, 8) * 45}ms`,
+                }}
                 onClick={() => onOpen(project.id)}
                 onKeyDown={(event) => {
-                  if (event.key === "Enter") onOpen(project.id);
+                  if (
+                    event.key === "Enter" &&
+                    event.target === event.currentTarget
+                  ) {
+                    onOpen(project.id);
+                  }
                 }}
               >
                 <div className="project-card-preview">
@@ -166,6 +235,46 @@ export default function ProjectList({
                   >
                     {project.isPublic ? "Público" : "Privado"}
                   </span>
+
+                  <div className="project-card-actions">
+                    <button
+                      type="button"
+                      className="project-card-menu-button"
+                      aria-label={`Ações do projeto ${project.name}`}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        setOpenMenuId(
+                          openMenuId === project.id ? null : project.id,
+                        );
+                      }}
+                    >
+                      <MoreHorizontal size={20} />
+                    </button>
+
+                    {openMenuId === project.id && (
+                      <div
+                        className="project-card-menu"
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => handleDuplicate(project)}
+                        >
+                          <Copy size={15} />
+                          Duplicar
+                        </button>
+
+                        <button
+                          type="button"
+                          className="danger"
+                          onClick={() => handleDelete(project)}
+                        >
+                          <Trash2 size={15} />
+                          Excluir
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="project-card-body">
@@ -195,7 +304,23 @@ export default function ProjectList({
         </div>
       )}
 
-      {error && <p className="message message-error">{error}</p>}
+      {(error || actionError) && (
+        <p className="message message-error">{actionError || error}</p>
+      )}
+
+      {modal?.type === "delete" && (
+        <ConfirmModal
+          title="Excluir projeto"
+          message={`"${modal.project.name}" e todas as suas peças serão excluídos. Essa ação não pode ser desfeita.`}
+          confirmLabel="Excluir"
+          danger
+          loading={actionLoading}
+          onConfirm={confirmDelete}
+          onCancel={() => {
+            if (!actionLoading) setModal(null);
+          }}
+        />
+      )}
     </section>
   );
 }

@@ -270,6 +270,8 @@ export async function duplicateProject(id: number, userId: number) {
     userId,
     vehicleId: project.vehicleId,
     name: `${project.name} - Cópia`,
+    description: project.description,
+    coverUrl: project.coverUrl,
     mode: project.mode,
     isPublic: false,
   });
@@ -293,6 +295,7 @@ export async function duplicateProject(id: number, userId: number) {
 
   return duplicatedProject;
 }
+
 
 export async function publishProject(
   id: number,

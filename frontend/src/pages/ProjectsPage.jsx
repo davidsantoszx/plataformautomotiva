@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProjectList from "../components/ProjectList";
 import { useAuth } from "../context/AuthContext";
@@ -12,22 +12,23 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    async function load() {
-      try {
-        setLoading(true);
-        setError("");
-        const data = await getProjects(token);
-        setProjects(data.projects || []);
-      } catch (err) {
-        setError(err.message || "Não foi possível carregar seus projetos.");
-      } finally {
-        setLoading(false);
-      }
-    }
+  const loadProjects = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError("");
 
-    load();
+      const data = await getProjects(token);
+      setProjects(data.projects || []);
+    } catch (err) {
+      setError(err.message || "Não foi possível carregar seus projetos.");
+    } finally {
+      setLoading(false);
+    }
   }, [token]);
+
+  useEffect(() => {
+    loadProjects();
+  }, [loadProjects]);
 
   return (
     <ProjectList
@@ -36,6 +37,7 @@ export default function ProjectsPage() {
       error={error}
       onOpen={(id) => navigate(`/projetos/${id}`)}
       onCreate={() => navigate("/projetos/novo")}
+      onRefresh={loadProjects}
     />
   );
 }
