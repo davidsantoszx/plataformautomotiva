@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useGLTF } from "@react-three/drei";
 import CarViewer3D from "../components/CarViewer3D";
+import CoverCapture from "../components/CoverCapture";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
-import CoverCapture from "../components/CoverCapture";
+import { vehicleLabel as formatVehicleLabel } from "../utils/vehicleLabel";
 import {
   getProject,
   getProjectParts,
@@ -41,8 +43,13 @@ export default function ConfiguratorPage() {
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [loadingParts, setLoadingParts] = useState(false);
 
+  const [saving, setSaving] = useState(false);
   const [capturing, setCapturing] = useState(false);
-  const finishingRef = useRef(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const savingRef = useRef(false);
+
+  // ids das peças como estavam no banco quando a tela abriu
+  const initialPartIdsRef = useRef([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -77,6 +84,10 @@ export default function ConfiguratorPage() {
           if (item.part) details[item.partId] = item.part;
         });
 
+        initialPartIdsRef.current = (partsData.parts || []).map(
+          (item) => item.partId,
+        );
+
         setProject(loadedProject);
         // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
         setVehicle(loadedProject.vehicle || null);
@@ -98,6 +109,39 @@ export default function ConfiguratorPage() {
       cancelled = true;
     };
   }, [id, token]);
+
+  // há alterações em relação ao que está salvo?
+  const initialIds = initialPartIdsRef.current;
+  const isDirty =
+    initialIds.length !== projectParts.length ||
+    projectParts.some((item) => !initialIds.includes(item.partId));
+
+  // avisa se tentarem fechar a aba com alterações pendentes
+  useEffect(() => {
+    if (!isDirty) return;
+
+    const warn = (event) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [isDirty]);
+
+  const scene = useMemo(
+    () => build3DScene(vehicle, projectPartDetails),
+    [vehicle, projectPartDetails],
+  );
+
+  function preloadPartModels(list) {
+    list.forEach((part) => {
+      const { parts: scenes } = build3DScene(vehicle, { [part.id]: part });
+      scenes.forEach((item) => {
+        if (item.modelUrl) useGLTF.preload(item.modelUrl);
+      });
+    });
+  }
 
   async function handleCategoryChange(categoryKey, categoryLabel) {
     setActive3DCategory(categoryKey);
@@ -124,6 +168,10 @@ export default function ConfiguratorPage() {
     setSelectedCategoryId(String(category.id));
     setParts([]);
 
+    const data = await getPartsByCategory(category.id);
+    setParts(data.parts || []);
+    preloadPartModels(data.parts || []);
+
     try {
       setLoadingParts(true);
       const data = await getPartsByCategory(category.id);
@@ -135,7 +183,8 @@ export default function ConfiguratorPage() {
     }
   }
 
-  async function handleAddPart(part) {
+  // Só altera o rascunho local. O banco é atualizado em handleSave.
+  function handleAddPart(part) {
     const compatibility = compatibilities[part.id];
     const isReal = project.mode === "REAL";
 
@@ -156,33 +205,28 @@ export default function ConfiguratorPage() {
       return;
     }
 
-    try {
-      setError("");
-      const data = await addPartToProject(token, project.id, part.id, 1);
-
-      setProjectParts((current) => [...current, data.projectPart]);
-      setProjectPartDetails((current) => ({ ...current, [part.id]: part }));
-    } catch (err) {
-      setError(err.message || "Erro ao adicionar peça ao projeto.");
-    }
+    setError("");
+    setProjectParts((current) => [
+      ...current,
+      {
+        partId: part.id,
+        quantity: 1,
+        priceAtTime: part.estimatedPrice ?? null,
+      },
+    ]);
+    setProjectPartDetails((current) => ({ ...current, [part.id]: part }));
   }
 
-  async function handleRemovePart(partId) {
-    try {
-      setError("");
-      await removePartFromProject(token, project.id, partId);
-
-      setProjectParts((current) =>
-        current.filter((item) => item.partId !== partId),
-      );
-      setProjectPartDetails((current) => {
-        const updated = { ...current };
-        delete updated[partId];
-        return updated;
-      });
-    } catch (err) {
-      setError(err.message || "Erro ao remover peça do projeto.");
-    }
+  function handleRemovePart(partId) {
+    setError("");
+    setProjectParts((current) =>
+      current.filter((item) => item.partId !== partId),
+    );
+    setProjectPartDetails((current) => {
+      const updated = { ...current };
+      delete updated[partId];
+      return updated;
+    });
   }
 
   if (loading) {
@@ -208,10 +252,7 @@ export default function ConfiguratorPage() {
     );
   }
 
-  const { modelUrl: vehicleModelUrl, parts: visible3DParts } = build3DScene(
-    vehicle,
-    projectPartDetails,
-  );
+  const { modelUrl: vehicleModelUrl, parts: visible3DParts } = scene;
 
   const projectTotal = projectParts.reduce((total, item) => {
     const part = projectPartDetails[item.partId];
@@ -219,11 +260,52 @@ export default function ConfiguratorPage() {
     return total + price * Number(item.quantity ?? 1);
   }, 0);
 
+  const vehicleText = formatVehicleLabel(vehicle, { withVersion: true });
+
   const backToProject = () => navigate(`/projetos/${project.id}`);
 
-  function finish() {
-    if (finishingRef.current) return;
-    finishingRef.current = true;
+  // Cancelar: sai sem salvar (pede confirmação só se houver alterações)
+  function handleCancel() {
+    if (saving) return;
+
+    if (isDirty) setConfirmOpen(true);
+    else backToProject();
+  }
+
+  async function handleSave() {
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError("");
+
+    try {
+      const currentIds = projectParts.map((item) => item.partId);
+
+      const toRemove = initialPartIdsRef.current.filter(
+        (partId) => !currentIds.includes(partId),
+      );
+      const toAdd = projectParts.filter(
+        (item) => !initialPartIdsRef.current.includes(item.partId),
+      );
+
+      await Promise.all(
+        toRemove.map((partId) =>
+          removePartFromProject(token, project.id, partId),
+        ),
+      );
+      await Promise.all(
+        toAdd.map((item) =>
+          addPartToProject(token, project.id, item.partId, item.quantity ?? 1),
+        ),
+      );
+
+      initialPartIdsRef.current = currentIds;
+    } catch (err) {
+      setError(err.message || "Erro ao salvar o projeto.");
+      savingRef.current = false;
+      setSaving(false);
+      return;
+    }
 
     // sem modelo 3D não há o que fotografar
     if (!vehicleModelUrl) {
@@ -252,8 +334,12 @@ export default function ConfiguratorPage() {
         selectedCategory={active3DCategory}
         onCategoryChange={handleCategoryChange}
         total={projectTotal}
-        onBack={finish}
-        onContinue={finish}
+        projectName={project.name}
+        vehicleLabel={vehicleText}
+        isDirty={isDirty}
+        saving={saving}
+        onCancel={handleCancel}
+        onSave={handleSave}
         projectMode={project.mode}
         categories={categories}
         catalogParts={parts}
@@ -270,14 +356,49 @@ export default function ConfiguratorPage() {
       />
 
       {capturing && (
-        <>
-          <CoverCapture
-            modelUrl={vehicleModelUrl}
-            parts={visible3DParts}
-            onCapture={handleCoverCaptured}
-          />
-          <div className="configurator-saving">Salvando projeto...</div>
-        </>
+        <CoverCapture
+          modelUrl={vehicleModelUrl}
+          parts={visible3DParts}
+          onCapture={handleCoverCaptured}
+        />
+      )}
+
+      {saving && <div className="configurator-saving">Salvando projeto...</div>}
+
+      {confirmOpen && (
+        <div
+          className="configurator-modal-backdrop"
+          onClick={() => setConfirmOpen(false)}
+        >
+          <div
+            className="configurator-modal"
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="cancel-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <h3 id="cancel-title">Cancelar edição?</h3>
+            <p>As alterações feitas não serão salvas.</p>
+
+            <div className="configurator-modal-actions">
+              <button
+                type="button"
+                className="configurator-back-button"
+                onClick={() => setConfirmOpen(false)}
+                autoFocus
+              >
+                Continuar editando
+              </button>
+              <button
+                type="button"
+                className="configurator-danger-button"
+                onClick={backToProject}
+              >
+                Descartar alterações
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {error && (

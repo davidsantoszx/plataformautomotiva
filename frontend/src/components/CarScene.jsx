@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { Suspense, useMemo } from "react";
 import { ContactShadows, useGLTF } from "@react-three/drei";
 
 function CarModel({ modelUrl }) {
@@ -34,13 +34,16 @@ export default function CarScene({ modelUrl, parts = [], shadow = true }) {
         <CarModel modelUrl={modelUrl} />
 
         {parts.map((part) => (
-          <CarPartModel
-            key={part.key}
-            modelUrl={part.modelUrl}
-            position={part.position}
-            rotation={part.rotation}
-            scale={part.scale}
-          />
+          // Suspense próprio: se o .glb da peça ainda está carregando,
+          // só ela espera. O carro continua na tela.
+          <Suspense key={part.key} fallback={null}>
+            <CarPartModel
+              modelUrl={part.modelUrl}
+              position={part.position}
+              rotation={part.rotation}
+              scale={part.scale}
+            />
+          </Suspense>
         ))}
       </group>
 

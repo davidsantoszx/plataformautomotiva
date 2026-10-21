@@ -25,7 +25,7 @@
   position: absolute;
   top: 18px;
   left: 50%;
-  z-index: 20;
+  z-index: 70;
   max-width: min(520px, 90vw);
   padding: 10px 16px;
   border: 1px solid rgba(220, 70, 60, 0.35);
@@ -72,7 +72,7 @@
 }
 
 .car-viewer-empty p {
-  margin: 0;
+  margin: 0 0 8px;
   color: #929ba6;
   font-size: 13px;
 }
@@ -97,6 +97,8 @@
   overflow: hidden;
 }
 
+/* ---------- cabeçalho ---------- */
+
 .configurator-header {
   display: flex;
   justify-content: space-between;
@@ -105,37 +107,76 @@
   flex-shrink: 0;
 }
 
-.configurator-header h2 {
-  margin: 4px 0 0;
+.configurator-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.car-viewer-label {
-  position: absolute;
-  top: 22px;
-  left: 28px;
-  z-index: 2;
+.configurator-eyebrow {
   color: #ff5a1f;
   font-size: 10px;
   font-weight: 900;
   letter-spacing: 0.16em;
-  pointer-events: none;
+}
+
+.configurator-header h1 {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.configurator-header-sub {
+  color: #929ba6;
+  font-size: 13px;
+}
+
+.configurator-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.configurator-header-actions .primary-button {
+  width: auto;
+  padding: 10px 24px;
+  font-size: 14px;
+}
+
+.configurator-header-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.configurator-dirty {
+  margin-right: 6px;
+  color: #e5a23c;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .configurator-back-button {
   border: 1px solid #303740;
   border-radius: 8px;
-  padding: 10px 16px;
+  padding: 10px 18px;
   background: #111519;
   color: #fff;
+  font-size: 14px;
   cursor: pointer;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
 }
 
-.configurator-workspace {
-  display: grid;
-  grid-template-columns: 160px minmax(0, 1fr) 190px;
-  gap: 12px;
-  flex: 1;
-  min-height: 0;
+.configurator-back-button:hover:not(:disabled) {
+  border-color: #4a535e;
+  background: #171c21;
 }
 
 .configurator-panel-title {
@@ -144,6 +185,16 @@
   font-weight: 700;
   letter-spacing: 1px;
   margin-bottom: 4px;
+}
+
+/* ---------- área principal ---------- */
+
+.configurator-workspace {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr) 190px;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ---------- categorias (esquerda) ---------- */
@@ -206,6 +257,81 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.configurator-workspace {
+  position: relative;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.summary-header .configurator-panel-title {
+  margin-bottom: 0;
+}
+
+.summary-close {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid #292f37;
+  border-radius: 6px;
+  background: #11151a;
+  color: #8b939d;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.summary-close:hover {
+  border-color: #ff5a1f;
+  color: #fff;
+}
+
+/* botão que reabre o orçamento, com o total à vista */
+.summary-reopen {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border: 1px solid #303740;
+  border-radius: 999px;
+  background: rgba(15, 19, 24, 0.94);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+}
+
+.summary-reopen svg {
+  color: #ff5a1f;
+}
+
+.summary-reopen:hover {
+  border-color: #ff5a1f;
+  background: rgba(255, 90, 31, 0.14);
+}
+
+/* com o orçamento fechado, o carro e o catálogo ocupam a largura toda */
+.summary-closed .configurator-workspace {
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.summary-closed .configurator-catalog {
+  right: 16px;
 }
 
 .configurator-summary p {
@@ -293,11 +419,6 @@
   color: #fff;
 }
 
-.summary-continue {
-  margin-top: auto;
-  flex-shrink: 0;
-}
-
 /* =========================
    CATÁLOGO COMO OVERLAY
 ========================= */
@@ -315,9 +436,7 @@
   padding: 12px 14px 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 14px;
-  background: rgba(10, 13, 16, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: rgba(10, 13, 16, 0.94);
   animation: catalog-slide-up 0.25s ease-out;
 }
 
@@ -515,6 +634,67 @@
 }
 
 /* =========================
+   MODAL DE CONFIRMAÇÃO
+========================= */
+
+.configurator-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.configurator-modal {
+  width: min(420px, 90vw);
+  padding: 24px;
+  border: 1px solid #252a30;
+  border-radius: 14px;
+  background: #0c0f12;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.configurator-modal h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 17px;
+}
+
+.configurator-modal p {
+  margin: 0 0 22px;
+  color: #a6adb7;
+  font-size: 14px;
+}
+
+.configurator-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.configurator-danger-button {
+  border: 1px solid rgba(220, 70, 60, 0.5);
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: rgba(220, 70, 60, 0.15);
+  color: #e58b82;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.configurator-danger-button:hover {
+  background: rgba(220, 70, 60, 0.28);
+  color: #fff;
+}
+
+/* =========================
    RESPONSIVO
 ========================= */
 
@@ -553,11 +733,6 @@
     border-radius: 10px;
   }
 
-  .car-viewer-label {
-    top: 17px;
-    left: 20px;
-  }
-
   .car-category-button {
     justify-content: center;
     width: 46px;
@@ -566,6 +741,14 @@
   }
 
   .car-category-button span {
+    display: none;
+  }
+
+  .configurator-header {
+    flex-wrap: wrap;
+  }
+
+  .configurator-dirty {
     display: none;
   }
 }
@@ -582,6 +765,9 @@
   .configurator-categories {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .configurator-panel-title {
@@ -592,7 +778,15 @@
   .configurator-car canvas {
     min-height: 300px;
   }
+
+  .configurator-modal-actions {
+    flex-direction: column-reverse;
+  }
 }
+
+/* =========================
+   CAPA E SALVAMENTO
+========================= */
 
 /* canvas invisível usado só para gerar a capa */
 .cover-capture {

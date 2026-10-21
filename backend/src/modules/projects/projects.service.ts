@@ -271,7 +271,6 @@ export async function duplicateProject(id: number, userId: number) {
     vehicleId: project.vehicleId,
     name: `${project.name} - Cópia`,
     description: project.description,
-    coverUrl: project.coverUrl,
     mode: project.mode,
     isPublic: false,
   });
@@ -291,6 +290,33 @@ export async function duplicateProject(id: number, userId: number) {
       quantity: projectPart.quantity,
       priceAtTime: projectPart.priceAtTime,
     });
+  }
+
+  // A cópia ganha um arquivo de capa próprio. Se apontasse para o mesmo
+  // arquivo do original, excluir (ou trocar a capa de) um dos dois apagaria
+  // a imagem do outro.
+  if (project.coverUrl) {
+    try {
+      await fs.mkdir(COVERS_DIR, { recursive: true });
+
+      const fileName = `project-${duplicatedProject.id}-${Date.now()}.jpg`;
+
+      await fs.copyFile(
+        path.join(COVERS_DIR, path.basename(project.coverUrl)),
+        path.join(COVERS_DIR, fileName),
+      );
+
+      const withCover = await db.orm.public.Project.where({
+        id: duplicatedProject.id,
+      }).update({
+        coverUrl: `/uploads/covers/${fileName}`,
+      });
+
+      return withCover ?? duplicatedProject;
+    } catch (error) {
+      // se o arquivo de capa do original não existe mais, a cópia sai sem capa
+      console.error(error);
+    }
   }
 
   return duplicatedProject;
