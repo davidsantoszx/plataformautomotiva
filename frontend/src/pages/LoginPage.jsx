@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import AuthPanel from "../components/AuthPanel";
 import { useAuth } from "../context/AuthContext";
-
+import { useGlobalLoading } from "../context/LoadingContext";
 export default function LoginPage() {
   const navigate = useNavigate();
   const { token, login, register } = useAuth();
@@ -15,6 +15,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+
+  useGlobalLoading(loading);
 
   if (token) return <Navigate to="/projetos" replace />;
 

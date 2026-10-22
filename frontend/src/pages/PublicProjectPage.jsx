@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Copy } from "lucide-react";
-
+import { useGlobalLoading } from "../context/LoadingContext";
 import CarPreview3D from "../components/CarPreview3D";
 import { useAuth } from "../context/AuthContext";
 import { getPublicProject } from "../services/api";
@@ -40,6 +40,8 @@ export default function PublicProjectPage({ shareToken }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+
+  useGlobalLoading(loading);
 
   useEffect(() => {
     let cancelled = false;

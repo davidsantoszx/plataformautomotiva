@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Copy, Globe, Lock, MoreHorizontal } from "lucide-react";
-
+import { useGlobalLoading } from "../context/LoadingContext";
 import CarPreview3D from "../components/CarPreview3D";
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
@@ -211,6 +211,7 @@ export default function ProjectPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
+  useGlobalLoading(loading || actionLoading);
   // carrega projeto (já com o veículo) e peças
   useEffect(() => {
     let cancelled = false;

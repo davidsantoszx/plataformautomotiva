@@ -82,6 +82,9 @@
 ========================= */
 
 .configurator-screen {
+  --cfg-left: 160px;
+  --cfg-summary: 260px;
+
   position: relative;
   width: 100%;
   height: calc(100vh - 16px);
@@ -190,11 +193,18 @@
 /* ---------- área principal ---------- */
 
 .configurator-workspace {
+  position: relative;
   display: grid;
-  grid-template-columns: 160px minmax(0, 1fr) 190px;
+  grid-template-columns: var(--cfg-left) minmax(0, 1fr);
   gap: 12px;
   flex: 1;
   min-height: 0;
+}
+
+.configurator-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* ---------- categorias (esquerda) ---------- */
@@ -233,6 +243,7 @@
 /* ---------- carro (centro) ---------- */
 
 .configurator-car {
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -246,21 +257,62 @@
   display: block;
 }
 
-/* ---------- orçamento (direita) ---------- */
+.configurator-car-empty {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #929ba6;
+}
+
+.configurator-car-empty p {
+  margin: 0;
+  font-size: 13px;
+}
+
+/* ---------- orçamento (painel por cima do canvas) ----------
+   O canvas nunca muda de tamanho: abrir/fechar só move o painel com
+   transform + opacity (GPU), sem layout e sem reenquadrar a câmera. */
 
 .configurator-summary {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  bottom: 12px;
+  z-index: 4;
+  width: var(--cfg-summary);
+  max-width: calc(100% - 24px);
   min-width: 0;
-  padding: 12px;
+  padding: 14px;
   border: 1px solid #252a30;
   border-radius: 12px;
-  background: #0c0f12;
+  background: rgba(12, 15, 18, 0.95);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  transform: translate3d(0, 0, 0);
+  opacity: 1;
+  visibility: visible;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease,
+    visibility 0s;
+  will-change: transform, opacity;
 }
 
-.configurator-workspace {
-  position: relative;
+.summary-closed .configurator-summary {
+  transform: translate3d(calc(100% + 24px), 0, 0);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    transform 0.22s ease,
+    opacity 0.22s ease,
+    visibility 0s linear 0.22s;
 }
 
 .summary-header {
@@ -306,11 +358,12 @@
   padding: 10px 14px;
   border: 1px solid #303740;
   border-radius: 999px;
-  background: rgba(15, 19, 24, 0.94);
+  background: rgba(15, 19, 24, 0.95);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  animation: summary-reopen-in 0.2s ease both;
   transition:
     border-color 0.18s,
     background 0.18s;
@@ -325,13 +378,15 @@
   background: rgba(255, 90, 31, 0.14);
 }
 
-/* com o orçamento fechado, o carro e o catálogo ocupam a largura toda */
-.summary-closed .configurator-workspace {
-  grid-template-columns: 160px minmax(0, 1fr);
-}
-
-.summary-closed .configurator-catalog {
-  right: 16px;
+@keyframes summary-reopen-in {
+  from {
+    opacity: 0;
+    transform: translate3d(8px, 0, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
 }
 
 .configurator-summary p {
@@ -425,9 +480,10 @@
 
 .configurator-catalog {
   position: absolute;
-  /* alinhado com a coluna central: padding 16 + coluna 160/190 + gap 12 */
-  left: calc(16px + 160px + 12px);
-  right: calc(16px + 190px + 12px);
+  /* alinhado com o canvas: padding 16 + coluna das categorias + gap 12;
+     com o orçamento aberto, deixa o espaço do painel (12 + largura + 12) */
+  left: calc(16px + var(--cfg-left) + 12px);
+  right: calc(16px + 12px + var(--cfg-summary) + 12px);
   bottom: 16px;
   z-index: 5;
   flex: none;
@@ -705,12 +761,8 @@
     overflow: visible;
   }
 
-  .configurator-workspace {
-    grid-template-columns: 140px minmax(0, 1fr);
-  }
-
-  .configurator-summary {
-    grid-column: 1 / -1;
+  .configurator-screen {
+    --cfg-left: 140px;
   }
 
   .configurator-car,
@@ -765,8 +817,6 @@
   .configurator-categories {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    display: flex;
-    flex-direction: column;
     gap: 8px;
   }
 
@@ -809,4 +859,9 @@
   color: #c7ccd3;
   font-size: 15px;
   font-weight: 700;
+}
+
+/* orçamento fechado: o catálogo usa a largura toda do canvas */
+.summary-closed .configurator-catalog {
+  right: 16px;
 }

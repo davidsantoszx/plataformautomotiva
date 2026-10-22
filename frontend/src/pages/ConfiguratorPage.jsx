@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useGLTF } from "@react-three/drei";
 import CarViewer3D from "../components/CarViewer3D";
 import CoverCapture from "../components/CoverCapture";
+import { useGlobalLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
 import { vehicleLabel as formatVehicleLabel } from "../utils/vehicleLabel";
@@ -42,6 +43,7 @@ export default function ConfiguratorPage() {
   const [active3DCategory, setActive3DCategory] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
   const [loadingParts, setLoadingParts] = useState(false);
+  const categoryRequestRef = useRef(null);
 
   const [saving, setSaving] = useState(false);
   const [capturing, setCapturing] = useState(false);
@@ -53,6 +55,9 @@ export default function ConfiguratorPage() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // transição de carregamento: ao abrir (dados) e ao salvar (inclui a capa)
+  useGlobalLoading(loading || saving || capturing);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,14 +139,51 @@ export default function ConfiguratorPage() {
     [vehicle, projectPartDetails],
   );
 
-  function preloadPartModels(list) {
-    list.forEach((part) => {
-      const { parts: scenes } = build3DScene(vehicle, { [part.id]: part });
-      scenes.forEach((item) => {
-        if (item.modelUrl) useGLTF.preload(item.modelUrl);
+  // Modelos 3D que podem aparecer na tela ao adicionar uma peça da categoria
+  // aberta (inclui a troca de modelo base do Astra com rodas).
+  const preloadUrls = useMemo(() => {
+    const baseUrl = build3DScene(vehicle, {}).modelUrl;
+    const urls = new Set();
+
+    parts.forEach((part) => {
+      const candidate = build3DScene(vehicle, { [part.id]: part });
+
+      if (candidate.modelUrl && candidate.modelUrl !== baseUrl) {
+        urls.add(candidate.modelUrl);
+      }
+
+      candidate.parts.forEach((item) => {
+        if (item.modelUrl) urls.add(item.modelUrl);
       });
     });
-  }
+
+    return [...urls];
+  }, [parts, vehicle]);
+
+  // Baixa os modelos em segundo plano, UM por vez e espaçados. Antes tudo era
+  // processado de uma vez no clique da categoria, e o carro engasgava.
+  useEffect(() => {
+    if (preloadUrls.length === 0) return undefined;
+
+    let cancelled = false;
+    let index = 0;
+    let timer;
+
+    function next() {
+      if (cancelled || index >= preloadUrls.length) return;
+
+      useGLTF.preload(preloadUrls[index]);
+      index += 1;
+      timer = setTimeout(next, 700);
+    }
+
+    timer = setTimeout(next, 500);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [preloadUrls]);
 
   async function handleCategoryChange(categoryKey, categoryLabel) {
     setActive3DCategory(categoryKey);
@@ -168,18 +210,20 @@ export default function ConfiguratorPage() {
     setSelectedCategoryId(String(category.id));
     setParts([]);
 
-    const data = await getPartsByCategory(category.id);
-    setParts(data.parts || []);
-    preloadPartModels(data.parts || []);
+    // se a pessoa trocar de categoria antes da resposta chegar, ignora a antiga
+    categoryRequestRef.current = category.id;
+    const isCurrent = () => categoryRequestRef.current === category.id;
 
     try {
       setLoadingParts(true);
       const data = await getPartsByCategory(category.id);
-      setParts(data.parts || []);
+      if (isCurrent()) setParts(data.parts || []);
     } catch (err) {
-      setError(err.message || "Não foi possível carregar as peças.");
+      if (isCurrent()) {
+        setError(err.message || "Não foi possível carregar as peças.");
+      }
     } finally {
-      setLoadingParts(false);
+      if (isCurrent()) setLoadingParts(false);
     }
   }
 

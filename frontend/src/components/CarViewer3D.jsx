@@ -1,18 +1,19 @@
-import { Suspense, memo, useEffect, useState } from "react";
-import { Canvas } from "@react-three/fiber";
+import { Suspense, memo, useCallback, useEffect, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, Environment, OrbitControls } from "@react-three/drei";
 import {
-  CircleDot,
   Activity,
-  Disc3,
-  Cog,
-  Wind,
-  CarFront,
   Banknote,
+  CarFront,
+  CircleDot,
+  Cog,
+  Disc3,
+  Wind,
 } from "lucide-react";
 
 import PartsCatalog from "./PartsCatalog";
 import CarScene from "./CarScene";
+import { useGlobalLoading } from "../context/LoadingContext";
 
 const categoryButtons = [
   { id: "wheels", label: "Rodas e Pneus", icon: CircleDot },
@@ -23,6 +24,10 @@ const categoryButtons = [
   { id: "exterior", label: "Exterior", icon: CarFront },
 ];
 
+// objetos fora do componente: não mudam de identidade a cada render
+const CAMERA = { position: [2.4, 1.2, 3.2], fov: 30 };
+const GL_OPTIONS = { antialias: true, toneMappingExposure: 1.1 };
+
 function formatCurrency(value) {
   return Number(value || 0).toLocaleString("pt-BR", {
     style: "currency",
@@ -30,19 +35,39 @@ function formatCurrency(value) {
   });
 }
 
+// Só monta quando tudo dentro do Suspense terminou de carregar. Espera dois
+// frames para a primeira imagem do carro já ter sido desenhada (é nesse
+// momento que as texturas sobem para a GPU, ainda escondido pela transição).
+function ReadySignal({ onReady }) {
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    invalidate();
+
+    let id = requestAnimationFrame(() => {
+      id = requestAnimationFrame(onReady);
+    });
+
+    return () => cancelAnimationFrame(id);
+  }, [invalidate, onReady]);
+
+  return null;
+}
+
 // Isolado com memo: só re-renderiza se o modelo ou as peças 3D mudarem.
-// Cliques em categoria, catálogo, orçamento etc. não tocam no canvas.
-const CarCanvas = memo(function CarCanvas({ modelUrl, parts }) {
+// O Canvas renderiza só quando algo muda (frameloop "demand"): com o carro
+// parado a GPU fica livre enquanto a pessoa escolhe peças.
+const CarCanvas = memo(function CarCanvas({ modelUrl, parts, onReady }) {
   return (
     <Canvas
-      shadows
+      frameloop="demand"
       dpr={[1, 2]}
-      camera={{ position: [2.4, 1.2, 3.2], fov: 30 }}
-      gl={{ antialias: true, toneMappingExposure: 1.1 }}
+      camera={CAMERA}
+      gl={GL_OPTIONS}
     >
       <color attach="background" args={["#07090b"]} />
       <ambientLight intensity={0.45} />
-      <directionalLight position={[5, 7, 5]} intensity={2} castShadow />
+      <directionalLight position={[5, 7, 5]} intensity={2} />
       <directionalLight position={[-5, 3, -3]} intensity={1.2} />
 
       <Suspense fallback={null}>
@@ -50,6 +75,7 @@ const CarCanvas = memo(function CarCanvas({ modelUrl, parts }) {
         <Bounds fit clip observe margin={0.35}>
           <CarScene modelUrl={modelUrl} parts={parts} />
         </Bounds>
+        <ReadySignal onReady={onReady} />
       </Suspense>
 
       <OrbitControls
@@ -63,8 +89,6 @@ const CarCanvas = memo(function CarCanvas({ modelUrl, parts }) {
         maxPolarAngle={Math.PI / 2.05}
         rotateSpeed={0.7}
         zoomSpeed={0.7}
-        autoRotate
-        autoRotateSpeed={0.9}
       />
     </Canvas>
   );
@@ -96,7 +120,22 @@ export default function CarViewer3D({
   onCatalogCategoryChange,
 }) {
   const [catalogOpen, setCatalogOpen] = useState(true);
-  const [summaryOpen, setSummaryOpen] = useState(true);
+
+  // A transição de carregamento só sai quando o carro 3D já está na tela.
+  const [sceneReady, setSceneReady] = useState(false);
+  const handleSceneReady = useCallback(() => setSceneReady(true), []);
+  useGlobalLoading(Boolean(modelUrl) && !sceneReady);
+
+  // trava de segurança: se o modelo não carregar, não deixa a tela presa
+  useEffect(() => {
+    const id = setTimeout(() => setSceneReady(true), 12000);
+    return () => clearTimeout(id);
+  }, []);
+
+  // começa fechado em telas estreitas, onde o painel cobriria o carro
+  const [summaryOpen, setSummaryOpen] = useState(
+    () => typeof window === "undefined" || window.innerWidth >= 1100,
+  );
 
   useEffect(() => {
     setCatalogOpen(true); // reabre ao trocar de categoria
@@ -105,24 +144,6 @@ export default function CarViewer3D({
   const addedParts = projectParts
     .map((item) => ({ item, part: projectPartDetails[item.partId] }))
     .filter(({ part }) => part);
-
-  if (!modelUrl) {
-    return (
-      <section className="car-viewer-3d">
-        <div className="car-viewer-empty">
-          <span>MONTE SEU CARRO</span>
-          <p>Modelo 3D indisponível para este veículo.</p>
-          <button
-            type="button"
-            className="configurator-back-button"
-            onClick={onCancel}
-          >
-            Voltar
-          </button>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section
@@ -182,12 +203,28 @@ export default function CarViewer3D({
           ))}
         </aside>
 
+        {/* O canvas ocupa sempre a área toda. O orçamento é um painel por cima
+            dele: abrir ou fechar não muda o tamanho do canvas, então não há
+            realocação de buffers nem reenquadramento da câmera. */}
         <div className="configurator-car">
-          <CarCanvas modelUrl={modelUrl} parts={parts} />
-        </div>
+          {modelUrl ? (
+            <CarCanvas
+              modelUrl={modelUrl}
+              parts={parts}
+              onReady={handleSceneReady}
+            />
+          ) : (
+            <div className="configurator-car-empty">
+              <CarFront size={28} />
+              <p>Modelo 3D indisponível para este veículo.</p>
+            </div>
+          )}
 
-        {summaryOpen ? (
-          <aside className="configurator-summary">
+          <aside
+            className="configurator-summary"
+            aria-hidden={!summaryOpen}
+            aria-label="Orçamento"
+          >
             <div className="summary-header">
               <span className="configurator-panel-title">ORÇAMENTO</span>
 
@@ -237,17 +274,19 @@ export default function CarViewer3D({
               )}
             </div>
           </aside>
-        ) : (
-          <button
-            type="button"
-            className="summary-reopen"
-            onClick={() => setSummaryOpen(true)}
-            aria-label="Abrir orçamento"
-          >
-            <Banknote size={17} />
-            <span>{formatCurrency(total)}</span>
-          </button>
-        )}
+
+          {!summaryOpen && (
+            <button
+              type="button"
+              className="summary-reopen"
+              onClick={() => setSummaryOpen(true)}
+              aria-label="Abrir orçamento"
+            >
+              <Banknote size={17} />
+              <span>{formatCurrency(total)}</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {selectedCategory && catalogOpen && (

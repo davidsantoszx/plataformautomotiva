@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import ProjectList from "../components/ProjectList";
 import { useAuth } from "../context/AuthContext";
 import { getProjects } from "../services/api";
+import { useGlobalLoading } from "../context/LoadingContext";
 
 export default function ProjectsPage() {
   const { token } = useAuth();
@@ -11,6 +12,8 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  useGlobalLoading(loading);
 
   const loadProjects = useCallback(async () => {
     try {

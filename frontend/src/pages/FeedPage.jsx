@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CarFront, Heart } from "lucide-react";
-
+import { useGlobalLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
 import { getFeed, assetUrl } from "../services/api";
 import {
@@ -55,6 +55,8 @@ export default function FeedPage() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+
+  useGlobalLoading(loading);
 
   // projetos com uma requisição de curtida em andamento (evita clique duplo)
   const pendingRef = useRef(new Set());
