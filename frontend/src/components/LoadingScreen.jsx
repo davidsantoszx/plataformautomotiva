@@ -33,16 +33,16 @@ function GearSymbol() {
             <rect
               className="loader-piece"
               x="-11" y="-84" width="22" height="44" rx="3"
-              style={{ "--y": "-70px", "--d": `${i * 70}ms` }}
+              style={{ "--y": "-70px", "--d": `${i * 35}ms` }}
             />
           </g>
         ))}
         <circle
           className="loader-piece"
           r="56" fill="none" stroke="currentColor" strokeWidth="24"
-          style={{ "--y": "0px", "--d": "500ms" }}
+          style={{ "--y": "0px", "--d": "250ms" }}
         />
-        <circle className="loader-piece" r="14" style={{ "--y": "0px", "--d": "600ms" }} />
+        <circle className="loader-piece" r="14" style={{ "--y": "0px", "--d": "300ms" }} />
       </g>
     </svg>
   );

@@ -244,16 +244,43 @@ export async function deleteProject(id: number, userId: number) {
     throw new Error("PROJECT_NOT_FOUND");
   }
 
-  await db.orm.public.ProjectLike.where({ projectId: id }).delete();
-  await db.orm.public.ProjectPart.where({ projectId: id }).delete();
+  // .delete() remove UMA linha por chamada. Com várias peças ou curtidas,
+  // sobravam linhas apontando para o projeto e o banco recusava a exclusão
+  // (erro 23503). Por isso apagamos item a item, pelo id.
+  const likes = await db.orm.public.ProjectLike.select("id")
+    .where({ projectId: id })
+    .all();
 
+  await Promise.all(
+    likes.map((like) =>
+      db.orm.public.ProjectLike.where({ id: like.id }).delete(),
+    ),
+  );
+
+  const projectParts = await db.orm.public.ProjectPart.select("id")
+    .where({ projectId: id })
+    .all();
+
+  await Promise.all(
+    projectParts.map((projectPart) =>
+      db.orm.public.ProjectPart.where({ id: projectPart.id }).delete(),
+    ),
+  );
+
+  // primeiro o projeto: se isso falhar, a capa continua intacta
+  const deleted = await db.orm.public.Project.where({ id }).delete();
+
+  // só depois remove o arquivo da capa (se falhar, sobra um arquivo solto,
+  // o que é bem menos grave que um projeto com capa quebrada)
   if (project.coverUrl) {
-    await fs.rm(path.join(COVERS_DIR, path.basename(project.coverUrl)), {
-      force: true,
-    });
+    await fs
+      .rm(path.join(COVERS_DIR, path.basename(project.coverUrl)), {
+        force: true,
+      })
+      .catch((error) => console.error(error));
   }
 
-  return db.orm.public.Project.where({ id }).delete();
+  return deleted;
 }
 
 export async function duplicateProject(id: number, userId: number) {

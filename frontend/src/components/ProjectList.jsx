@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { CarFront, Search, MoreHorizontal, Copy, Trash2 } from "lucide-react";
-
+import { useToast } from "../context/ToastContext";
 import { assetUrl, duplicateProject, deleteProject } from "../services/api";
 import { vehicleLabel } from "../utils/vehicleLabel";
 import { useAuth } from "../context/AuthContext";
@@ -42,6 +42,8 @@ export default function ProjectList({
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState("");
 
+  const { showToast } = useToast();
+
   const filteredProjects = useMemo(() => {
     const search = query.trim().toLowerCase();
 
@@ -70,6 +72,7 @@ export default function ProjectList({
     setActionLoading(true);
 
     const data = await duplicateProject(token, project.id);
+    showToast("Projeto duplicado com sucesso");
 
     if (onRefresh) {
       await onRefresh();
@@ -99,6 +102,7 @@ async function confirmDelete() {
 
     await deleteProject(token, modal.project.id);
     setModal(null);
+    showToast("Projeto excluído com sucesso");
 
     if (onRefresh) {
       await onRefresh();

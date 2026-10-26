@@ -7,8 +7,9 @@ import {
   useSearchParams,
 } from "react-router-dom";
 
-
 import { useAuth } from "./context/AuthContext";
+import { useLoading } from "./context/LoadingContext";
+import { ToastProvider } from "./context/ToastContext";
 import ProtectedLayout from "./components/ProtectedLayout";
 import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/LoginPage";
@@ -22,6 +23,7 @@ import FeedPage from "./pages/FeedPage";
 function LandingRoute() {
   const { token } = useAuth();
   const navigate = useNavigate();
+  const { withLoading } = useLoading();
   const [params] = useSearchParams();
 
   // compatibilidade com links antigos: /?share=TOKEN
@@ -30,7 +32,9 @@ function LandingRoute() {
 
   if (token) return <Navigate to="/projetos" replace />;
 
-  return <LandingPage onEnter={() => navigate("/login")} />;
+  return (
+    <LandingPage onEnter={() => withLoading(() => navigate("/login"))} />
+  );
 }
 
 function PublicProjectRoute() {
@@ -40,20 +44,22 @@ function PublicProjectRoute() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/" element={<LandingRoute />} />
-      <Route path="/login" element={<LoginPage />} />
-      <Route path="/p/:shareToken" element={<PublicProjectRoute />} />
+    <ToastProvider>
+      <Routes>
+        <Route path="/" element={<LandingRoute />} />
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/p/:shareToken" element={<PublicProjectRoute />} />
 
-      <Route element={<ProtectedLayout />}>
-        <Route path="/projetos" element={<ProjectsPage />} />
-        <Route path="/projetos/novo" element={<NewProjectPage />} />
-        <Route path="/projetos/:id" element={<ProjectPage />} />
-        <Route path="/projetos/:id/configurar" element={<ConfiguratorPage />} />
-        <Route path="/feed" element={<FeedPage />} />
-      </Route>
+        <Route element={<ProtectedLayout />}>
+          <Route path="/projetos" element={<ProjectsPage />} />
+          <Route path="/projetos/novo" element={<NewProjectPage />} />
+          <Route path="/projetos/:id" element={<ProjectPage />} />
+          <Route path="/projetos/:id/configurar" element={<ConfiguratorPage />} />
+          <Route path="/feed" element={<FeedPage />} />
+        </Route>
 
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </ToastProvider>
   );
 }

@@ -8,24 +8,20 @@ import {
   useRef,
   useState,
 } from "react";
-import { useLocation } from "react-router-dom";
 import LoadingScreen from "../components/LoadingScreen";
 
-// Tempos em ms. Se mudar aqui, confira os tempos em styles/loading.css.
-const MIN_COVER = 1440; // tempo mínimo pulsando: o carro leva 3 piscadas para se montar
+const MIN_COVER = 900; // tempo mínimo da montagem antes de inverter
 const INVERT_HOLD = 400; // símbolo parado no fundo laranja
 const OUT_TOTAL = 800; // saída do overlay + entrada do conteúdo
 
-// fases: "cover" (pulsando) -> "invert" (fundo laranja) -> "out" -> "idle"
+// fases: "idle" -> "cover" (montando) -> "invert" -> "out" -> "idle"
 const LoadingContext = createContext(null);
 
 export function LoadingProvider({ children }) {
-  const { pathname } = useLocation();
-
-  const [phase, setPhase] = useState("cover"); // abre já coberto (primeira abertura / F5)
-  const phaseRef = useRef("cover");
+  const [phase, setPhase] = useState("idle");
+  const phaseRef = useRef("idle");
   const pending = useRef(0);
-  const shownAt = useRef(Date.now());
+  const shownAt = useRef(0);
   const timers = useRef([]);
 
   const go = useCallback((next) => {
@@ -45,7 +41,6 @@ export function LoadingProvider({ children }) {
   const settle = useCallback(() => {
     clearTimers();
 
-    // espera um instante: a próxima tela pode assumir o carregamento
     later(() => {
       if (pending.current > 0) return;
 
@@ -77,7 +72,7 @@ export function LoadingProvider({ children }) {
     if (pending.current === 0) settle();
   }, [settle]);
 
-  // envolve uma promise (ou função async) com o efeito
+  // envolve uma ação (ex.: navegação) com o loader
   const withLoading = useCallback(
     async (task) => {
       show();
@@ -90,22 +85,7 @@ export function LoadingProvider({ children }) {
     [show, hide],
   );
 
-  // primeira abertura / recarregar a página: sai sozinho se ninguém pediu mais tempo
-  useEffect(() => {
-    settle();
-    return clearTimers;
-  }, [settle, clearTimers]);
-
-  // transição entre rotas
-  const firstRoute = useRef(true);
-  useLayoutEffect(() => {
-    if (firstRoute.current) {
-      firstRoute.current = false;
-      return;
-    }
-    show();
-    hide();
-  }, [pathname, show, hide]);
+  useEffect(() => clearTimers, [clearTimers]);
 
   // o CSS esconde/mostra o #root conforme a fase
   useLayoutEffect(() => {

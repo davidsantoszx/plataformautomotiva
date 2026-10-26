@@ -12,7 +12,7 @@
 :root {
   --loader-dark: #07090b;
   --loader-accent: #ff5a1f;
-  --loader-blink: 0.48s;
+  --loader-blink: 0.26s;
 }
 
 /* evita flash branco atrás do overlay */
@@ -57,7 +57,7 @@ html[data-loading="out"] #root {
 
 /* remova loader-pulse, loader-assemble e a linha animation do .loader-car */
 .loader-piece {
-  animation: piece-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) var(--d, 0ms) both;
+  animation: piece-in 0.4s cubic-bezier(0.2, 0.9, 0.25, 1) var(--d, 0ms) both;
 }
 
 @keyframes piece-in {
@@ -66,7 +66,7 @@ html[data-loading="out"] #root {
 }
 
 .gear-spin {
-  animation: gear-turn 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: gear-turn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes gear-turn {

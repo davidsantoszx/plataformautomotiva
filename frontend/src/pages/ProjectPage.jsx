@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Copy, Globe, Lock, MoreHorizontal } from "lucide-react";
-import { useGlobalLoading } from "../context/LoadingContext";
 import CarPreview3D from "../components/CarPreview3D";
+import { useToast } from "../context/ToastContext";
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
@@ -211,7 +211,8 @@ export default function ProjectPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
-  useGlobalLoading(loading || actionLoading);
+  const { showToast } = useToast();
+
   // carrega projeto (já com o veículo) e peças
   useEffect(() => {
     let cancelled = false;
@@ -316,6 +317,7 @@ export default function ProjectPage() {
       setError("");
 
       await deleteProject(token, project.id);
+      showToast("Projeto excluído com sucesso");
       navigate("/projetos", { replace: true });
     } catch (err) {
       setError(err.message || "Erro ao excluir projeto.");
@@ -332,6 +334,7 @@ export default function ProjectPage() {
       setError("");
 
       const data = await duplicateProject(token, project.id);
+      showToast("Projeto duplicado com sucesso");
       navigate(`/projetos/${data.project.id}`);
     } catch (err) {
       setError(err.message || "Erro ao duplicar projeto.");
