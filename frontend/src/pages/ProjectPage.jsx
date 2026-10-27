@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Copy, Globe, Lock, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Copy, Globe, Lock, Pencil } from "lucide-react";
 import CarPreview3D from "../components/CarPreview3D";
-import { useToast } from "../context/ToastContext";
+
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
@@ -208,10 +208,7 @@ export default function ProjectPage() {
   const [notice, setNotice] = useState("");
 
   const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish"
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
 
-  const { showToast } = useToast();
 
   // carrega projeto (já com o veículo) e peças
   useEffect(() => {
@@ -253,17 +250,7 @@ export default function ProjectPage() {
     };
   }, [id, token]);
 
-  // fecha o menu "⋯" ao clicar fora
-  useEffect(() => {
-    function handleClick(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setMenuOpen(false);
-      }
-    }
 
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
 
   // some com o aviso depois de 3s
   useEffect(() => {
@@ -311,37 +298,7 @@ export default function ProjectPage() {
     }
   }
 
-  async function handleDelete() {
-    try {
-      setActionLoading(true);
-      setError("");
 
-      await deleteProject(token, project.id);
-      showToast("Projeto excluído com sucesso");
-      navigate("/projetos", { replace: true });
-    } catch (err) {
-      setError(err.message || "Erro ao excluir projeto.");
-      setModal(null);
-      setActionLoading(false);
-    }
-  }
-
-  async function handleDuplicate() {
-    setMenuOpen(false);
-
-    try {
-      setActionLoading(true);
-      setError("");
-
-      const data = await duplicateProject(token, project.id);
-      showToast("Projeto duplicado com sucesso");
-      navigate(`/projetos/${data.project.id}`);
-    } catch (err) {
-      setError(err.message || "Erro ao duplicar projeto.");
-    } finally {
-      setActionLoading(false);
-    }
-  }
 
   async function handlePublish(name, description) {
     try {
@@ -498,66 +455,26 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        <div className="project-page-actions">
-          <button
-            className="primary-button"
-            type="button"
-            onClick={goToConfigurator}
-          >
-            Editar no 3D
-          </button>
+<div className="project-page-actions">
+  <button
+    className="primary-button"
+    type="button"
+    onClick={goToConfigurator}
+  >
+    Editar no 3D
+  </button>
 
-          <div className="more-menu" ref={menuRef}>
-            <button
-              type="button"
-              className="icon-button"
-              aria-label="Mais ações"
-              aria-haspopup="menu"
-              aria-expanded={menuOpen}
-              onClick={() => setMenuOpen((open) => !open)}
-            >
-              <MoreHorizontal size={18} />
-            </button>
+  <button
+    type="button"
+    className="icon-button"
+    aria-label="Renomear projeto"
+    title="Renomear projeto"
+    onClick={() => setModal("rename")}
+  >
+    <Pencil size={18} />
+  </button>
+</div>
 
-            {menuOpen && (
-              <div className="user-menu-dropdown" role="menu">
-                <button
-                  type="button"
-                  className="user-menu-item"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setModal("rename");
-                  }}
-                >
-                  Renomear
-                </button>
-
-                <button
-                  type="button"
-                  className="user-menu-item"
-                  role="menuitem"
-                  onClick={handleDuplicate}
-                  disabled={actionLoading}
-                >
-                  Duplicar
-                </button>
-
-                <button
-                  type="button"
-                  className="user-menu-item danger"
-                  role="menuitem"
-                  onClick={() => {
-                    setMenuOpen(false);
-                    setModal("delete");
-                  }}
-                >
-                  Excluir
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
       </header>
 
       {error && <p className="message message-error">{error}</p>}
@@ -735,17 +652,6 @@ export default function ProjectPage() {
         />
       )}
 
-      {modal === "delete" && (
-        <ConfirmModal
-          title="Excluir projeto"
-          message={`"${project.name}" e todas as suas peças serão excluídos. Essa ação não pode ser desfeita.`}
-          confirmLabel="Excluir"
-          danger
-          loading={actionLoading}
-          onConfirm={handleDelete}
-          onCancel={() => setModal(null)}
-        />
-      )}
 
       {modal === "publish" && (
         <PublishModal

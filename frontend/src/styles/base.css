@@ -173,22 +173,3 @@ button {
   color: #75bd91;
 }
 
-.app-toast {
-  position: fixed;
-  left: 24px;
-  bottom: 24px;
-  z-index: 10000;
-  padding: 12px 18px;
-  border-radius: 10px;
-  background: #0f1216;
-  color: #fff;
-  border: 1px solid rgba(255, 90, 31, 0.6);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-  font-size: 14px;
-  animation: app-toast-in 0.25s ease;
-}
-
-@keyframes app-toast-in {
-  from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: none; }
-}
