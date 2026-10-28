@@ -1,6 +1,16 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Copy, Globe, Lock, Pencil } from "lucide-react";
+import {
+  ArrowLeft,
+  Copy,
+  Globe,
+  Lock,
+  Minus,
+  Package,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import CarPreview3D from "../components/CarPreview3D";
 
 import Modal, { ConfirmModal } from "../components/Modal";
@@ -8,6 +18,7 @@ import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
 import { vehicleLabel } from "../utils/vehicleLabel";
 import {
+  assetUrl,
   getProject,
   getProjectParts,
   updateProject,
@@ -36,6 +47,23 @@ function formatDate(value) {
     month: "short",
     year: "numeric",
   });
+}
+
+// Miniatura da peça: usa a imagem cadastrada ou, se não houver (ou falhar),
+// um ícone.
+function PartThumb({ part }) {
+  const [failed, setFailed] = useState(false);
+  const src = part?.imageUrl ? assetUrl(part.imageUrl) : "";
+
+  return (
+    <div className="part-thumb">
+      {src && !failed ? (
+        <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />
+      ) : (
+        <Package size={22} />
+      )}
+    </div>
+  );
 }
 
 function RenameModal({ project, loading, onSave, onClose }) {
@@ -567,20 +595,33 @@ export default function ProjectPage() {
         </aside>
       </div>
 
-      <div className="parts-project-list">
-        <div className="parts-project-heading">
-          <h3>Peças do projeto</h3>
+      <div className="project-parts">
+        <header className="project-parts-header">
+          <div className="project-parts-heading">
+            <h3>Peças do projeto</h3>
+            <span className="project-parts-count">{projectParts.length}</span>
+          </div>
 
-          <span>
-            {projectParts.length} item{projectParts.length !== 1 ? "s" : ""}
-          </span>
-        </div>
+          <button
+            className="secondary-button project-parts-add"
+            type="button"
+            aria-label="Adicionar peças"
+            onClick={goToConfigurator}
+          >
+            <Plus size={15} />
+            <span>Adicionar peças</span>
+          </button>
+        </header>
 
         {projectParts.length === 0 ? (
-          <div className="empty-state parts-empty">
-            <p>Nenhuma peça adicionada ainda.</p>
+          <div className="project-parts-empty">
+            <div className="project-parts-empty-icon">
+              <Package size={24} />
+            </div>
+            <strong>Nenhuma peça adicionada ainda</strong>
+            <p>Abra o configurador 3D para escolher as peças do seu projeto.</p>
             <button
-              className="primary-button empty-state-action"
+              className="primary-button"
               type="button"
               onClick={goToConfigurator}
             >
@@ -588,58 +629,82 @@ export default function ProjectPage() {
             </button>
           </div>
         ) : (
-          projectParts.map((projectPart) => {
-            const part =
-              projectPart.part || projectPartDetails[projectPart.partId];
+          <>
+            <div className="project-parts-list">
+              {projectParts.map((projectPart) => {
+                const part =
+                  projectPart.part || projectPartDetails[projectPart.partId];
 
-            const quantity = Number(projectPart.quantity || 1);
-            const unitPrice = Number(projectPart.priceAtTime || 0);
+                const name = part?.name || `Peça #${projectPart.partId}`;
+                const quantity = Number(projectPart.quantity || 1);
+                const unitPrice = Number(projectPart.priceAtTime || 0);
 
-            return (
-              <article className="project-part-row" key={projectPart.id}>
-                <div className="project-part-info">
-                  <h4>{part?.name || `Peça #${projectPart.partId}`}</h4>
-                  {part?.brand && <span>{part.brand}</span>}
-                </div>
+                return (
+                  <article className="part-card" key={projectPart.id}>
+                    <PartThumb part={part} />
 
-                <div className="project-part-price">
-                  <span>{formatCurrency(unitPrice)} un.</span>
-                  <strong>{formatCurrency(unitPrice * quantity)}</strong>
-                </div>
+                    <div className="part-card-info">
+                      <h4>{name}</h4>
 
-                <div className="quantity-control">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdateQuantity(projectPart.partId, quantity - 1)
-                    }
-                    disabled={quantity <= 1}
-                  >
-                    −
-                  </button>
+                      <div className="part-card-meta">
+                        {part?.brand && (
+                          <span className="part-card-brand">{part.brand}</span>
+                        )}
+                        <span>{formatCurrency(unitPrice)} un.</span>
+                      </div>
+                    </div>
 
-                  <span>{quantity}</span>
+                    <div className="part-qty" role="group" aria-label="Quantidade">
+                      <button
+                        type="button"
+                        aria-label="Diminuir quantidade"
+                        onClick={() =>
+                          handleUpdateQuantity(projectPart.partId, quantity - 1)
+                        }
+                        disabled={quantity <= 1}
+                      >
+                        <Minus size={14} />
+                      </button>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      handleUpdateQuantity(projectPart.partId, quantity + 1)
-                    }
-                  >
-                    +
-                  </button>
-                </div>
+                      <span>{quantity}</span>
 
-                <button
-                  className="remove-button"
-                  type="button"
-                  onClick={() => handleRemovePart(projectPart.partId)}
-                >
-                  Remover
-                </button>
-              </article>
-            );
-          })
+                      <button
+                        type="button"
+                        aria-label="Aumentar quantidade"
+                        onClick={() =>
+                          handleUpdateQuantity(projectPart.partId, quantity + 1)
+                        }
+                      >
+                        <Plus size={14} />
+                      </button>
+                    </div>
+
+                    <strong className="part-card-subtotal">
+                      {formatCurrency(unitPrice * quantity)}
+                    </strong>
+
+                    <button
+                      className="part-remove"
+                      type="button"
+                      aria-label={`Remover ${name}`}
+                      title="Remover do projeto"
+                      onClick={() => handleRemovePart(projectPart.partId)}
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </article>
+                );
+              })}
+            </div>
+
+            <footer className="project-parts-footer">
+              <span>
+                Total estimado · {projectParts.length} peça
+                {projectParts.length !== 1 ? "s" : ""}
+              </span>
+              <strong>{formatCurrency(projectTotal)}</strong>
+            </footer>
+          </>
         )}
       </div>
 

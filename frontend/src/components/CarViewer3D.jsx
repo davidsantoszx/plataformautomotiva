@@ -25,7 +25,7 @@ const categoryButtons = [
 ];
 
 // objetos fora do componente: não mudam de identidade a cada render
-const CAMERA = { position: [2.4, 1.2, 3.2], fov: 30 };
+const CAMERA = { position: [-2.4, 1.2, -6.2], fov: 30 };
 const GL_OPTIONS = { antialias: true, toneMappingExposure: 1.1 };
 
 function formatCurrency(value) {
