@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Copy } from "lucide-react";
+import { Copy, Package } from "lucide-react";
 import { useGlobalLoading } from "../context/LoadingContext";
 import CarPreview3D from "../components/CarPreview3D";
+import PartThumb from "../components/PartThumb";
 import { useAuth } from "../context/AuthContext";
 import { getPublicProject } from "../services/api";
 import { build3DScene } from "../utils/build3DScene";
@@ -222,42 +223,68 @@ export default function PublicProjectPage({ shareToken }) {
           </aside>
         </div>
 
-        <div className="parts-project-list">
-          <div className="parts-project-heading">
-            <h3>Peças do projeto</h3>
-            <span>
-              {parts.length} item{parts.length !== 1 ? "s" : ""}
-            </span>
-          </div>
+        <div className="project-parts">
+          <header className="project-parts-header">
+            <div className="project-parts-heading">
+              <h3>Peças do projeto</h3>
+              <span className="project-parts-count">{parts.length}</span>
+            </div>
+          </header>
 
           {parts.length === 0 ? (
-            <div className="empty-state parts-empty">
-              <p>Nenhuma peça adicionada.</p>
+            <div className="project-parts-empty">
+              <div className="project-parts-empty-icon">
+                <Package size={24} />
+              </div>
+              <strong>Nenhuma peça adicionada</strong>
+              <p>Este projeto ainda não tem peças cadastradas.</p>
             </div>
           ) : (
-            parts.map((item) => {
-              const quantity = Number(item.quantity || 1);
-              const unitPrice = Number(item.priceAtTime || 0);
+            <>
+              <div className="project-parts-list">
+                {parts.map((item) => {
+                  const name = item.part?.name || `Peça #${item.partId}`;
+                  const quantity = Number(item.quantity || 1);
+                  const unitPrice = Number(item.priceAtTime || 0);
 
-              return (
-                <article
-                  className="project-part-row public-part-row"
-                  key={item.id}
-                >
-                  <div className="project-part-info">
-                    <h4>{item.part?.name || `Peça #${item.partId}`}</h4>
-                    {item.part?.brand && <span>{item.part.brand}</span>}
-                  </div>
+                  return (
+                    <article
+                      className="part-card part-card--readonly"
+                      key={item.id}
+                    >
+                      <PartThumb part={item.part} />
 
-                  <div className="project-part-price">
-                    <span>
-                      {quantity} × {formatCurrency(unitPrice)}
-                    </span>
-                    <strong>{formatCurrency(unitPrice * quantity)}</strong>
-                  </div>
-                </article>
-              );
-            })
+                      <div className="part-card-info">
+                        <h4>{name}</h4>
+
+                        <div className="part-card-meta">
+                          {item.part?.brand && (
+                            <span className="part-card-brand">
+                              {item.part.brand}
+                            </span>
+                          )}
+                          <span>{formatCurrency(unitPrice)} un.</span>
+                        </div>
+                      </div>
+
+                      <span className="part-qty-static">× {quantity}</span>
+
+                      <strong className="part-card-subtotal">
+                        {formatCurrency(unitPrice * quantity)}
+                      </strong>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <footer className="project-parts-footer">
+                <span>
+                  Total estimado · {parts.length} peça
+                  {parts.length !== 1 ? "s" : ""}
+                </span>
+                <strong>{formatCurrency(total)}</strong>
+              </footer>
+            </>
           )}
         </div>
       </section>
