@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { CarFront, Heart } from "lucide-react";
 import { useGlobalLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
@@ -191,17 +191,33 @@ export default function FeedPage() {
               const likesCount = Number(project.likesCount || 0);
               const published = formatDate(project.publishedAt);
 
+              const authorInfo = (
+                <>
+                  <div className="feed-post-avatar" aria-hidden="true">
+                    {authorName.charAt(0).toUpperCase()}
+                  </div>
+
+                  <div className="feed-post-author">
+                    <strong>{authorName}</strong>
+                    {published && <span>{published}</span>}
+                  </div>
+                </>
+              );
+
               return (
                 <article className="feed-post" key={project.id}>
                   <header className="feed-post-header">
-                    <div className="feed-post-avatar" aria-hidden="true">
-                      {authorName.charAt(0).toUpperCase()}
-                    </div>
-
-                    <div className="feed-post-author">
-                      <strong>{authorName}</strong>
-                      {published && <span>{published}</span>}
-                    </div>
+                    {project.author?.username ? (
+                      <Link
+                        to={`/perfil/${project.author.username}`}
+                        className="feed-post-author-link"
+                        aria-label={`Ver o perfil de ${authorName}`}
+                      >
+                        {authorInfo}
+                      </Link>
+                    ) : (
+                      authorInfo
+                    )}
                   </header>
 
                   <button

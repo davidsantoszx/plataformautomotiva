@@ -1,0 +1,155 @@
+/* =========================
+   TELA DE LOGIN: ESTRADA E CARRO
+========================= */
+
+/* o fundo que era do .auth-page passa para cá, para o carro ficar ATRÁS do card */
+.login-stage {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255, 90, 31, 0.1), transparent 35%),
+    #080a0d;
+}
+
+.login-stage .auth-page {
+  position: relative;
+  z-index: 1;
+  background: transparent;
+}
+
+.login-road {
+  /* AJUSTES: tamanho do carro, velocidade e altura da estrada */
+  --car-w: 260px;
+  --car-speed: 9s;
+  --road-bottom: 26px;
+
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* linha da estrada */
+.login-road-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: var(--road-bottom);
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.14) 15%,
+    rgba(255, 255, 255, 0.14) 85%,
+    transparent
+  );
+}
+
+/* faixas tracejadas que "correm" para trás, dando sensação de velocidade */
+.login-road-dashes {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--road-bottom) - 12px);
+  height: 2px;
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(255, 90, 31, 0.55) 0 28px,
+    transparent 28px 64px
+  );
+  animation: login-dashes 0.7s linear infinite;
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 15%,
+    #000 85%,
+    transparent
+  );
+  mask-image: linear-gradient(90deg, transparent, #000 15%, #000 85%, transparent);
+}
+
+@keyframes login-dashes {
+  to {
+    background-position: -64px 0;
+  }
+}
+
+/* o carro atravessa a tela da esquerda para a direita, em loop */
+.login-car {
+  position: absolute;
+  left: 0;
+  /* as rodas encostam na linha: o chão do desenho fica a ~11% da base do SVG */
+  bottom: calc(var(--road-bottom) - 0.11 * var(--car-w) * 84 / 320);
+  width: var(--car-w);
+  animation: login-drive var(--car-speed) linear infinite;
+  will-change: transform;
+}
+
+@keyframes login-drive {
+  0% {
+    transform: translateX(calc(-1 * var(--car-w) - 20px));
+  }
+  88% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(100vw);
+  }
+}
+
+.login-car svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+/* balanço leve da suspensão */
+.login-car-bob {
+  animation: login-bob 0.45s ease-in-out infinite alternate;
+}
+
+@keyframes login-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-1.5px);
+  }
+}
+
+.login-car-wheel-spin {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: login-wheel 0.55s linear infinite;
+}
+
+@keyframes login-wheel {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 650px) {
+  .login-road {
+    --car-w: 150px;
+    --road-bottom: 18px;
+  }
+}
+
+/* quem prefere menos movimento vê o carro parado, sem animação */
+@media (prefers-reduced-motion: reduce) {
+  .login-car,
+  .login-car-bob,
+  .login-car-wheel-spin,
+  .login-road-dashes {
+    animation: none;
+  }
+
+  .login-car {
+    transform: translateX(24px);
+  }
+}

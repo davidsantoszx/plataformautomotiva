@@ -1195,7 +1195,7 @@
                 }
               },
               "username": {
-                "nullable": true,
+                "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
@@ -2541,7 +2541,7 @@
                 "username": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
-                  "nullable": true
+                  "nullable": false
                 }
               },
               "foreignKeys": [],
@@ -2782,7 +2782,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "9a5b31eb323d75a54cee3b11dc234492dc49ee8fb493606bc0e69ffccae6c318"
+    "storageHash": "72c80b3eeb8bed78ed011386718d7d05dd7cf39f03bcb1ae2a568d43619e69b7"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

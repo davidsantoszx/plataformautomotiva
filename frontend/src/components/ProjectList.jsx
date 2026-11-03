@@ -127,7 +127,8 @@ async function confirmDelete() {
           )}
         </div>
 
-        {onCreate && (
+        {/* sem projetos, o único botão de criar fica no estado vazio abaixo */}
+        {onCreate && hasProjects && (
           <button className="primary-button" type="button" onClick={onCreate}>
             + Novo projeto
           </button>

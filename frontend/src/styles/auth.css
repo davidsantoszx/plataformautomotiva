@@ -111,3 +111,9 @@
     padding: 28px 22px;
   }
 }
+
+.required-mark {
+  margin-left: 3px;
+  color: #ef4444;
+  font-weight: 900;
+}

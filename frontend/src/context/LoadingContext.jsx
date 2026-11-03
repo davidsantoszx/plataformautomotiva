@@ -10,9 +10,12 @@ import {
 } from "react";
 import LoadingScreen from "../components/LoadingScreen";
 
-const MIN_COVER = 900; // tempo mínimo da montagem antes de inverter
-const INVERT_HOLD = 400; // símbolo parado no fundo laranja
-const OUT_TOTAL = 800; // saída do overlay + entrada do conteúdo
+// Tempos em ms. Eles andam junto com as variáveis do topo de styles/loading.css:
+// - MIN_COVER  >= tempo da montagem da engrenagem (hoje ~460ms)
+// - OUT_TOTAL  >= saída do overlay e entrada do conteúdo (hoje 500ms)
+const MIN_COVER = 600; // tempo mínimo da montagem antes de inverter
+const INVERT_HOLD = 200; // símbolo parado no fundo laranja
+const OUT_TOTAL = 500; // saída do overlay + entrada do conteúdo
 
 // fases: "idle" -> "cover" (montando) -> "invert" -> "out" -> "idle"
 const LoadingContext = createContext(null);

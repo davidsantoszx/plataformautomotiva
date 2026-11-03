@@ -1,16 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef(null);
 
   const displayName = user?.name || user?.username || user?.email || "Usuário";
   const initial = displayName.trim().charAt(0).toUpperCase();
+  const profilePath = user?.username ? `/perfil/${user.username}` : null;
 
   // fecha o menu ao clicar fora ou apertar Esc
   useEffect(() => {
@@ -32,6 +34,16 @@ export default function Navbar() {
       document.removeEventListener("keydown", handleKey);
     };
   }, []);
+
+  // fecha o menu ao trocar de página
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
+  function handleProfile() {
+    setMenuOpen(false);
+    navigate(profilePath);
+  }
 
   function handleLogout() {
     setMenuOpen(false);
@@ -70,8 +82,20 @@ export default function Navbar() {
             <div className="user-menu-dropdown" role="menu">
               <div className="user-menu-info">
                 <strong>{displayName}</strong>
+                {user?.username && <span>@{user.username}</span>}
                 {user?.email && <span>{user.email}</span>}
               </div>
+
+              {profilePath && (
+                <button
+                  type="button"
+                  className="user-menu-item"
+                  role="menuitem"
+                  onClick={handleProfile}
+                >
+                  Meu perfil
+                </button>
+              )}
 
               <button
                 type="button"

@@ -1,18 +1,34 @@
 /* =========================
    TELA DE CARREGAMENTO
-   cover  -> escuro, o carro se monta a cada piscada (3 piscadas)
-   invert -> fundo laranja, carro escuro, montado e parado
+   cover  -> escuro, a engrenagem se monta
+   invert -> fundo laranja, engrenagem escura, montada e parada
    out    -> overlay some, conteúdo entra um pouco depois
 
-   Tempo de uma piscada: --loader-blink. O carro leva 3 piscadas para
-   se montar, então MIN_COVER no LoadingContext deve ser 3 x --loader-blink
-   (0.48s x 3 = 1440ms).
+   VELOCIDADE: ajuste os tempos aqui e as 3 constantes no topo do
+   LoadingContext.jsx. Eles precisam andar juntos:
+
+   MIN_COVER   >= tempo da montagem  (atraso máximo x --loader-stagger
+                                       + --loader-piece)
+   INVERT_HOLD  = quanto o símbolo fica parado no laranja
+   OUT_TOTAL   >= --loader-out e (--loader-content-delay + --loader-content)
 ========================= */
 
 :root {
   --loader-dark: #07090b;
   --loader-accent: #ff5a1f;
-  --loader-blink: 0.26s;
+
+  /* montagem */
+  --loader-piece: 0.28s; /* duração de cada peça entrando */
+  --loader-stagger: 0.6; /* multiplica os atrasos entre peças (menor = mais junto) */
+  --loader-turn: 0.42s; /* giro da engrenagem */
+
+  /* piscada: a troca de cor escuro <-> laranja */
+  --loader-flip: 0.08s;
+
+  /* saída */
+  --loader-out: 0.3s; /* o overlay some */
+  --loader-content: 0.35s; /* o conteúdo entra */
+  --loader-content-delay: 0.15s; /* o conteúdo espera o símbolo sair */
 }
 
 /* evita flash branco atrás do overlay */
@@ -28,10 +44,10 @@ html[data-loading="invert"] #root {
   opacity: 0;
 }
 
-/* conteúdo entra DEPOIS do símbolo começar a sair (delay de .25s) */
+/* conteúdo entra DEPOIS do símbolo começar a sair */
 html[data-loading="out"] #root {
   opacity: 1;
-  transition: opacity 0.5s ease 0.25s;
+  transition: opacity var(--loader-content) ease var(--loader-content-delay);
 }
 
 .loader {
@@ -43,56 +59,55 @@ html[data-loading="out"] #root {
   background: var(--loader-dark);
   color: var(--loader-accent);
   transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
+    background-color var(--loader-flip) ease,
+    color var(--loader-flip) ease;
 }
 
 .loader-car {
   width: clamp(110px, 17vw, 180px);
   height: auto;
   overflow: visible; /* as peças começam fora do desenho */
-  opacity: 0.18;
-  animation: loader-pulse var(--loader-blink) ease-in-out infinite;
 }
 
-/* remova loader-pulse, loader-assemble e a linha animation do .loader-car */
+/* cada peça entra deslizando; --d (do JSX) escalonado por --loader-stagger */
 .loader-piece {
-  animation: piece-in 0.4s cubic-bezier(0.2, 0.9, 0.25, 1) var(--d, 0ms) both;
+  animation: piece-in var(--loader-piece) cubic-bezier(0.2, 0.9, 0.25, 1)
+    calc(var(--d, 0ms) * var(--loader-stagger)) both;
 }
 
 @keyframes piece-in {
-  from { opacity: 0; transform: translate(0, var(--y)); }
-  to   { opacity: 1; transform: translate(0, 0); }
+  from {
+    opacity: 0;
+    transform: translate(0, var(--y));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
 }
 
 .gear-spin {
-  animation: gear-turn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: gear-turn var(--loader-turn) cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 @keyframes gear-turn {
-  from { transform: rotate(-90deg); }
-  to   { transform: rotate(0deg); }
+  from {
+    transform: rotate(-90deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
 }
 
-.loader[data-phase="invert"] .gear-spin,
-.loader[data-phase="out"] .gear-spin {
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .loader-piece, .gear-spin { animation: none; }
-}
- 
-/* fundo inverte: laranja com o carro escuro, montado e parado */
+/* fundo inverte: laranja com a engrenagem escura, montada e parada */
 .loader[data-phase="invert"] {
   background: var(--loader-accent);
   color: var(--loader-dark);
 }
 
-.loader[data-phase="invert"] .loader-car {
+.loader[data-phase="invert"] .gear-spin,
+.loader[data-phase="out"] .gear-spin {
   animation: none;
-  opacity: 1;
-  filter: none;
 }
 
 .loader[data-phase="invert"] .loader-piece,
@@ -101,27 +116,24 @@ html[data-loading="out"] #root {
   transform: none;
 }
 
-/* saída: overlay some e o carro se afasta um pouco */
+/* saída: overlay some e o símbolo se afasta um pouco */
 .loader[data-phase="out"] {
   background: var(--loader-accent);
   color: var(--loader-dark);
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.5s ease;
+  transition: opacity var(--loader-out) ease;
 }
 
 .loader[data-phase="out"] .loader-car {
-  animation: none;
-  opacity: 1;
-  filter: none;
   transform: scale(1.12);
-  transition: transform 0.5s ease;
+  transition: transform var(--loader-out) ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  /* sem peças voando: o carro já aparece montado e só pulsa devagar */
-  .loader-piece {
+  /* sem peças deslizando nem giro: a engrenagem já aparece montada */
+  .loader-piece,
+  .gear-spin {
     animation: none;
   }
-
 }

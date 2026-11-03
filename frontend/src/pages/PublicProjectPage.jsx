@@ -106,7 +106,7 @@ export default function PublicProjectPage({ shareToken }) {
         to={token ? "/feed" : "/login"}
         className="secondary-button public-header-link"
       >
-        {token ? "Ver feed" : "Entrar"}
+        {token ? "Voltar ao feed" : "Entrar"}
       </Link>
     </header>
   );
@@ -172,8 +172,20 @@ export default function PublicProjectPage({ shareToken }) {
 
               <span className="project-vehicle">{vehicleName}</span>
 
-              <span className="project-date">
-                por {authorName}
+                            <span className="project-date">
+                {project.author?.username ? (
+                  <Link
+                    to={`/perfil/${project.author.username}`}
+                    className="project-author-link"
+                  >
+                    <span className="project-author-avatar" aria-hidden="true">
+                      {authorName.charAt(0).toUpperCase()}
+                    </span>
+                    {authorName}
+                  </Link>
+                ) : (
+                  <>por {authorName}</>
+                )}
                 {published && ` · ${published}`}
               </span>
             </div>

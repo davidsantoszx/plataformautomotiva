@@ -70,7 +70,7 @@ async function getAuthor(userId: number) {
 
 // Resumo do veículo: serve tanto para o rótulo ("Chevrolet Astra 2011")
 // quanto para o 3D (o frontend usa id e model3dUrl para achar o modelo).
-async function getVehicleSummary(vehicleId: number) {
+export async function getVehicleSummary(vehicleId: number) {
   const vehicle = await db.orm.public.Vehicle.select(
     "id",
     "generationId",

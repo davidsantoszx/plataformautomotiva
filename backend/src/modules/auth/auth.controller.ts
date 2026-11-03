@@ -40,6 +40,31 @@ export async function register(req: Request, res: Response) {
     })
   } catch (error) {
     if (error instanceof Error) {
+      if (error.message === 'USERNAME_REQUIRED') {
+        return res.status(400).json({
+          message: 'Escolha um username',
+        })
+      }
+
+      if (error.message === 'USERNAME_INVALID_CHARS') {
+        return res.status(400).json({
+          message:
+            'O username só pode ter letras minúsculas, números e _',
+        })
+      }
+
+      if (error.message === 'USERNAME_TOO_SHORT') {
+        return res.status(400).json({
+          message: 'O username precisa ter no mínimo 6 caracteres',
+        })
+      }
+
+      if (error.message === 'USERNAME_TOO_LONG') {
+        return res.status(400).json({
+          message: 'O username pode ter no máximo 15 caracteres',
+        })
+      }
+
       if (error.message === 'EMAIL_ALREADY_EXISTS') {
         return res.status(409).json({
           message: 'Email já cadastrado',

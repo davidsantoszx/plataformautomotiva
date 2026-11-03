@@ -19,6 +19,7 @@ import NewProjectPage from "./pages/NewProjectPage";
 import ProjectPage from "./pages/ProjectPage";
 import ConfiguratorPage from "./pages/ConfiguratorPage";
 import FeedPage from "./pages/FeedPage";
+import ProfilePage from "./pages/ProfilePage";
 
 function LandingRoute() {
   const { token } = useAuth();
@@ -42,6 +43,17 @@ function PublicProjectRoute() {
   return <PublicProjectPage shareToken={shareToken} />;
 }
 
+// /perfil leva para o perfil de quem está logado
+function OwnProfileRoute() {
+  const { user } = useAuth();
+
+  if (user?.username) {
+    return <Navigate to={`/perfil/${user.username}`} replace />;
+  }
+
+  return <Navigate to="/projetos" replace />;
+}
+
 export default function App() {
   return (
     <ToastProvider>
@@ -56,6 +68,8 @@ export default function App() {
           <Route path="/projetos/:id" element={<ProjectPage />} />
           <Route path="/projetos/:id/configurar" element={<ConfiguratorPage />} />
           <Route path="/feed" element={<FeedPage />} />
+          <Route path="/perfil" element={<OwnProfileRoute />} />
+          <Route path="/perfil/:username" element={<ProfilePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

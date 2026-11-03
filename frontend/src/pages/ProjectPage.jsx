@@ -12,13 +12,13 @@ import {
   Trash2,
 } from "lucide-react";
 import CarPreview3D from "../components/CarPreview3D";
+import PartThumb from "../components/PartThumb";
 
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
 import { vehicleLabel } from "../utils/vehicleLabel";
 import {
-  assetUrl,
   getProject,
   getProjectParts,
   updateProject,
@@ -47,23 +47,6 @@ function formatDate(value) {
     month: "short",
     year: "numeric",
   });
-}
-
-// Miniatura da peça: usa a imagem cadastrada ou, se não houver (ou falhar),
-// um ícone.
-function PartThumb({ part }) {
-  const [failed, setFailed] = useState(false);
-  const src = part?.imageUrl ? assetUrl(part.imageUrl) : "";
-
-  return (
-    <div className="part-thumb">
-      {src && !failed ? (
-        <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} />
-      ) : (
-        <Package size={22} />
-      )}
-    </div>
-  );
 }
 
 function RenameModal({ project, loading, onSave, onClose }) {

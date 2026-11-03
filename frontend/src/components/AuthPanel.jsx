@@ -1,3 +1,39 @@
+import { useState } from 'react'
+
+const USERNAME_MIN = 6
+const USERNAME_MAX = 15
+
+// asterisco vermelho ao lado do nome do campo obrigatório
+function Required() {
+  return (
+    <span className="required-mark" aria-hidden="true">
+      *
+    </span>
+  )
+}
+
+// Devolve a mensagem do primeiro problema do username, ou '' se estiver ok.
+// A mesma regra vale no servidor (users.service.ts).
+function validateUsername(value) {
+  const username = value.trim()
+
+  if (!username) return 'Escolha um username.'
+
+  if (!/^[a-z0-9_]+$/.test(username)) {
+    return 'O username só pode ter letras minúsculas, números e _.'
+  }
+
+  if (username.length < USERNAME_MIN) {
+    return `O username precisa ter no mínimo ${USERNAME_MIN} caracteres.`
+  }
+
+  if (username.length > USERNAME_MAX) {
+    return `O username pode ter no máximo ${USERNAME_MAX} caracteres.`
+  }
+
+  return ''
+}
+
 export default function AuthPanel({
   mode,
   email,
@@ -16,6 +52,29 @@ export default function AuthPanel({
   onBack,
 }) {
   const isRegister = mode === 'register'
+
+  // erro de validação do formulário (só aparece ao tentar cadastrar)
+  const [fieldError, setFieldError] = useState('')
+
+  function handleSubmit(event) {
+    if (isRegister) {
+      const problem = validateUsername(username)
+
+      if (problem) {
+        event.preventDefault()
+        setFieldError(problem)
+        return
+      }
+    }
+
+    setFieldError('')
+    onSubmit(event)
+  }
+
+  function handleModeChange(nextMode) {
+    setFieldError('')
+    onModeChange(nextMode)
+  }
 
   return (
     <main className="auth-page">
@@ -48,7 +107,7 @@ export default function AuthPanel({
           <button
             type="button"
             className={!isRegister ? 'active' : ''}
-            onClick={() => onModeChange('login')}
+            onClick={() => handleModeChange('login')}
           >
             Entrar
           </button>
@@ -56,7 +115,7 @@ export default function AuthPanel({
           <button
             type="button"
             className={isRegister ? 'active' : ''}
-            onClick={() => onModeChange('register')}
+            onClick={() => handleModeChange('register')}
           >
             Cadastrar
           </button>
@@ -64,13 +123,13 @@ export default function AuthPanel({
 
         <form
           className="auth-form"
-          onSubmit={onSubmit}
+          onSubmit={handleSubmit}
         >
           {isRegister && (
             <>
               <div className="form-field">
                 <label htmlFor="auth-name">
-                  Nome
+                  Nome (opcional)
                 </label>
 
                 <input
@@ -86,15 +145,23 @@ export default function AuthPanel({
               <div className="form-field">
                 <label htmlFor="auth-username">
                   Username
+                  <Required />
                 </label>
 
+                {/* maiúsculas viram minúsculas ao digitar; o resto é validado
+                    ao clicar em "Criar conta" */}
                 <input
                   id="auth-username"
                   value={username}
-                  onChange={(event) =>
-                    onUsernameChange(event.target.value)
-                  }
-                  placeholder="Seu username"
+                  onChange={(event) => {
+                    setFieldError('')
+                    onUsernameChange(event.target.value.toLowerCase())
+                  }}
+                  placeholder="seu_username"
+                  aria-required="true"
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  spellCheck={false}
                 />
               </div>
             </>
@@ -103,6 +170,7 @@ export default function AuthPanel({
           <div className="form-field">
             <label htmlFor="auth-email">
               Email
+              <Required />
             </label>
 
             <input
@@ -113,12 +181,14 @@ export default function AuthPanel({
                 onEmailChange(event.target.value)
               }
               placeholder="seu@email.com"
+              aria-required="true"
             />
           </div>
 
           <div className="form-field">
             <label htmlFor="auth-password">
               Senha
+              <Required />
             </label>
 
             <input
@@ -129,6 +199,7 @@ export default function AuthPanel({
                 onPasswordChange(event.target.value)
               }
               placeholder="Sua senha"
+              aria-required="true"
             />
           </div>
 
@@ -145,9 +216,9 @@ export default function AuthPanel({
           </button>
         </form>
 
-        {error && (
+        {(fieldError || error) && (
           <p className="message message-error">
-            {error}
+            {fieldError || error}
           </p>
         )}
 

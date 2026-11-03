@@ -1,5 +1,5 @@
-import { createContext, useContext, useState } from "react";
-import { loginUser, registerUser } from "../services/api";
+import { createContext, useContext, useEffect, useState } from "react";
+import { getMe, loginUser, registerUser } from "../services/api";
 
 const TOKEN_KEY = "plataforma_automotiva_token";
 const USER_KEY = "plataforma_automotiva_user";
@@ -20,6 +20,29 @@ export function AuthProvider({ children }) {
     () => localStorage.getItem(TOKEN_KEY) || "",
   );
   const [user, setUser] = useState(getStoredUser);
+
+  // Atualiza o usuário guardado com o que está no banco. Sessões antigas ficam
+  // sem campos novos (como o username) até a pessoa sair e entrar de novo.
+  useEffect(() => {
+    if (!token) return undefined;
+
+    let cancelled = false;
+
+    getMe(token)
+      .then((data) => {
+        if (cancelled || !data?.user) return;
+
+        localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+        setUser(data.user);
+      })
+      .catch(() => {
+        // sem rede ou token vencido: segue com o que já estava guardado
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
 
   async function login(email, password) {
     const data = await loginUser(email, password);

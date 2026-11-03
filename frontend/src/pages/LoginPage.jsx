@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import AuthPanel from "../components/AuthPanel";
+import LoginRoad from "../components/LoginRoad";
 import { useAuth } from "../context/AuthContext";
 import { useGlobalLoading } from "../context/LoadingContext";
 export default function LoginPage() {
@@ -72,22 +73,26 @@ export default function LoginPage() {
   }
 
   return (
-    <AuthPanel
-      mode={mode}
-      email={email}
-      password={password}
-      name={name}
-      username={username}
-      loading={loading}
-      error={error}
-      message={message}
-      onModeChange={setMode}
-      onEmailChange={setEmail}
-      onPasswordChange={setPassword}
-      onNameChange={setName}
-      onUsernameChange={setUsername}
-      onSubmit={mode === "login" ? handleLogin : handleRegister}
-      onBack={() => navigate("/")}
-    />
+    <div className="login-stage">
+      <LoginRoad />
+
+      <AuthPanel
+        mode={mode}
+        email={email}
+        password={password}
+        name={name}
+        username={username}
+        loading={loading}
+        error={error}
+        message={message}
+        onModeChange={setMode}
+        onEmailChange={setEmail}
+        onPasswordChange={setPassword}
+        onNameChange={setName}
+        onUsernameChange={setUsername}
+        onSubmit={mode === "login" ? handleLogin : handleRegister}
+        onBack={() => navigate("/")}
+      />
+    </div>
   );
 }

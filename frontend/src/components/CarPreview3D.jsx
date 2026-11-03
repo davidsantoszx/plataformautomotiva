@@ -1,7 +1,17 @@
 import { Suspense } from "react";
 import { Canvas } from "@react-three/fiber";
-import { Bounds, Environment, OrbitControls } from "@react-three/drei";
+import {
+  Bounds,
+  ContactShadows,
+  Environment,
+  OrbitControls,
+} from "@react-three/drei";
 import CarScene from "./CarScene";
+
+// Quão perto a câmera fica do carro. MENOR = carro maior e mais perto;
+// MAIOR = mais folga ao redor. Se o carro ficar cortado nas bordas, suba um
+// pouco (ex.: 0.9); se quiser ainda maior, desça (ex.: 0.7).
+const FIT_MARGIN = 1.0;
 
 export default function CarPreview3D({
   modelUrl,
@@ -35,9 +45,22 @@ export default function CarPreview3D({
 
         <Suspense fallback={null}>
           <Environment preset="studio" environmentIntensity={0.8} />
-          <Bounds fit clip observe margin={0.45}>
-            <CarScene modelUrl={modelUrl} parts={parts} />
+
+          {/* O Bounds enquadra tudo o que está dentro dele. A sombra (um plano
+              de 8x8) fica FORA, senão o carro é enquadrado como se fosse do
+              tamanho dela e aparece pequeno. */}
+          <Bounds fit clip observe margin={FIT_MARGIN}>
+            <CarScene modelUrl={modelUrl} parts={parts} shadow={false} />
           </Bounds>
+
+          <ContactShadows
+            position={[0, -0.75, 0]}
+            opacity={0.55}
+            scale={8}
+            blur={2.5}
+            far={4}
+            frames={2}
+          />
         </Suspense>
 
         <OrbitControls
@@ -54,8 +77,10 @@ export default function CarPreview3D({
       </Canvas>
 
       <span className="car-preview-hint">
-  {zoomable ? "Arraste para girar · role para aproximar" : "Arraste para girar"}
-</span>
+        {zoomable
+          ? "Arraste para girar · role para aproximar"
+          : "Arraste para girar"}
+      </span>
     </div>
   );
 }

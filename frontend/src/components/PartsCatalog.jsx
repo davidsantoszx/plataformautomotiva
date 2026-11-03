@@ -82,9 +82,7 @@ export default function PartsCatalog({
                     (item) => item.partId === part.id,
                   );
 
-                  const isReal = currentProject
-                    ? currentProject.mode === "REAL"
-                    : projectMode === "REAL";
+                  const isReal = currentProject?.mode === "REAL";
 
                   const missing = isReal && !compatibility;
 
@@ -159,20 +157,20 @@ export default function PartsCatalog({
                             Remover peça
                           </button>
                         ) : (
-                          <button
-                            className="primary-button full-width"
-                            type="button"
-                            disabled={missing || incompatible}
-                            onClick={() => onAddPart(part)}
-                          >
-                            {incompatible
-                              ? "Incompatível"
-                              : missing
-                                ? "Compatibilidade não cadastrada"
-                                : adaptation
-                                  ? "Adicionar com adaptação"
-                                  : "Adicionar ao projeto"}
-                          </button>
+                          // sem compatibilidade ou incompatível: só o aviso
+                          // acima, sem botão
+                          !missing &&
+                          !incompatible && (
+                            <button
+                              className="primary-button full-width"
+                              type="button"
+                              onClick={() => onAddPart(part)}
+                            >
+                              {adaptation
+                                ? "Adicionar com adaptação"
+                                : "Adicionar ao projeto"}
+                            </button>
+                          )
                         )}
                       </div>
                     </article>

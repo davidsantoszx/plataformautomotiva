@@ -52,6 +52,12 @@ export default function ConfiguratorPage() {
 
   // ids das peças como estavam no banco quando a tela abriu
   const initialPartIdsRef = useRef([]);
+  // detalhes dessas mesmas peças (o rascunho pode remover peças de
+  // projectPartDetails, mas a capa precisa do estado que está salvo)
+  const initialDetailsRef = useRef({});
+
+  // cena usada na foto da capa quando a pessoa sai sem salvar
+  const [captureScene, setCaptureScene] = useState(null);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -92,6 +98,8 @@ export default function ConfiguratorPage() {
         initialPartIdsRef.current = (partsData.parts || []).map(
           (item) => item.partId,
         );
+
+        initialDetailsRef.current = details;
 
         setProject(loadedProject);
         // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
@@ -308,12 +316,42 @@ export default function ConfiguratorPage() {
 
   const backToProject = () => navigate(`/projetos/${project.id}`);
 
-  // Cancelar: sai sem salvar (pede confirmação só se houver alterações)
+  // Sai sem salvar. Se o projeto ainda não tem capa (ex.: acabou de ser criado),
+  // fotografa o carro como está SALVO no banco, sem as peças do rascunho.
+  function leaveWithoutSaving() {
+    if (savingRef.current) return;
+    setConfirmOpen(false);
+
+    if (project.coverUrl || !vehicle) {
+      backToProject();
+      return;
+    }
+
+    const savedDetails = {};
+    initialPartIdsRef.current.forEach((partId) => {
+      if (initialDetailsRef.current[partId]) {
+        savedDetails[partId] = initialDetailsRef.current[partId];
+      }
+    });
+
+    const savedScene = build3DScene(vehicle, savedDetails);
+
+    if (!savedScene.modelUrl) {
+      backToProject();
+      return;
+    }
+
+    savingRef.current = true;
+    setCaptureScene(savedScene);
+    setCapturing(true);
+  }
+
+  // Cancelar: pede confirmação só se houver alterações
   function handleCancel() {
-    if (saving) return;
+    if (saving || capturing) return;
 
     if (isDirty) setConfirmOpen(true);
-    else backToProject();
+    else leaveWithoutSaving();
   }
 
   async function handleSave() {
@@ -401,8 +439,8 @@ export default function ConfiguratorPage() {
 
       {capturing && (
         <CoverCapture
-          modelUrl={vehicleModelUrl}
-          parts={visible3DParts}
+          modelUrl={captureScene?.modelUrl ?? vehicleModelUrl}
+          parts={captureScene?.parts ?? visible3DParts}
           onCapture={handleCoverCaptured}
         />
       )}
@@ -436,7 +474,7 @@ export default function ConfiguratorPage() {
               <button
                 type="button"
                 className="configurator-danger-button"
-                onClick={backToProject}
+                onClick={leaveWithoutSaving}
               >
                 Descartar alterações
               </button>

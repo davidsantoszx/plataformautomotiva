@@ -504,3 +504,34 @@ export async function uploadProjectCover(token, projectId, image) {
 
   return data
 }
+export async function getMe(token) {
+  const response = await fetch(`${API_URL}/users/me`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao buscar usuário')
+  }
+
+  return data
+}
+
+export async function getUserProfile(username) {
+  const response = await fetch(
+    `${API_URL}/users/${encodeURIComponent(username)}/profile`,
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(data.message || 'Erro ao carregar o perfil')
+    error.status = response.status
+    throw error
+  }
+
+  return data
+}
