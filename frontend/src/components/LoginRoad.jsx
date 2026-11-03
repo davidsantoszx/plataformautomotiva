@@ -1,4 +1,4 @@
-import "./LoginRoad.css";
+import "../styles/LoginRoad.css";
 
 // Estrada e carro em loop no rodapé da tela de login. É só decoração:
 // fica atrás do card, não recebe clique e some para quem prefere menos

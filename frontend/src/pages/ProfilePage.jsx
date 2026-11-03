@@ -5,7 +5,7 @@ import { useAuth } from "../context/AuthContext";
 import { useGlobalLoading } from "../context/LoadingContext";
 import { assetUrl, getUserProfile } from "../services/api";
 import { vehicleLabel } from "../utils/vehicleLabel";
-import "./ProfilePage.css";
+import "../styles/ProfilePage.css";
 
 // "2026-10-18 10:34:46.192495-03" -> Date
 function parseDate(value) {
