@@ -535,3 +535,22 @@ export async function getUserProfile(username) {
 
   return data
 }
+
+export async function deleteAccount(token, password) {
+  const response = await fetch(`${API_URL}/users/me`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ password }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao excluir a conta')
+  }
+
+  return data
+}

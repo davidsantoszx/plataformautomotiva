@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import DeleteAccountModal from "./DeleteAccountModal";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -8,6 +9,7 @@ export default function Navbar() {
   const location = useLocation();
 
   const [menuOpen, setMenuOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const menuRef = useRef(null);
 
   const displayName = user?.name || user?.username || user?.email || "Usuário";
@@ -49,6 +51,17 @@ export default function Navbar() {
     setMenuOpen(false);
     logout();
     navigate("/", { replace: true });
+  }
+
+  function handleOpenDelete() {
+    setMenuOpen(false);
+    setDeleteOpen(true);
+  }
+
+  // conta já apagada no servidor: limpa a sessão e volta para a landing page
+function handleAccountDeleted() {
+    logout();
+    window.location.replace("/");
   }
 
   return (
@@ -105,10 +118,26 @@ export default function Navbar() {
               >
                 Sair
               </button>
+
+              <button
+                type="button"
+                className="user-menu-item user-menu-item--danger"
+                role="menuitem"
+                onClick={handleOpenDelete}
+              >
+                Excluir conta
+              </button>
             </div>
           )}
         </div>
       </div>
+
+      {deleteOpen && (
+        <DeleteAccountModal
+          onClose={() => setDeleteOpen(false)}
+          onDeleted={handleAccountDeleted}
+        />
+      )}
     </nav>
   );
 }
