@@ -62,9 +62,26 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  // Limpa a sessão e troca de página recarregando o app, SEM mexer no estado do
+  // React. Assim as rotas protegidas não chegam a ver "sem usuário" e mandar
+  // para o login: a tela atual fica visível até a nova página carregar.
+  function logoutAndRedirect(path = "/") {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+
+    window.location.replace(path);
+  }
+
   return (
     <AuthContext.Provider
-      value={{ token, user, login, register: registerUser, logout }}
+      value={{
+        token,
+        user,
+        login,
+        register: registerUser,
+        logout,
+        logoutAndRedirect,
+      }}
     >
       {children}
     </AuthContext.Provider>

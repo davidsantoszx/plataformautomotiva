@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import DeleteAccountModal from "./DeleteAccountModal";
 
 export default function Navbar() {
-  const { user, logout } = useAuth();
+  const { user, logout, logoutAndRedirect } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -60,8 +60,7 @@ export default function Navbar() {
 
   // conta já apagada no servidor: limpa a sessão e volta para a landing page
 function handleAccountDeleted() {
-    logout();
-    window.location.replace("/");
+logoutAndRedirect("/");
   }
 
   return (
