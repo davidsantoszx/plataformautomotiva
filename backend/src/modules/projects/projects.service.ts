@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 
 import { db } from "../../prisma/db";
+import { FREE_PROJECT_LIMIT, getUserPlan } from "../plans/plans.service";
 
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -115,7 +116,7 @@ export async function getVehicleSummary(vehicleId: number) {
 }
 
 // Busca o resumo uma vez por veículo (vários projetos costumam repetir o carro).
-async function getVehicleSummaries(vehicleIds: number[]) {
+export async function getVehicleSummaries(vehicleIds: number[]) {
   const uniqueIds = [...new Set(vehicleIds)];
 
   const entries = await Promise.all(
@@ -168,12 +169,51 @@ export async function getProjectById(id: number, userId: number) {
   return { ...project, vehicle };
 }
 
+// Regras de plano ------------------------------------------------------------
+
+// Projeto livre só é editável por quem está no Pro. Quando o Pro vence, os
+// projetos livres continuam visíveis, mas ficam bloqueados para edição.
+async function assertCanEditProject(
+  project: { mode: string },
+  userId: number,
+) {
+  if (project.mode !== "FREE") return;
+
+  const { isPro } = await getUserPlan(userId);
+
+  if (!isPro) {
+    throw new Error("PROJECT_LOCKED");
+  }
+}
+
+// Criar (ou duplicar) um projeto: o Free só faz projeto real e até
+// FREE_PROJECT_LIMIT projetos. O Pro não tem restrição.
+async function assertCanCreateProject(userId: number, mode: string) {
+  const { isPro } = await getUserPlan(userId);
+
+  if (isPro) return;
+
+  if (mode === "FREE") {
+    throw new Error("PRO_REQUIRED");
+  }
+
+  const ownedProjects = await db.orm.public.Project.select("id")
+    .where({ userId })
+    .all();
+
+  if (ownedProjects.length >= FREE_PROJECT_LIMIT) {
+    throw new Error("PROJECT_LIMIT_REACHED");
+  }
+}
+
 export async function createProject(
   userId: number,
   vehicleId: number,
   name: string,
   mode: "REAL" | "FREE",
 ) {
+  await assertCanCreateProject(userId, mode);
+
   const vehicle = await db.orm.public.Vehicle.first({
     id: vehicleId,
   });
@@ -212,6 +252,16 @@ export async function updateProject(
 
   if (mode !== "REAL" && mode !== "FREE") {
     throw new Error("INVALID_PROJECT_MODE");
+  }
+
+  // Sem Pro só dá para ficar (ou virar) projeto real. Um projeto livre
+  // existente fica bloqueado; converter para real continua permitido.
+  if (mode === "FREE") {
+    const { isPro } = await getUserPlan(userId);
+
+    if (!isPro) {
+      throw new Error(project.mode === "FREE" ? "PROJECT_LOCKED" : "PRO_REQUIRED");
+    }
   }
 
   if (project.mode !== "REAL" && mode === "REAL") {
@@ -292,6 +342,8 @@ export async function duplicateProject(id: number, userId: number) {
   if (!project) {
     throw new Error("PROJECT_NOT_FOUND");
   }
+
+  await assertCanCreateProject(userId, project.mode);
 
   const duplicatedProject = await db.orm.public.Project.create({
     userId,
@@ -553,6 +605,8 @@ export async function addPartToProject(
     throw new Error("PROJECT_NOT_FOUND");
   }
 
+  await assertCanEditProject(project, userId);
+
   const part = await db.orm.public.Part.first({
     id: partId,
   });
@@ -613,6 +667,8 @@ export async function updateProjectPartQuantity(
     throw new Error("PROJECT_NOT_FOUND");
   }
 
+  await assertCanEditProject(project, userId);
+
   const projectPart = await db.orm.public.ProjectPart.first({
     projectId,
     partId,
@@ -640,6 +696,8 @@ export async function removePartFromProject(
   if (!project) {
     throw new Error("PROJECT_NOT_FOUND");
   }
+
+  await assertCanEditProject(project, userId);
 
   return db.orm.public.ProjectPart.where({
     projectId,

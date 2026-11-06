@@ -21,6 +21,23 @@ import {
   saveProjectCover,
 } from './projects.service'
 
+import { PLAN_ERROR_MESSAGES } from '../plans/plans.service'
+
+// Erros de plano (projeto livre só no Pro, limite do Free, projeto bloqueado)
+// viram 403 com uma mensagem e um "code" que o frontend pode usar.
+function planErrorResponse(error: unknown, res: Response) {
+  if (!(error instanceof Error)) return null
+
+  const message = PLAN_ERROR_MESSAGES[error.message]
+
+  if (!message) return null
+
+  return res.status(403).json({
+    message,
+    code: error.message,
+  })
+}
+
 export async function getProjects(
   req: AuthenticatedRequest,
   res: Response,
@@ -182,6 +199,10 @@ export async function postProject(
       project,
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (
       error instanceof Error &&
       error.message ===
@@ -257,6 +278,10 @@ export async function patchProject(
       project,
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (error instanceof Error) {
       if (
         error.message ===
@@ -382,6 +407,10 @@ export async function duplicateProjectController(
       project,
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (
       error instanceof Error &&
       error.message ===
@@ -646,6 +675,10 @@ export async function postProjectPart(
       projectPart,
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (error instanceof Error) {
       if (
         error.message ===
@@ -747,6 +780,10 @@ export async function patchProjectPart(
       projectPart,
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (error instanceof Error) {
       if (
         error.message ===
@@ -821,6 +858,10 @@ export async function deleteProjectPart(
         'Peça removida do projeto',
     })
   } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
     if (
       error instanceof Error &&
       error.message ===

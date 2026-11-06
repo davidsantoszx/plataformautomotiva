@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken'
 import bcrypt from 'bcrypt'
 
 import { db } from '../../prisma/db'
+import { getPlanInfo } from '../plans/plans.service'
 import { createUser } from '../users/users.service'
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -36,7 +37,10 @@ export async function register(req: Request, res: Response) {
 
     return res.status(201).json({
       message: 'Usuário criado com sucesso',
-      user,
+      user: {
+        ...user,
+        ...getPlanInfo(user),
+      },
     })
   } catch (error) {
     if (error instanceof Error) {
@@ -137,6 +141,7 @@ export async function login(req: Request, res: Response) {
         name: user.name,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        ...getPlanInfo(user),
       },
     })
   } catch (error) {

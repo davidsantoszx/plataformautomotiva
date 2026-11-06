@@ -1187,6 +1187,20 @@
                   "kind": "scalar"
                 }
               },
+              "plan": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "planExpiresAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -1250,6 +1264,12 @@
                 },
                 "password": {
                   "column": "password"
+                },
+                "plan": {
+                  "column": "plan"
+                },
+                "planExpiresAt": {
+                  "column": "planExpiresAt"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -2533,6 +2553,20 @@
                   "nativeType": "text",
                   "nullable": false
                 },
+                "plan": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "FREE"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "planExpiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
@@ -2782,7 +2816,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "72c80b3eeb8bed78ed011386718d7d05dd7cf39f03bcb1ae2a568d43619e69b7"
+    "storageHash": "e0413cb41a0196da6bda53b9286e373dcd49c61209b21a6f3476b26a4279598f"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

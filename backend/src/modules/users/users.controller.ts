@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 
 import type { AuthenticatedRequest } from '../../middlewares/auth.middleware'
 import { db } from '../../prisma/db'
+import { getPlanInfo } from '../plans/plans.service'
 import { getUserProfile } from './profile.service'
 import { deleteUser } from './users.service'
 
@@ -22,6 +23,8 @@ export async function getMe(
         'email',
         'username',
         'name',
+        'plan',
+        'planExpiresAt',
         'createdAt',
         'updatedAt',
       )
@@ -36,7 +39,10 @@ export async function getMe(
     }
 
     return res.json({
-      user,
+      user: {
+        ...user,
+        ...getPlanInfo(user),
+      },
     })
   } catch (error) {
     console.error(error)

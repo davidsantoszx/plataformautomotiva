@@ -77,6 +77,8 @@ export async function createUser(
         'email',
         'username',
         'name',
+        'plan',
+        'planExpiresAt',
         'createdAt',
         'updatedAt',
       )
