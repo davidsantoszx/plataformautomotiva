@@ -118,6 +118,7 @@ export default function CarViewer3D({
   onAddPart,
   onRemovePart,
   onCatalogCategoryChange,
+  readOnly = false,
 }) {
   const [catalogOpen, setCatalogOpen] = useState(true);
 
@@ -163,23 +164,31 @@ export default function CarViewer3D({
             <span className="configurator-dirty">● Alterações não salvas</span>
           )}
 
+          {readOnly && (
+            <span className="configurator-readonly">
+              🔒 Projeto livre bloqueado · só visualização
+            </span>
+          )}
+
           <button
             type="button"
             className="configurator-back-button"
             onClick={onCancel}
             disabled={saving}
           >
-            Cancelar
+            {readOnly ? "Voltar" : "Cancelar"}
           </button>
 
-          <button
-            type="button"
-            className="primary-button"
-            onClick={onSave}
-            disabled={saving}
-          >
-            {saving ? "Salvando..." : "Salvar"}
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              className="primary-button"
+              onClick={onSave}
+              disabled={saving}
+            >
+              {saving ? "Salvando..." : "Salvar"}
+            </button>
+          )}
         </div>
       </header>
 
@@ -196,6 +205,7 @@ export default function CarViewer3D({
               }`}
               onClick={() => onCategoryChange?.(id, label)}
               aria-pressed={selectedCategory === id}
+              disabled={readOnly}
             >
               <Icon size={19} />
               <span>{label}</span>
@@ -260,14 +270,16 @@ export default function CarViewer3D({
                         </span>
                       </div>
 
-                      <button
-                        type="button"
-                        className="summary-part-remove"
-                        onClick={() => onRemovePart?.(item.partId)}
-                        aria-label={`Remover ${part.name}`}
-                      >
-                        ✕
-                      </button>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          className="summary-part-remove"
+                          onClick={() => onRemovePart?.(item.partId)}
+                          aria-label={`Remover ${part.name}`}
+                        >
+                          ✕
+                        </button>
+                      )}
                     </div>
                   );
                 })
@@ -289,7 +301,7 @@ export default function CarViewer3D({
         </div>
       </div>
 
-      {selectedCategory && catalogOpen && (
+      {selectedCategory && catalogOpen && !readOnly && (
         <div className="configurator-catalog">
           <button
             type="button"

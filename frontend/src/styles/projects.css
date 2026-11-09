@@ -595,3 +595,113 @@
   background: rgba(220, 70, 60, 0.12);
   color: #ff8a6a;
 }
+
+/* ===== ETAPA 3 — planos nas telas de projeto =====
+   Cole no FIM do CSS que já tem .project-grid e .project-card (lista e página do projeto). */
+
+/* contador "3 de 4 projetos" */
+.projects-limit-note {
+  color: #ff7a49;
+  font-weight: 700;
+}
+
+/* selo "Bloqueado" no card */
+.project-locked-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(255, 90, 31, 0.12);
+  color: #ff7a49;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* ação desativada no menu do card */
+.project-card-menu button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.project-card-menu button:disabled:hover {
+  background: transparent;
+  color: #b8bec6;
+}
+
+/* aviso de projeto livre bloqueado (página do projeto) */
+.project-locked-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 90, 31, 0.35);
+  border-radius: 12px;
+  background: rgba(255, 90, 31, 0.06);
+  color: #ff7a49;
+}
+
+.project-locked-banner > div {
+  flex: 1;
+}
+
+.project-locked-banner strong {
+  display: block;
+  margin-bottom: 4px;
+  color: #fff;
+  font-size: 14px;
+}
+
+.project-locked-banner p {
+  margin: 0;
+  color: #9aa2ac;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+@media (max-width: 650px) {
+  .project-locked-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* botões de peça desativados (projeto bloqueado) */
+.part-qty button:disabled,
+.part-remove:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* modo fixo "Projeto Real" para quem está no Free (tela Montar projeto) */
+.mode-fixed {
+  max-width: 420px;
+  margin-bottom: 18px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 90, 31, 0.45);
+  border-radius: 12px;
+  background: rgba(255, 90, 31, 0.06);
+}
+
+.mode-fixed > span {
+  display: block;
+  margin-bottom: 8px;
+  color: #8b939d;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.mode-fixed p {
+  margin: 0 0 6px;
+  color: #e5e8eb;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.mode-fixed small {
+  color: #707984;
+  font-size: 12px;
+}

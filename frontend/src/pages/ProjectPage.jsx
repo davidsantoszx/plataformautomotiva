@@ -49,7 +49,7 @@ function formatDate(value) {
   });
 }
 
-function RenameModal({ project, loading, onSave, onClose }) {
+function RenameModal({ project, loading, canUseFreeMode, onSave, onClose }) {
   const [name, setName] = useState(project.name);
   const [mode, setMode] = useState(project.mode);
 
@@ -96,35 +96,37 @@ function RenameModal({ project, loading, onSave, onClose }) {
           />
         </div>
 
-        <div className="mode-selector">
-          <span>Modo do projeto</span>
+        {canUseFreeMode && (
+          <div className="mode-selector">
+            <span>Modo do projeto</span>
 
-          <div className="mode-options">
-            <label className={mode === "REAL" ? "selected" : ""}>
-              <input
-                type="radio"
-                name="rename-mode"
-                value="REAL"
-                checked={mode === "REAL"}
-                onChange={() => setMode("REAL")}
-              />
-              <strong>Projeto Real</strong>
-              <small>Respeita compatibilidades.</small>
-            </label>
+            <div className="mode-options">
+              <label className={mode === "REAL" ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name="rename-mode"
+                  value="REAL"
+                  checked={mode === "REAL"}
+                  onChange={() => setMode("REAL")}
+                />
+                <strong>Projeto Real</strong>
+                <small>Respeita compatibilidades.</small>
+              </label>
 
-            <label className={mode === "FREE" ? "selected" : ""}>
-              <input
-                type="radio"
-                name="rename-mode"
-                value="FREE"
-                checked={mode === "FREE"}
-                onChange={() => setMode("FREE")}
-              />
-              <strong>Projeto Livre</strong>
-              <small>Permite combinações livres.</small>
-            </label>
+              <label className={mode === "FREE" ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name="rename-mode"
+                  value="FREE"
+                  checked={mode === "FREE"}
+                  onChange={() => setMode("FREE")}
+                />
+                <strong>Projeto Livre</strong>
+                <small>Permite combinações livres.</small>
+              </label>
+            </div>
           </div>
-        </div>
+        )}
       </form>
     </Modal>
   );
@@ -205,7 +207,7 @@ function PublishModal({ project, loading, onSubmit, onClose }) {
 
 export default function ProjectPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
@@ -288,6 +290,10 @@ export default function ProjectPage() {
 
   const goToConfigurator = () => navigate(`/projetos/${id}/configurar`);
 
+  // Projeto livre só edita com o Pro ativo. Sem ele, fica visível mas bloqueado.
+  const isPro = Boolean(user?.isPro);
+  const isLocked = project?.mode === "FREE" && !isPro;
+
   async function handleSaveRename(name, mode) {
     if (!name.trim()) {
       setError("Informe um nome para o projeto.");
@@ -310,6 +316,23 @@ export default function ProjectPage() {
   }
 
 
+
+  // Saída para quem perdeu o Pro: virar projeto real (o servidor confere se
+  // todas as peças são compatíveis com o veículo).
+  async function handleConvertToReal() {
+    try {
+      setActionLoading(true);
+      setError("");
+
+      const data = await updateProject(token, project.id, project.name, "REAL");
+      setProject(data.project);
+      setNotice("Projeto convertido para Real.");
+    } catch (err) {
+      setError(err.message || "Erro ao converter o projeto.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
 
   async function handlePublish(name, description) {
     try {
@@ -365,7 +388,7 @@ export default function ProjectPage() {
   }
 
   async function handleUpdateQuantity(partId, quantity) {
-    if (!Number.isInteger(quantity) || quantity < 1) return;
+    if (isLocked || !Number.isInteger(quantity) || quantity < 1) return;
 
     try {
       const data = await updateProjectPartQuantity(
@@ -387,6 +410,8 @@ export default function ProjectPage() {
   }
 
   async function handleRemovePart(partId) {
+    if (isLocked) return;
+
     try {
       setError("");
       await removePartFromProject(token, project.id, partId);
@@ -466,29 +491,59 @@ export default function ProjectPage() {
           </div>
         </div>
 
-<div className="project-page-actions">
-  <button
-    className="primary-button"
-    type="button"
-    onClick={goToConfigurator}
-  >
-    Editar no 3D
-  </button>
+        <div className="project-page-actions">
+          <button
+            className="primary-button"
+            type="button"
+            onClick={goToConfigurator}
+          >
+            {isLocked ? "Ver no 3D" : "Editar no 3D"}
+          </button>
 
-  <button
-    type="button"
-    className="icon-button"
-    aria-label="Renomear projeto"
-    title="Renomear projeto"
-    onClick={() => setModal("rename")}
-  >
-    <Pencil size={18} />
-  </button>
-</div>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Renomear projeto"
+            title={
+              isLocked
+                ? "Projeto livre bloqueado: renove o Pro para editar"
+                : "Renomear projeto"
+            }
+            onClick={() => setModal("rename")}
+            disabled={isLocked}
+          >
+            <Pencil size={18} />
+          </button>
+        </div>
 
       </header>
 
       {error && <p className="message message-error">{error}</p>}
+
+      {isLocked && (
+        <div className="project-locked-banner">
+          <Lock size={20} />
+
+          <div>
+            <strong>Projeto livre bloqueado</strong>
+            <p>
+              Seu plano Pro não está ativo. Você continua vendo e publicando
+              este projeto, mas só volta a editá-lo ao renovar o Pro. Também é
+              possível convertê-lo para Projeto Real, desde que todas as peças
+              sejam compatíveis com o veículo.
+            </p>
+          </div>
+
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={handleConvertToReal}
+            disabled={actionLoading}
+          >
+            Converter para Real
+          </button>
+        </div>
+      )}
 
       <div className="project-overview">
         <div className="project-preview-card">
@@ -585,15 +640,17 @@ export default function ProjectPage() {
             <span className="project-parts-count">{projectParts.length}</span>
           </div>
 
-          <button
-            className="secondary-button project-parts-add"
-            type="button"
-            aria-label="Adicionar peças"
-            onClick={goToConfigurator}
-          >
-            <Plus size={15} />
-            <span>Adicionar peças</span>
-          </button>
+          {!isLocked && (
+            <button
+              className="secondary-button project-parts-add"
+              type="button"
+              aria-label="Adicionar peças"
+              onClick={goToConfigurator}
+            >
+              <Plus size={15} />
+              <span>Adicionar peças</span>
+            </button>
+          )}
         </header>
 
         {projectParts.length === 0 ? (
@@ -603,13 +660,15 @@ export default function ProjectPage() {
             </div>
             <strong>Nenhuma peça adicionada ainda</strong>
             <p>Abra o configurador 3D para escolher as peças do seu projeto.</p>
-            <button
-              className="primary-button"
-              type="button"
-              onClick={goToConfigurator}
-            >
-              Adicionar peças no 3D
-            </button>
+            {!isLocked && (
+              <button
+                className="primary-button"
+                type="button"
+                onClick={goToConfigurator}
+              >
+                Adicionar peças no 3D
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -644,7 +703,7 @@ export default function ProjectPage() {
                         onClick={() =>
                           handleUpdateQuantity(projectPart.partId, quantity - 1)
                         }
-                        disabled={quantity <= 1}
+                        disabled={isLocked || quantity <= 1}
                       >
                         <Minus size={14} />
                       </button>
@@ -654,6 +713,7 @@ export default function ProjectPage() {
                       <button
                         type="button"
                         aria-label="Aumentar quantidade"
+                        disabled={isLocked}
                         onClick={() =>
                           handleUpdateQuantity(projectPart.partId, quantity + 1)
                         }
@@ -671,6 +731,7 @@ export default function ProjectPage() {
                       type="button"
                       aria-label={`Remover ${name}`}
                       title="Remover do projeto"
+                      disabled={isLocked}
                       onClick={() => handleRemovePart(projectPart.partId)}
                     >
                       <Trash2 size={16} />
@@ -695,6 +756,7 @@ export default function ProjectPage() {
         <RenameModal
           project={project}
           loading={actionLoading}
+          canUseFreeMode={isPro}
           onSave={handleSaveRename}
           onClose={() => setModal(null)}
         />

@@ -29,7 +29,7 @@ const CATEGORY_ALIASES = {
 
 export default function ConfiguratorPage() {
   const { id } = useParams();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
 
   const [project, setProject] = useState(null);
@@ -64,6 +64,9 @@ export default function ConfiguratorPage() {
 
   // transição de carregamento: ao abrir (dados) e ao salvar (inclui a capa)
   useGlobalLoading(loading || saving || capturing);
+
+  // Projeto livre sem Pro ativo abre só para visualizar (o servidor também recusa).
+  const readOnly = project?.mode === "FREE" && !user?.isPro;
 
   useEffect(() => {
     let cancelled = false;
@@ -237,6 +240,11 @@ export default function ConfiguratorPage() {
 
   // Só altera o rascunho local. O banco é atualizado em handleSave.
   function handleAddPart(part) {
+    if (readOnly) {
+      setError("Projeto livre bloqueado: renove o Pro para editar.");
+      return;
+    }
+
     const compatibility = compatibilities[part.id];
     const isReal = project.mode === "REAL";
 
@@ -270,6 +278,8 @@ export default function ConfiguratorPage() {
   }
 
   function handleRemovePart(partId) {
+    if (readOnly) return;
+
     setError("");
     setProjectParts((current) =>
       current.filter((item) => item.partId !== partId),
@@ -350,12 +360,18 @@ export default function ConfiguratorPage() {
   function handleCancel() {
     if (saving || capturing) return;
 
+    // só visualização: não há o que salvar nem capa para refazer
+    if (readOnly) {
+      backToProject();
+      return;
+    }
+
     if (isDirty) setConfirmOpen(true);
     else leaveWithoutSaving();
   }
 
   async function handleSave() {
-    if (savingRef.current) return;
+    if (readOnly || savingRef.current) return;
     savingRef.current = true;
     setSaving(true);
     setError("");
@@ -423,6 +439,7 @@ export default function ConfiguratorPage() {
         onCancel={handleCancel}
         onSave={handleSave}
         projectMode={project.mode}
+        readOnly={readOnly}
         categories={categories}
         catalogParts={parts}
         compatibilities={compatibilities}

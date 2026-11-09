@@ -1,5 +1,12 @@
 import { useMemo, useState } from "react";
-import { CarFront, Search, MoreHorizontal, Copy, Trash2 } from "lucide-react";
+import {
+  CarFront,
+  Search,
+  MoreHorizontal,
+  Copy,
+  Trash2,
+  Lock,
+} from "lucide-react";
 import { useToast } from "../context/ToastContext";
 import { assetUrl, duplicateProject, deleteProject } from "../services/api";
 import { vehicleLabel } from "../utils/vehicleLabel";
@@ -33,7 +40,11 @@ export default function ProjectList({
   onCreate,
   onRefresh,
 }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
+
+  // Free: limite de projetos. Pro: sem limite (projectLimit vem vazio).
+  const isPro = Boolean(user?.isPro);
+  const projectLimit = user?.projectLimit ?? null;
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("ALL");
@@ -122,7 +133,16 @@ async function confirmDelete() {
 
           {!loading && hasProjects && (
             <p>
-              {projects.length} projeto{projects.length !== 1 ? "s" : ""}
+              {projectLimit
+                ? `${projects.length} de ${projectLimit} projetos`
+                : `${projects.length} projeto${projects.length !== 1 ? "s" : ""}`}
+
+              {projectLimit && projects.length >= projectLimit && (
+                <span className="projects-limit-note">
+                  {" "}
+                  · limite do plano Free atingido
+                </span>
+              )}
             </p>
           )}
         </div>
@@ -207,6 +227,9 @@ async function confirmDelete() {
           {filteredProjects.map((project, index) => {
             const date = formatDate(project.updatedAt || project.createdAt);
 
+            // projeto livre sem Pro ativo: continua visível, mas não edita
+            const isLocked = project.mode === "FREE" && !isPro;
+
             return (
               <article
                 className="project-card"
@@ -263,6 +286,12 @@ async function confirmDelete() {
                       >
                         <button
                           type="button"
+                          disabled={isLocked}
+                          title={
+                            isLocked
+                              ? "Projeto livre bloqueado: renove o Pro para duplicar"
+                              : undefined
+                          }
                           onClick={() => handleDuplicate(project)}
                         >
                           <Copy size={15} />
@@ -291,6 +320,13 @@ async function confirmDelete() {
                     >
                       {project.mode === "REAL" ? "Real" : "Livre"}
                     </span>
+
+                    {isLocked && (
+                      <span className="project-locked-badge">
+                        <Lock size={11} />
+                        Bloqueado
+                      </span>
+                    )}
 
                     <span className="project-vehicle">
                       {vehicleLabel(project.vehicle) ||

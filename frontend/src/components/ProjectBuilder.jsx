@@ -2,6 +2,7 @@ export default function ProjectBuilder({
   selectedVehicleData,
   projectName,
   projectMode,
+  canUseFreeMode = false,
   loading,
   projectError,
   onProjectNameChange,
@@ -37,35 +38,51 @@ export default function ProjectBuilder({
           />
         </div>
 
-        <div className="mode-selector">
-          <span>Modo do projeto</span>
+        {canUseFreeMode ? (
+          <div className="mode-selector">
+            <span>Modo do projeto</span>
 
-          <div className="mode-options">
-            <label className={projectMode === "REAL" ? "selected" : ""}>
-              <input
-                type="radio"
-                name="project-mode"
-                value="REAL"
-                checked={projectMode === "REAL"}
-                onChange={(event) => onProjectModeChange(event.target.value)}
-              />
-              <strong>Projeto Real</strong>
-              <small>Respeita compatibilidades.</small>
-            </label>
+            <div className="mode-options">
+              <label className={projectMode === "REAL" ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name="project-mode"
+                  value="REAL"
+                  checked={projectMode === "REAL"}
+                  onChange={(event) => onProjectModeChange(event.target.value)}
+                />
+                <strong>Projeto Real</strong>
+                <small>Respeita compatibilidades.</small>
+              </label>
 
-            <label className={projectMode === "FREE" ? "selected" : ""}>
-              <input
-                type="radio"
-                name="project-mode"
-                value="FREE"
-                checked={projectMode === "FREE"}
-                onChange={(event) => onProjectModeChange(event.target.value)}
-              />
-              <strong>Projeto Livre</strong>
-              <small>Permite combinações livres.</small>
-            </label>
+              <label className={projectMode === "FREE" ? "selected" : ""}>
+                <input
+                  type="radio"
+                  name="project-mode"
+                  value="FREE"
+                  checked={projectMode === "FREE"}
+                  onChange={(event) => onProjectModeChange(event.target.value)}
+                />
+                <strong>Projeto Livre</strong>
+                <small>Permite combinações livres.</small>
+              </label>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="mode-fixed">
+            <span>Modo do projeto</span>
+
+            <p>
+              <strong>Projeto Real</strong>: só aceita peças compatíveis com o
+              veículo.
+            </p>
+
+            <small>
+              O Projeto Livre, com combinações sem restrição, é exclusivo do
+              plano Pro.
+            </small>
+          </div>
+        )}
 
         <button
           className="primary-button"

@@ -884,3 +884,14 @@
 .summary-closed .configurator-catalog {
   right: 16px;
 }
+
+.configurator-readonly {
+  color: #ff7a49;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.car-category-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

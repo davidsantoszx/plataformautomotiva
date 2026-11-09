@@ -7,12 +7,15 @@ import { useAuth } from "../context/AuthContext";
 import { createProject } from "../services/api";
 
 export default function NewProjectPage() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const navigate = useNavigate();
   const vehicle = useVehicleSelection();
 
+  // Projeto livre é exclusivo do plano Pro. No Free o modo é sempre real.
+  const canUseFreeMode = Boolean(user?.isPro);
+
   const [projectName, setProjectName] = useState("");
-  const [projectMode, setProjectMode] = useState("FREE");
+  const [projectMode, setProjectMode] = useState("REAL");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -44,11 +47,12 @@ export default function NewProjectPage() {
         token,
         Number(vehicle.selectedVehicle),
         projectName.trim(),
-        projectMode,
+        canUseFreeMode ? projectMode : "REAL",
       );
 
       navigate(`/projetos/${data.project.id}/configurar`);
     } catch (err) {
+      // inclui as mensagens do servidor, como o limite de projetos do Free
       setError(err.message || "Erro ao criar projeto.");
       setLoading(false);
     }
@@ -84,6 +88,7 @@ export default function NewProjectPage() {
             selectedVehicleData={vehicle.selectedVehicleData}
             projectName={projectName}
             projectMode={projectMode}
+            canUseFreeMode={canUseFreeMode}
             loading={loading}
             projectError={error}
             onProjectNameChange={setProjectName}
