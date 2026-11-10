@@ -20,6 +20,7 @@ import ProjectPage from "./pages/ProjectPage";
 import ConfiguratorPage from "./pages/ConfiguratorPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
+import PlansPage from "./pages/PlansPage";
 
 function LandingRoute() {
   const { token } = useAuth();
@@ -70,6 +71,7 @@ export default function App() {
           <Route path="/feed" element={<FeedPage />} />
           <Route path="/perfil" element={<OwnProfileRoute />} />
           <Route path="/perfil/:username" element={<ProfilePage />} />
+          <Route path="/planos" element={<PlansPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

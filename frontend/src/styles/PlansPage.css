@@ -1,0 +1,280 @@
+/* =========================
+   PÁGINA DE PLANOS
+========================= */
+
+.plans-page {
+  max-width: 1000px;
+}
+
+/* ---------- plano atual ---------- */
+
+.plan-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 26px;
+  padding: 14px 18px;
+  border: 1px solid #20252c;
+  border-radius: 12px;
+  background: #0d1014;
+  color: #8b939d;
+}
+
+.plan-status.pro {
+  border-color: rgba(255, 90, 31, 0.4);
+  background: rgba(255, 90, 31, 0.06);
+  color: #ff7a49;
+}
+
+.plan-status p {
+  margin: 0;
+  color: #9aa2ac;
+  font-size: 14px;
+}
+
+.plan-status strong {
+  color: #fff;
+}
+
+/* ---------- mensal / anual ---------- */
+
+.plans-toggle {
+  display: inline-flex;
+  margin-bottom: 22px;
+  padding: 4px;
+  border: 1px solid #252b32;
+  border-radius: 999px;
+  background: #0d1014;
+}
+
+.plans-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #8b939d;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.plans-toggle button.active {
+  background: #ff5a1f;
+  color: #fff;
+}
+
+.plans-toggle-chip {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+/* ---------- cartões ---------- */
+
+.plans-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px;
+  align-items: stretch;
+}
+
+.plan-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 26px 26px;
+  border: 1px solid #20252c;
+  border-radius: 16px;
+  background: #0d1014;
+}
+
+.plan-card-pro {
+  border-color: rgba(255, 90, 31, 0.55);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(255, 90, 31, 0.1), transparent 45%),
+    #0d1014;
+  box-shadow: 0 18px 44px rgba(255, 90, 31, 0.08);
+}
+
+.plan-ribbon {
+  position: absolute;
+  top: -11px;
+  right: 22px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #ff5a1f;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.plan-card h3 {
+  margin: 0 0 14px;
+  font-size: 20px;
+}
+
+.plan-price {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.plan-price strong {
+  color: #fff;
+  font-size: 34px;
+  letter-spacing: -0.03em;
+}
+
+.plan-card-pro .plan-price strong {
+  color: #ff7a49;
+}
+
+.plan-price span {
+  color: #707984;
+  font-size: 13px;
+}
+
+.plan-tagline {
+  min-height: 40px;
+  margin: 8px 0 20px;
+  color: #8b939d;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* ---------- lista de benefícios ---------- */
+
+.plan-features {
+  flex: 1;
+  margin: 0 0 24px;
+  padding: 18px 0 0;
+  border-top: 1px solid #1a1f25;
+  list-style: none;
+}
+
+.plan-features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+}
+
+.plan-features svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.plan-icon-yes {
+  color: #4cc38a;
+}
+
+.plan-icon-no {
+  color: #4a525c;
+}
+
+.plan-feature-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.plan-feature-text strong {
+  display: block;
+  color: #e5e8eb;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.plan-feature-text span {
+  display: block;
+  margin-top: 2px;
+  color: #8b939d;
+  font-size: 12px;
+}
+
+.plan-feature-off .plan-feature-text strong {
+  color: #5d6671;
+  font-weight: 600;
+}
+
+.plan-soon {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(255, 170, 50, 0.1);
+  color: #d6a55d;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.plan-cta {
+  width: 100%;
+}
+
+.plan-cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ---------- em breve ---------- */
+
+.plans-soon {
+  margin-top: 30px;
+  padding: 22px 24px;
+  border: 1px dashed #292f36;
+  border-radius: 14px;
+  background: #0c0f13;
+}
+
+.plans-soon h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+}
+
+.plans-soon ul {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px 24px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plans-soon li {
+  position: relative;
+  padding-left: 16px;
+  color: #8b939d;
+  font-size: 13px;
+}
+
+.plans-soon li::before {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ff5a1f;
+}
+
+@media (max-width: 800px) {
+  .plans-grid,
+  .plans-soon ul {
+    grid-template-columns: 1fr;
+  }
+
+  .plan-tagline {
+    min-height: 0;
+  }
+}

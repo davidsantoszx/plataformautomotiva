@@ -272,6 +272,14 @@ export default function ProjectPage() {
     return () => clearTimeout(timer);
   }, [notice]);
 
+  // O erro também aparece como aviso que some sozinho. Se o projeto nem
+  // carregou, a mensagem fica na tela (é o que explica o problema).
+  useEffect(() => {
+    if (!error || !project) return;
+    const timer = setTimeout(() => setError(""), 6000);
+    return () => clearTimeout(timer);
+  }, [error, project]);
+
   const scene = useMemo(
     () => build3DScene(vehicle, projectPartDetails),
     [vehicle, projectPartDetails],
@@ -517,8 +525,6 @@ export default function ProjectPage() {
         </div>
 
       </header>
-
-      {error && <p className="message message-error">{error}</p>}
 
       {isLocked && (
         <div className="project-locked-banner">
@@ -783,7 +789,15 @@ export default function ProjectPage() {
         />
       )}
 
-      {notice && <div className="page-toast">{notice}</div>}
+      {(error || notice) && (
+        <div
+          key={error ? `error-${error}` : `notice-${notice}`}
+          className={`page-toast${error ? " page-toast-error" : ""}`}
+          role={error ? "alert" : "status"}
+        >
+          {error || notice}
+        </div>
+      )}
     </section>
   );
 }

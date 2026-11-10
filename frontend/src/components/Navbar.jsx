@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import DeleteAccountModal from "./DeleteAccountModal";
 
@@ -15,6 +16,7 @@ export default function Navbar() {
   const displayName = user?.name || user?.username || user?.email || "Usuário";
   const initial = displayName.trim().charAt(0).toUpperCase();
   const profilePath = user?.username ? `/perfil/${user.username}` : null;
+  const isPro = Boolean(user?.isPro);
 
   // fecha o menu ao clicar fora ou apertar Esc
   useEffect(() => {
@@ -47,6 +49,11 @@ export default function Navbar() {
     navigate(profilePath);
   }
 
+  function handlePlans() {
+    setMenuOpen(false);
+    navigate("/planos");
+  }
+
   function handleLogout() {
     setMenuOpen(false);
     logout();
@@ -58,9 +65,10 @@ export default function Navbar() {
     setDeleteOpen(true);
   }
 
-  // conta já apagada no servidor: limpa a sessão e volta para a landing page
-function handleAccountDeleted() {
-logoutAndRedirect("/");
+  // conta já apagada no servidor: limpa a sessão e vai para a landing page
+  // sem passar pela tela de login
+  function handleAccountDeleted() {
+    logoutAndRedirect("/");
   }
 
   return (
@@ -78,56 +86,78 @@ logoutAndRedirect("/");
           </NavLink>
         </div>
 
-        <div className="user-menu" ref={menuRef}>
-          <button
-            type="button"
-            className="user-menu-trigger"
-            onClick={() => setMenuOpen((open) => !open)}
-            aria-haspopup="menu"
-            aria-expanded={menuOpen}
-          >
-            <span className="user-avatar">{initial}</span>
-            <span className="user-menu-name">{displayName}</span>
-          </button>
+        <div className="app-navbar-right">
+          {!isPro && (
+            <NavLink to="/planos" className="app-navbar-pro">
+              <Sparkles size={14} />
+              Seja Pro
+            </NavLink>
+          )}
 
-          {menuOpen && (
-            <div className="user-menu-dropdown" role="menu">
-              <div className="user-menu-info">
-                <strong>{displayName}</strong>
-                {user?.username && <span>@{user.username}</span>}
-                {user?.email && <span>{user.email}</span>}
-              </div>
+          <div className="user-menu" ref={menuRef}>
+            <button
+              type="button"
+              className="user-menu-trigger"
+              onClick={() => setMenuOpen((open) => !open)}
+              aria-haspopup="menu"
+              aria-expanded={menuOpen}
+            >
+              <span className="user-avatar">{initial}</span>
+              <span className="user-menu-name">{displayName}</span>
+              {isPro && <span className="pro-badge">PRO</span>}
+            </button>
 
-              {profilePath && (
+            {menuOpen && (
+              <div className="user-menu-dropdown" role="menu">
+                <div className="user-menu-info">
+                  <strong>
+                    {displayName}
+                    {isPro && <span className="pro-badge">PRO</span>}
+                  </strong>
+                  {user?.username && <span>@{user.username}</span>}
+                  {user?.email && <span>{user.email}</span>}
+                </div>
+
+                {profilePath && (
+                  <button
+                    type="button"
+                    className="user-menu-item"
+                    role="menuitem"
+                    onClick={handleProfile}
+                  >
+                    Meu perfil
+                  </button>
+                )}
+
                 <button
                   type="button"
                   className="user-menu-item"
                   role="menuitem"
-                  onClick={handleProfile}
+                  onClick={handlePlans}
                 >
-                  Meu perfil
+                  Meu plano
                 </button>
-              )}
 
-              <button
-                type="button"
-                className="user-menu-item"
-                role="menuitem"
-                onClick={handleLogout}
-              >
-                Sair
-              </button>
+                <button
+                  type="button"
+                  className="user-menu-item"
+                  role="menuitem"
+                  onClick={handleLogout}
+                >
+                  Sair
+                </button>
 
-              <button
-                type="button"
-                className="user-menu-item user-menu-item--danger"
-                role="menuitem"
-                onClick={handleOpenDelete}
-              >
-                Excluir conta
-              </button>
-            </div>
-          )}
+                <button
+                  type="button"
+                  className="user-menu-item user-menu-item--danger"
+                  role="menuitem"
+                  onClick={handleOpenDelete}
+                >
+                  Excluir conta
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

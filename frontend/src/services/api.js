@@ -144,9 +144,11 @@ export async function createProject(
   const data = await response.json()
 
   if (!response.ok) {
-    throw new Error(
+    const error = new Error(
       data.message || 'Erro ao criar projeto',
     )
+    error.code = data.code
+    throw error
   }
 
   return data

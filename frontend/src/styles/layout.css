@@ -392,3 +392,58 @@
   opacity: 0.6;
   cursor: not-allowed;
 }
+
+
+/* ---------- plano: botão "Seja Pro" e selo PRO ---------- */
+
+.app-navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.app-navbar-pro {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ff5a1f, #ff8a3d);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+.app-navbar-pro:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(255, 90, 31, 0.35);
+}
+
+.pro-badge {
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: rgba(255, 90, 31, 0.16);
+  color: #ff7a49;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  vertical-align: middle;
+}
+
+/* link dentro de mensagens (ex.: "Ver planos") */
+.message-link {
+  margin-left: 8px;
+  color: #ff7a49;
+  font-weight: 800;
+  text-decoration: underline;
+}
+
+@media (max-width: 700px) {
+  .app-navbar-pro {
+    padding: 6px 10px;
+  }
+}

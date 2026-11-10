@@ -18,6 +18,7 @@ export default function NewProjectPage() {
   const [projectMode, setProjectMode] = useState("REAL");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [errorCode, setErrorCode] = useState("");
 
   const builderRef = useRef(null);
 
@@ -34,6 +35,7 @@ export default function NewProjectPage() {
 
   async function handleGoToModifications() {
     setError("");
+    setErrorCode("");
 
     if (!projectName.trim()) {
       setError("Informe um nome para o projeto.");
@@ -54,6 +56,7 @@ export default function NewProjectPage() {
     } catch (err) {
       // inclui as mensagens do servidor, como o limite de projetos do Free
       setError(err.message || "Erro ao criar projeto.");
+      setErrorCode(err.code || "");
       setLoading(false);
     }
   }
@@ -91,6 +94,10 @@ export default function NewProjectPage() {
             canUseFreeMode={canUseFreeMode}
             loading={loading}
             projectError={error}
+            showPlansLink={
+              errorCode === "PROJECT_LIMIT_REACHED" ||
+              errorCode === "PRO_REQUIRED"
+            }
             onProjectNameChange={setProjectName}
             onProjectModeChange={setProjectMode}
             onGoToModifications={handleGoToModifications}

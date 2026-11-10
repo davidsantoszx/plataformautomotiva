@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+
 export default function ProjectBuilder({
   selectedVehicleData,
   projectName,
@@ -5,6 +7,7 @@ export default function ProjectBuilder({
   canUseFreeMode = false,
   loading,
   projectError,
+  showPlansLink = false,
   onProjectNameChange,
   onProjectModeChange,
   onGoToModifications,
@@ -94,7 +97,17 @@ export default function ProjectBuilder({
         </button>
       </div>
 
-      {projectError && <p className="message message-error">{projectError}</p>}
+      {projectError && (
+        <p className="message message-error">
+          {projectError}
+
+          {showPlansLink && (
+            <Link to="/planos" className="message-link">
+              Ver planos
+            </Link>
+          )}
+        </p>
+      )}
     </section>
   );
 }

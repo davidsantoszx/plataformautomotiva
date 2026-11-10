@@ -705,3 +705,10 @@
   color: #707984;
   font-size: 12px;
 }
+
+.page-toast.page-toast-error {
+  max-width: min(560px, 92vw);
+  border-color: rgba(255, 90, 31, 0.6);
+  background: #1a0f0b;
+  color: #ff8a6a;
+}
