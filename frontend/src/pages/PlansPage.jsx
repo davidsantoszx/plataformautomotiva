@@ -10,7 +10,7 @@ import {
   PRICING,
   formatPrice,
   yearlySavings,
-} from "../utils/plans";
+} from "../utils/plans.js";
 import "../styles/PlansPage.css";
 
 function formatDate(value) {
