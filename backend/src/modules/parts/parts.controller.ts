@@ -1,5 +1,8 @@
 import type { Request, Response } from 'express'
 
+import type { AuthenticatedRequest } from '../../middlewares/auth.middleware'
+import { isProUser } from '../plans/plans.service'
+
 import {
   createCategory,
   createCompatibility,
@@ -268,7 +271,7 @@ export async function deleteCategoryController(
 }
 
 export async function getPartsByCategory(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) {
   try {
@@ -283,9 +286,12 @@ export async function getPartsByCategory(
       })
     }
 
+    const includePremium = await isProUser(req.userId)
+
     const parts =
       await listPartsByCategory(
         categoryId,
+        includePremium,
       )
 
     return res.json({
@@ -348,6 +354,7 @@ export async function postPart(
       estimatedPrice,
       imageUrl,
       modelUrl,
+      tier,
     } = req.body
 
     if (
@@ -391,6 +398,17 @@ export async function postPart(
       })
     }
 
+    if (
+      tier !== undefined &&
+      tier !== 'BASIC' &&
+      tier !== 'PREMIUM'
+    ) {
+      return res.status(400).json({
+        message:
+          'tier deve ser BASIC ou PREMIUM',
+      })
+    }
+
     const part =
       await createPart(
         numericCategoryId,
@@ -410,6 +428,7 @@ export async function postPart(
         typeof modelUrl === 'string'
           ? modelUrl.trim() || undefined
           : undefined,
+        tier,
       )
 
     return res.status(201).json({

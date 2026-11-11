@@ -227,7 +227,7 @@ export default function ConfiguratorPage() {
 
     try {
       setLoadingParts(true);
-      const data = await getPartsByCategory(category.id);
+      const data = await getPartsByCategory(category.id, token);
       if (isCurrent()) setParts(data.parts || []);
     } catch (err) {
       if (isCurrent()) {

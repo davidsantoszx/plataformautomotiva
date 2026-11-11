@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useAuth } from "../context/AuthContext";
 import {
   getBrands,
   getModelsByBrand,
@@ -7,6 +8,9 @@ import {
 } from "../services/api";
 
 export default function useVehicleSelection() {
+  // o token faz o servidor liberar o catálogo completo para quem é Pro
+  const { token } = useAuth();
+
   const [brands, setBrands] = useState([]);
   const [models, setModels] = useState([]);
   const [vehicles, setVehicles] = useState([]);
@@ -24,7 +28,7 @@ export default function useVehicleSelection() {
   useEffect(() => {
     async function loadBrands() {
       try {
-        const data = await getBrands();
+        const data = await getBrands(token);
         setBrands(data.brands || []);
       } catch (err) {
         console.error(err);
@@ -35,7 +39,7 @@ export default function useVehicleSelection() {
     }
 
     loadBrands();
-  }, []);
+  }, [token]);
 
   async function handleBrandChange(event) {
     const brandId = event.target.value;
@@ -52,7 +56,7 @@ export default function useVehicleSelection() {
 
     try {
       setLoadingModels(true);
-      const data = await getModelsByBrand(brandId);
+      const data = await getModelsByBrand(brandId, token);
       setModels(data.models || []);
     } catch (err) {
       console.error(err);
@@ -76,11 +80,13 @@ export default function useVehicleSelection() {
     try {
       setLoadingVehicles(true);
 
-      const data = await getGenerationsByModel(modelId);
+      const data = await getGenerationsByModel(modelId, token);
       const generations = data.generations || [];
 
       const responses = await Promise.all(
-        generations.map((generation) => getVehiclesByGeneration(generation.id)),
+        generations.map((generation) =>
+          getVehiclesByGeneration(generation.id, token),
+        ),
       );
 
       setVehicles(responses.flatMap((response) => response.vehicles || []));

@@ -79,6 +79,9 @@ model Vehicle {
   version      String?
   model3dUrl   String?
 
+  // BASIC aparece para todos; PREMIUM só para quem está no plano Pro
+  tier         String    @default("BASIC")
+
   engine       String?
   transmission String?
   fuel         String?
@@ -137,6 +140,9 @@ model Part {
   estimatedPrice Float
   imageUrl       String?
   modelUrl       String?
+
+  // BASIC aparece para todos; PREMIUM só para quem está no plano Pro
+  tier           String    @default("BASIC")
 
   category       PartCategory @relation(fields: [categoryId], references: [id])
 

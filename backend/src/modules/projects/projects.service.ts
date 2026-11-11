@@ -186,6 +186,17 @@ async function assertCanEditProject(
   }
 }
 
+// Carros e peças premium só entram em projetos de quem está no Pro.
+async function assertCanUseTier(tier: string, userId: number, code: string) {
+  if (tier === "BASIC") return;
+
+  const { isPro } = await getUserPlan(userId);
+
+  if (!isPro) {
+    throw new Error(code);
+  }
+}
+
 // Criar (ou duplicar) um projeto: o Free só faz projeto real e até
 // FREE_PROJECT_LIMIT projetos. O Pro não tem restrição.
 async function assertCanCreateProject(userId: number, mode: string) {
@@ -221,6 +232,8 @@ export async function createProject(
   if (!vehicle) {
     throw new Error("VEHICLE_NOT_FOUND");
   }
+
+  await assertCanUseTier(vehicle.tier, userId, "PREMIUM_VEHICLE");
 
   return db.orm.public.Project.create({
     userId,
@@ -614,6 +627,8 @@ export async function addPartToProject(
   if (!part) {
     throw new Error("PART_NOT_FOUND");
   }
+
+  await assertCanUseTier(part.tier, userId, "PREMIUM_PART");
 
   const compatibility = await db.orm.public.PartCompatibility.first({
     partId,

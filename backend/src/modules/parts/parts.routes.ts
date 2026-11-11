@@ -18,7 +18,10 @@ import {
   deleteCompatibility,
 } from './parts.controller'
 
-import { authMiddleware } from '../../middlewares/auth.middleware'
+import {
+  authMiddleware,
+  optionalAuthMiddleware,
+} from '../../middlewares/auth.middleware'
 
 const router = Router()
 
@@ -33,8 +36,10 @@ router.get(
   getCategory,
 )
 
+// o catálogo de peças muda conforme o plano (básico x completo)
 router.get(
   '/categories/:categoryId/parts',
+  optionalAuthMiddleware,
   getPartsByCategory,
 )
 

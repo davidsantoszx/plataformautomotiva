@@ -10,6 +10,8 @@ export const PLAN_ERROR_MESSAGES: Record<string, string> = {
   PROJECT_LIMIT_REACHED: `Você atingiu o limite de ${FREE_PROJECT_LIMIT} projetos do plano Free. Exclua um projeto ou assine o Pro para criar mais.`,
   PROJECT_LOCKED:
     'Este projeto livre está bloqueado porque o seu plano Pro não está ativo. Renove o Pro para editá-lo.',
+  PREMIUM_VEHICLE: 'Este veículo é exclusivo do plano Pro.',
+  PREMIUM_PART: 'Esta peça é exclusiva do plano Pro.',
 }
 
 export type PlanUser = {
@@ -54,4 +56,15 @@ export async function getUserPlan(userId: number) {
   }
 
   return getPlanInfo(user)
+}
+
+// Para rotas públicas: visitante (sem userId) ou conta inexistente = não é Pro.
+export async function isProUser(userId?: number) {
+  if (!userId) return false
+
+  const user = await db.orm.public.User.select('plan', 'planExpiresAt').first({
+    id: userId,
+  })
+
+  return user ? isProActive(user) : false
 }

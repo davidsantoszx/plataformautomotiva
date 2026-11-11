@@ -52,3 +52,34 @@ export function authMiddleware(
     })
   }
 }
+
+// Rotas públicas que mudam conforme o plano (ex.: catálogo básico x completo).
+// Com token válido, preenche req.userId. Sem token, ou com token inválido,
+// segue como visitante: nunca devolve 401.
+export function optionalAuthMiddleware(
+  req: AuthenticatedRequest,
+  _res: Response,
+  next: NextFunction,
+) {
+  const authorization = req.headers.authorization
+
+  if (authorization) {
+    const [scheme, token] = authorization.split(' ')
+
+    if (scheme === 'Bearer' && token) {
+      try {
+        const payload = jwt.verify(token, JWT_SECRET!) as jwt.JwtPayload & {
+          userId?: unknown
+        }
+
+        if (typeof payload.userId === 'number') {
+          req.userId = payload.userId
+        }
+      } catch {
+        // token vencido ou inválido: trata como visitante
+      }
+    }
+  }
+
+  next()
+}

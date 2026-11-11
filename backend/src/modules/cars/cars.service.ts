@@ -1,7 +1,13 @@
 import { db } from '../../prisma/db'
+import {
+  clearBasicCatalogCache,
+  getBasicCatalogIds,
+} from './catalog-access.service'
 
-export async function listBrands() {
-  return db.orm.public.CarBrand
+// includePremium: só quem está no Pro vê o catálogo completo. Os outros veem
+// apenas marcas que tenham pelo menos um veículo BASIC.
+export async function listBrands(includePremium = false) {
+  const brands = await db.orm.public.CarBrand
     .select(
       'id',
       'name',
@@ -10,6 +16,12 @@ export async function listBrands() {
       'updatedAt',
     )
     .all()
+
+  if (includePremium) return brands
+
+  const { brandIds } = await getBasicCatalogIds()
+
+  return brands.filter((brand) => brandIds.has(brand.id))
 }
 
 export async function getBrandById(id: number) {
@@ -53,8 +65,11 @@ export async function createBrand(
 }
 
 
-export async function listModelsByBrand(brandId: number) {
-  return db.orm.public.CarModel
+export async function listModelsByBrand(
+  brandId: number,
+  includePremium = false,
+) {
+  const models = await db.orm.public.CarModel
     .select(
       'id',
       'brandId',
@@ -63,10 +78,16 @@ export async function listModelsByBrand(brandId: number) {
       'createdAt',
       'updatedAt',
     )
-        .where({
-        brandId,
-        })
-        .all()
+    .where({
+      brandId,
+    })
+    .all()
+
+  if (includePremium) return models
+
+  const { modelIds } = await getBasicCatalogIds()
+
+  return models.filter((model) => modelIds.has(model.id))
 }
 
 export async function getModelById(id: number) {
@@ -113,8 +134,11 @@ export async function createModel(
   })
 }
 
-export async function listGenerationsByModel(modelId: number) {
-  return db.orm.public.CarGeneration
+export async function listGenerationsByModel(
+  modelId: number,
+  includePremium = false,
+) {
+  const generations = await db.orm.public.CarGeneration
     .select(
       'id',
       'modelId',
@@ -125,9 +149,15 @@ export async function listGenerationsByModel(modelId: number) {
       'updatedAt',
     )
     .where({
-    modelId,
+      modelId,
     })
     .all()
+
+  if (includePremium) return generations
+
+  const { generationIds } = await getBasicCatalogIds()
+
+  return generations.filter((generation) => generationIds.has(generation.id))
 }
 
 export async function getGenerationById(id: number) {
@@ -179,14 +209,16 @@ export async function createGeneration(
 
 export async function listVehiclesByGeneration(
   generationId: number,
+  includePremium = false,
 ) {
-  return db.orm.public.Vehicle
+  const query = db.orm.public.Vehicle
     .select(
       'id',
       'generationId',
       'year',
       'version',
       'model3dUrl',
+      'tier',
       'engine',
       'transmission',
       'fuel',
@@ -209,11 +241,12 @@ export async function listVehiclesByGeneration(
       'fipeCode',
       'createdAt',
       'updatedAt',
-        )
-    .where({
-    generationId,
-    })
-    .all()
+  )
+
+  // quem não é Pro só recebe os veículos BASIC
+  return includePremium
+    ? query.where({ generationId }).all()
+    : query.where({ generationId, tier: 'BASIC' }).all()
 }
 
 export async function getVehicleById(id: number) {
@@ -224,6 +257,7 @@ export async function getVehicleById(id: number) {
       'year',
       'version',
       'model3dUrl',
+      'tier',
       'engine',
       'transmission',
       'fuel',
@@ -276,6 +310,7 @@ export async function createVehicle(
   source?: string,
   externalId?: string,
   fipeCode?: string,
+  tier?: 'BASIC' | 'PREMIUM',
 ) {
   const generation = await db.orm.public.CarGeneration.first({
     id: generationId,
@@ -285,7 +320,7 @@ export async function createVehicle(
     throw new Error('GENERATION_NOT_FOUND')
   }
 
-  return db.orm.public.Vehicle.create({
+  const vehicle = await db.orm.public.Vehicle.create({
     generationId,
     year,
     version,
@@ -309,6 +344,12 @@ export async function createVehicle(
     source,
     externalId,
     fipeCode,
+    ...(tier ? { tier } : {}),
   })
+
+  // um veículo novo pode liberar marca, modelo e geração no catálogo básico
+  clearBasicCatalogCache()
+
+  return vehicle
 }
 

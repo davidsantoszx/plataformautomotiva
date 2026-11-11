@@ -458,6 +458,13 @@
                   "kind": "scalar"
                 }
               },
+              "tier": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -544,6 +551,9 @@
                 },
                 "slug": {
                   "column": "slug"
+                },
+                "tier": {
+                  "column": "tier"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1417,6 +1427,13 @@
                   "kind": "scalar"
                 }
               },
+              "tier": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "torqueNm": {
                 "nullable": true,
                 "type": {
@@ -1579,6 +1596,9 @@
                 },
                 "source": {
                   "column": "source"
+                },
+                "tier": {
+                  "column": "tier"
                 },
                 "torqueNm": {
                   "column": "torqueNm"
@@ -1907,6 +1927,15 @@
                 },
                 "slug": {
                   "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "tier": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "BASIC"
+                  },
                   "nativeType": "text",
                   "nullable": false
                 },
@@ -2703,6 +2732,15 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "tier": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "BASIC"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "torqueNm": {
                   "codecId": "pg/float8@1",
                   "nativeType": "float8",
@@ -2816,7 +2854,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "e0413cb41a0196da6bda53b9286e373dcd49c61209b21a6f3476b26a4279598f"
+    "storageHash": "199af4e136ca4e2e93b9b1e6d72d6a11540e17479eb3923965c5d1a224a444ea"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

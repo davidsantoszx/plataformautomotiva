@@ -1,5 +1,7 @@
 import { Router } from 'express'
 
+import { optionalAuthMiddleware } from '../../middlewares/auth.middleware'
+
 import {
   getBrand,
   getBrands,
@@ -17,7 +19,9 @@ import {
 
 const router = Router()
 
-router.get('/brands', getBrands)
+// As listas do catálogo mudam conforme o plano: com token de quem é Pro vem
+// o catálogo completo, sem token (ou no Free) vem só o básico.
+router.get('/brands', optionalAuthMiddleware, getBrands)
 
 router.get('/brands/:id', getBrand)
 
@@ -25,6 +29,7 @@ router.post('/brands', postBrand)
 
 router.get(
   '/brands/:brandId/models',
+  optionalAuthMiddleware,
   getModelsByBrand,
 )
 
@@ -34,6 +39,7 @@ router.post('/models', postModel)
 
 router.get(
   '/models/:modelId/generations',
+  optionalAuthMiddleware,
   getGenerationsByModel,
 )
 
@@ -43,6 +49,7 @@ router.post('/generations', postGeneration)
 
 router.get(
   '/generations/:generationId/vehicles',
+  optionalAuthMiddleware,
   getVehiclesByGeneration,
 )
 

@@ -147,8 +147,9 @@ export async function deleteCategory(
 
 export async function listPartsByCategory(
   categoryId: number,
+  includePremium = false,
 ) {
-  return db.orm.public.Part
+  const query = db.orm.public.Part
     .select(
       'id',
       'categoryId',
@@ -159,13 +160,15 @@ export async function listPartsByCategory(
       'estimatedPrice',
       'imageUrl',
       'modelUrl',
+      'tier',
       'createdAt',
       'updatedAt',
     )
-    .where({
-      categoryId,
-    })
-    .all()
+
+  // quem não é Pro só recebe as peças BASIC
+  return includePremium
+    ? query.where({ categoryId }).all()
+    : query.where({ categoryId, tier: 'BASIC' }).all()
 }
 
 export async function getPartById(
@@ -182,6 +185,7 @@ export async function getPartById(
       'estimatedPrice',
       'imageUrl',
       'modelUrl',
+      'tier',
       'createdAt',
       'updatedAt',
     )
@@ -199,6 +203,7 @@ export async function createPart(
   description?: string,
   imageUrl?: string,
   modelUrl?: string,
+  tier?: 'BASIC' | 'PREMIUM',
 ) {
   const category =
     await db.orm.public.PartCategory.first({
@@ -241,6 +246,7 @@ export async function createPart(
     estimatedPrice,
     imageUrl,
     modelUrl,
+    ...(tier ? { tier } : {}),
   })
 }
 

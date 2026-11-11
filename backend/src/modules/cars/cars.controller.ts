@@ -1,5 +1,8 @@
 import type { Request, Response } from 'express'
 
+import type { AuthenticatedRequest } from '../../middlewares/auth.middleware'
+import { isProUser } from '../plans/plans.service'
+
 import {
   createBrand,
   getBrandById,
@@ -16,11 +19,12 @@ import {
 } from './cars.service'
 
 export async function getBrands(
-  _req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) {
   try {
-    const brands = await listBrands()
+    const includePremium = await isProUser(req.userId)
+    const brands = await listBrands(includePremium)
 
     return res.json({
       brands,
@@ -113,7 +117,7 @@ export async function postBrand(
 }
 
 export async function getModelsByBrand(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) {
   try {
@@ -125,7 +129,8 @@ export async function getModelsByBrand(
       })
     }
 
-    const models = await listModelsByBrand(brandId)
+    const includePremium = await isProUser(req.userId)
+    const models = await listModelsByBrand(brandId, includePremium)
 
     return res.json({
       models,
@@ -219,7 +224,7 @@ export async function postModel(
 }
 
 export async function getGenerationsByModel(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) {
   try {
@@ -231,7 +236,11 @@ export async function getGenerationsByModel(
       })
     }
 
-    const generations = await listGenerationsByModel(modelId)
+    const includePremium = await isProUser(req.userId)
+    const generations = await listGenerationsByModel(
+      modelId,
+      includePremium,
+    )
 
     return res.json({
       generations,
@@ -326,7 +335,7 @@ export async function postGeneration(
 }
 
 export async function getVehiclesByGeneration(
-  req: Request,
+  req: AuthenticatedRequest,
   res: Response,
 ) {
   try {
@@ -338,8 +347,10 @@ export async function getVehiclesByGeneration(
       })
     }
 
+    const includePremium = await isProUser(req.userId)
+
     const vehicles =
-      await listVehiclesByGeneration(generationId)
+      await listVehiclesByGeneration(generationId, includePremium)
 
     return res.json({
       vehicles,
@@ -415,11 +426,22 @@ export async function postVehicle(
     source,
     externalId,
     fipeCode,
+    tier,
   } = req.body
 
     if (!generationId || !year) {
       return res.status(400).json({
         message: 'generationId e year são obrigatórios',
+      })
+    }
+
+    if (
+      tier !== undefined &&
+      tier !== 'BASIC' &&
+      tier !== 'PREMIUM'
+    ) {
+      return res.status(400).json({
+        message: 'tier deve ser BASIC ou PREMIUM',
       })
     }
 
@@ -446,6 +468,8 @@ export async function postVehicle(
       consumptionHighway !== undefined ? Number(consumptionHighway) : undefined,
       source?.trim(),
       externalId?.trim(),
+      fipeCode?.trim(),
+      tier,
     )
 
     return res.status(201).json({

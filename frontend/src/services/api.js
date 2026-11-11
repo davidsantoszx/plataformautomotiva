@@ -1,7 +1,13 @@
 export const API_URL = 'http://localhost:3000/api'
 
-export async function getBrands() {
-  const response = await fetch(`${API_URL}/cars/brands`)
+// Quem está logado manda o token também nas listas do catálogo: é com ele que
+// o servidor libera os carros e peças do plano Pro.
+function optionalAuth(token) {
+  return token ? { headers: { Authorization: `Bearer ${token}` } } : {}
+}
+
+export async function getBrands(token) {
+  const response = await fetch(`${API_URL}/cars/brands`, optionalAuth(token))
 
   if (!response.ok) {
     throw new Error('Erro ao buscar marcas')
@@ -10,9 +16,10 @@ export async function getBrands() {
   return response.json()
 }
 
-export async function getModelsByBrand(brandId) {
+export async function getModelsByBrand(brandId, token) {
   const response = await fetch(
     `${API_URL}/cars/brands/${brandId}/models`,
+    optionalAuth(token),
   )
 
   if (!response.ok) {
@@ -22,9 +29,10 @@ export async function getModelsByBrand(brandId) {
   return response.json()
 }
 
-export async function getGenerationsByModel(modelId) {
+export async function getGenerationsByModel(modelId, token) {
   const response = await fetch(
     `${API_URL}/cars/models/${modelId}/generations`,
+    optionalAuth(token),
   )
 
   if (!response.ok) {
@@ -34,9 +42,10 @@ export async function getGenerationsByModel(modelId) {
   return response.json()
 }
 
-export async function getVehiclesByGeneration(generationId) {
+export async function getVehiclesByGeneration(generationId, token) {
   const response = await fetch(
     `${API_URL}/cars/generations/${generationId}/vehicles`,
+    optionalAuth(token),
   )
 
   if (!response.ok) {
@@ -58,9 +67,10 @@ export async function getPartCategories() {
   return response.json()
 }
 
-export async function getPartsByCategory(categoryId) {
+export async function getPartsByCategory(categoryId, token) {
   const response = await fetch(
     `${API_URL}/parts/categories/${categoryId}/parts`,
+    optionalAuth(token),
   )
 
   if (!response.ok) {
