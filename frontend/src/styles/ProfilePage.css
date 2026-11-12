@@ -171,3 +171,23 @@
   font-weight: 900;
   line-height: 1;
 }
+
+
+.project-card.featured {
+  box-shadow: 0 0 0 1px #f5b301;
+}
+
+.project-featured-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: rgba(7, 9, 11, 0.8);
+  color: #f5b301;
+  font-size: 0.72rem;
+  font-weight: 700;
+}

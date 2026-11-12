@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { CarFront, Heart } from "lucide-react";
+import { CarFront, Heart, Star } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useGlobalLoading } from "../context/LoadingContext";
 import { assetUrl, getUserProfile } from "../services/api";
@@ -120,6 +120,7 @@ export default function ProfilePage() {
         <div className="profile-identity">
           <div className="profile-name-row">
             <h1>{displayName}</h1>
+            {user.isPro && <span className="pro-badge">PRO</span>}
             {isOwn && <span className="profile-own-badge">Seu perfil</span>}
           </div>
 
@@ -170,7 +171,7 @@ export default function ProfilePage() {
         <div className="project-grid">
           {projects.map((project, index) => (
             <article
-              className="project-card"
+              className={`project-card${project.isFeatured ? " featured" : ""}`}
               key={project.id}
               role="link"
               tabIndex={0}
@@ -181,6 +182,13 @@ export default function ProfilePage() {
               }}
             >
               <div className="project-card-preview">
+                {project.isFeatured && (
+                  <span className="project-featured-tag">
+                    <Star size={12} fill="currentColor" />
+                    Destaque
+                  </span>
+                )}
+
                 {project.coverUrl ? (
                   <img src={assetUrl(project.coverUrl)} alt={project.name} />
                 ) : (

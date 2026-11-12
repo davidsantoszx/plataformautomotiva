@@ -137,6 +137,7 @@ export async function listProjectsByUser(userId: number) {
     "name",
     "description",
     "coverUrl",
+    "featuredAt",
     "mode",
     "isPublic",
     "shareToken",
@@ -440,6 +441,7 @@ export async function publishProject(
     isPublic: boolean;
     shareToken: string | null;
     publishedAt: string | null;
+    featuredAt?: null;
     name?: string;
     description?: string | null;
   } = {
@@ -452,6 +454,11 @@ export async function publishProject(
         : new Date().toISOString()
       : null,
   };
+
+  // despublicar também tira o projeto do destaque do perfil
+  if (!isPublic) {
+    data.featuredAt = null;
+  }
 
   if (isPublic && details.name !== undefined) {
     data.name = details.name.trim();
@@ -768,4 +775,50 @@ export async function listProjectParts(projectId: number, userId: number) {
   );
 
   return projectPartsWithDetails;
+}
+
+// Projeto em destaque no perfil (recurso Pro): um por conta, e só projeto
+// público. Destacar um novo tira o destaque do anterior. Remover o destaque é
+// sempre permitido, mesmo sem Pro.
+export async function setProjectFeatured(
+  id: number,
+  userId: number,
+  featured: boolean,
+) {
+  const project = await db.orm.public.Project.first({ id, userId });
+
+  if (!project) {
+    throw new Error("PROJECT_NOT_FOUND");
+  }
+
+  if (!featured) {
+    return db.orm.public.Project.where({ id }).update({ featuredAt: null });
+  }
+
+  const { isPro } = await getUserPlan(userId);
+
+  if (!isPro) {
+    throw new Error("PRO_FEATURE_REQUIRED");
+  }
+
+  if (!project.isPublic) {
+    throw new Error("PROJECT_NOT_PUBLIC");
+  }
+
+  // .update() mexe em UMA linha por chamada, então limpa o destaque antigo pelo id
+  const ownProjects = await db.orm.public.Project.select("id", "featuredAt")
+    .where({ userId })
+    .all();
+
+  for (const other of ownProjects) {
+    if (other.id !== id && other.featuredAt) {
+      await db.orm.public.Project.where({ id: other.id }).update({
+        featuredAt: null,
+      });
+    }
+  }
+
+  return db.orm.public.Project.where({ id }).update({
+    featuredAt: new Date().toISOString(),
+  });
 }

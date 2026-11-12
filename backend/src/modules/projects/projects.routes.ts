@@ -12,6 +12,7 @@ import {
   getProjects,
   getPublicProjectController,
   patchProject,
+  patchProjectFeatured,
   patchProjectPart,
   patchProjectPublication,
   postProject,
@@ -86,6 +87,12 @@ router.post(
 router.patch(
   '/:id/publication',
   patchProjectPublication,
+)
+
+// projeto em destaque no perfil (recurso Pro)
+router.patch(
+  '/:id/featured',
+  patchProjectFeatured,
 )
 
 router.get(

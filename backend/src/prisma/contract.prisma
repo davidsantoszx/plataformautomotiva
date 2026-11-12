@@ -184,6 +184,9 @@ model Project {
   publishedAt TimestamptzString?
   coverUrl    String?
 
+  // data em que o Pro fixou o projeto no perfil (null = não está em destaque)
+  featuredAt  TimestamptzString?
+
   user        User      @relation(fields: [userId], references: [id])
   vehicle     Vehicle   @relation(fields: [vehicleId], references: [id])
   parts       ProjectPart[]

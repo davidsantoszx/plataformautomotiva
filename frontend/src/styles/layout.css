@@ -447,3 +447,14 @@
     padding: 6px 10px;
   }
 }
+
+.pro-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.pro-action .pro-badge {
+  margin-left: auto;
+}

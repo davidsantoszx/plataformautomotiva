@@ -433,6 +433,26 @@ export async function duplicateProject(
   return data
 }
 
+// Destaca (ou tira o destaque de) um projeto no perfil. Recurso Pro.
+export async function updateProjectFeatured(token, projectId, featured) {
+  const response = await fetch(`${API_URL}/projects/${projectId}/featured`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ featured }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao destacar o projeto')
+  }
+
+  return data
+}
+
 export async function updateProjectPublication(
   token,
   projectId,

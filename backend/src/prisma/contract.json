@@ -791,6 +791,13 @@
                   "kind": "scalar"
                 }
               },
+              "featuredAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "id": {
                 "nullable": false,
                 "type": {
@@ -933,6 +940,9 @@
                 },
                 "description": {
                   "column": "description"
+                },
+                "featuredAt": {
+                  "column": "featuredAt"
                 },
                 "id": {
                   "column": "id"
@@ -2205,6 +2215,11 @@
                   "nativeType": "text",
                   "nullable": true
                 },
+                "featuredAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "id": {
                   "codecId": "pg/int4@1",
                   "default": {
@@ -2854,7 +2869,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "199af4e136ca4e2e93b9b1e6d72d6a11540e17479eb3923965c5d1a224a444ea"
+    "storageHash": "2d9d33e8066dd7c63b61c8605a92fb755a6b1c47a0711db7bc71b09290e43e25"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

@@ -3,20 +3,25 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Copy,
+  FileText,
   Globe,
+  Image as ImageIcon,
   Lock,
   Minus,
   Package,
   Pencil,
   Plus,
+  Star,
   Trash2,
 } from "lucide-react";
 import CarPreview3D from "../components/CarPreview3D";
 import PartThumb from "../components/PartThumb";
+import CoverCapture from "../components/CoverCapture";
 
 import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
+import { downloadBudgetPdf } from "../utils/budgetPdf";
 import { vehicleLabel } from "../utils/vehicleLabel";
 import {
   getProject,
@@ -24,6 +29,7 @@ import {
   updateProject,
   deleteProject,
   duplicateProject,
+  updateProjectFeatured,
   updateProjectPublication,
   updateProjectPartQuantity,
   removePartFromProject,
@@ -132,6 +138,102 @@ function RenameModal({ project, loading, canUseFreeMode, onSave, onClose }) {
   );
 }
 
+// Direção em que a FRENTE do carro aponta para a câmera (graus). Todos os
+// ângulos abaixo são calculados a partir dela. Se "Frente" sair mostrando a
+// traseira nos seus modelos, mude para 90.
+const FRONT_AZIMUTH = 270;
+
+const EXPORT_ANGLES = [
+  { id: "side", label: "Lateral", hint: "frente para a direita", azimuth: FRONT_AZIMUTH - 90, elevation: 4 },
+  { id: "front34", label: "3/4 frente", hint: "frente à direita", azimuth: FRONT_AZIMUTH - 45, elevation: 12 },
+  { id: "front", label: "Frente", hint: "de frente", azimuth: FRONT_AZIMUTH, elevation: 6 },
+  { id: "rear34", label: "3/4 traseira", hint: "por trás, frente à direita", azimuth: FRONT_AZIMUTH - 135, elevation: 12 },
+  { id: "rear", label: "Traseira", hint: "de trás", azimuth: FRONT_AZIMUTH + 180, elevation: 6 },
+];
+
+const EXPORT_FORMATS = [
+  { id: "png", label: "PNG", hint: "máxima qualidade", mimeType: "image/png" },
+  { id: "jpg", label: "JPG", hint: "arquivo menor", mimeType: "image/jpeg" },
+];
+
+function ExportImageModal({ onExport, onClose }) {
+  const [angleId, setAngleId] = useState("side");
+  const [formatId, setFormatId] = useState("png");
+
+  return (
+    <Modal
+      title="Exportar imagem HD"
+      onClose={onClose}
+      footer={
+        <>
+          <button className="secondary-button" type="button" onClick={onClose}>
+            Cancelar
+          </button>
+
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() =>
+              onExport(
+                EXPORT_ANGLES.find((angle) => angle.id === angleId),
+                EXPORT_FORMATS.find((format) => format.id === formatId),
+              )
+            }
+          >
+            Baixar imagem
+          </button>
+        </>
+      }
+    >
+      <div className="mode-selector">
+        <span>Ângulo do carro</span>
+
+        <div className="mode-options">
+          {EXPORT_ANGLES.map((angle) => (
+            <label
+              key={angle.id}
+              className={angleId === angle.id ? "selected" : ""}
+            >
+              <input
+                type="radio"
+                name="export-angle"
+                value={angle.id}
+                checked={angleId === angle.id}
+                onChange={() => setAngleId(angle.id)}
+              />
+              <strong>{angle.label}</strong>
+              <small>{angle.hint}</small>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="mode-selector">
+        <span>Formato</span>
+
+        <div className="mode-options">
+          {EXPORT_FORMATS.map((format) => (
+            <label
+              key={format.id}
+              className={formatId === format.id ? "selected" : ""}
+            >
+              <input
+                type="radio"
+                name="export-format"
+                value={format.id}
+                checked={formatId === format.id}
+                onChange={() => setFormatId(format.id)}
+              />
+              <strong>{format.label}</strong>
+              <small>{format.hint}</small>
+            </label>
+          ))}
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
 function PublishModal({ project, loading, onSubmit, onClose }) {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
@@ -220,7 +322,8 @@ export default function ProjectPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish"
+  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish" | "export-image" | "parts"
+  const [hdCapture, setHdCapture] = useState(null); // opções da imagem HD em geração
 
 
   // carrega projeto (já com o veículo) e peças
@@ -301,6 +404,9 @@ export default function ProjectPage() {
   // Projeto livre só edita com o Pro ativo. Sem ele, fica visível mas bloqueado.
   const isPro = Boolean(user?.isPro);
   const isLocked = project?.mode === "FREE" && !isPro;
+
+  // o destaque só vale enquanto o Pro está ativo
+  const isFeatured = Boolean(project?.featuredAt) && isPro;
 
   async function handleSaveRename(name, mode) {
     if (!name.trim()) {
@@ -392,6 +498,112 @@ export default function ProjectPage() {
       setNotice("Link copiado.");
     } catch {
       setError("Não foi possível copiar o link.");
+    }
+  }
+
+  // ---- recursos Pro ----------------------------------------------------
+  // Quem não é Pro clica e vai para a página de planos.
+
+  function handleExportImage() {
+    if (!isPro) {
+      navigate("/planos");
+      return;
+    }
+
+    if (!scene.modelUrl) {
+      setError("Este veículo não tem modelo 3D para exportar.");
+      return;
+    }
+
+    if (!hdCapture) setModal("export-image");
+  }
+
+  function handleStartExport(angle, format) {
+    setModal(null);
+    setHdCapture({ angle, format });
+  }
+
+  function handleHdCaptured(image) {
+    const format = hdCapture?.format;
+    const angle = hdCapture?.angle;
+
+    setHdCapture(null);
+
+    if (!image) {
+      setError("Não foi possível gerar a imagem. Tente novamente.");
+      return;
+    }
+
+    const fileName = String(project.name || "projeto")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const link = document.createElement("a");
+    link.href = image;
+    link.download = `${fileName || "projeto"}-${angle?.id || "hd"}-hd.${
+      format?.id || "png"
+    }`;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+
+    setNotice("Imagem HD baixada.");
+  }
+
+  async function handleDownloadBudget() {
+    if (!isPro) {
+      navigate("/planos");
+      return;
+    }
+
+    try {
+      await downloadBudgetPdf({
+        projectName: project.name,
+        vehicleText,
+        items: projectParts.map((item) => {
+          const part = item.part || projectPartDetails[item.partId];
+
+          return {
+            name: part?.name || `Peça #${item.partId}`,
+            brand: part?.brand || "",
+            quantity: Number(item.quantity || 1),
+            unitPrice: Number(item.priceAtTime || 0),
+          };
+        }),
+      });
+
+      setNotice("Orçamento em PDF baixado.");
+    } catch (err) {
+      console.error(err);
+      setError("Não foi possível gerar o PDF.");
+    }
+  }
+
+  async function handleToggleFeatured() {
+    if (!isPro) {
+      navigate("/planos");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError("");
+
+      const data = await updateProjectFeatured(token, project.id, !isFeatured);
+
+      setProject(data.project);
+      setNotice(
+        isFeatured
+          ? "Destaque removido do perfil."
+          : "Projeto em destaque no seu perfil.",
+      );
+    } catch (err) {
+      setError(err.message || "Erro ao destacar o projeto.");
+    } finally {
+      setActionLoading(false);
     }
   }
 
@@ -493,6 +705,12 @@ export default function ProjectPage() {
               {project.isPublic ? "Público" : "Privado"}
             </span>
 
+            {isFeatured && (
+              <span className="project-status public">
+                <Star size={12} fill="currentColor" /> Destaque
+              </span>
+            )}
+
             {updated && (
               <span className="project-date">Atualizado em {updated}</span>
             )}
@@ -567,7 +785,19 @@ export default function ProjectPage() {
 
         <aside className="project-side">
           <div className="side-card">
-            <span className="side-card-label">TOTAL ESTIMADO</span>
+            <div className="side-card-top">
+              <span className="side-card-label">TOTAL ESTIMADO</span>
+
+              <button
+                className="secondary-button side-card-link"
+                type="button"
+                onClick={() => setModal("parts")}
+              >
+                <Package size={14} />
+                Ver peças
+              </button>
+            </div>
+
             <strong className="side-total">{formatCurrency(projectTotal)}</strong>
             <span className="side-card-sub">
               {projectParts.length} peça{projectParts.length !== 1 ? "s" : ""}
@@ -636,127 +866,174 @@ export default function ProjectPage() {
               </button>
             )}
           </div>
+
+          <div className="side-card">
+            <span className="side-card-label">RECURSOS PRO</span>
+
+            <div className="side-actions">
+              <button
+                className="secondary-button full-width pro-action"
+                type="button"
+                onClick={handleExportImage}
+                disabled={hdCapture}
+              >
+                <ImageIcon size={15} />
+                {hdCapture ? "Gerando imagem..." : "Exportar imagem HD"}
+                {!isPro && <span className="pro-badge">PRO</span>}
+              </button>
+
+              <button
+                className="secondary-button full-width pro-action"
+                type="button"
+                onClick={handleDownloadBudget}
+              >
+                <FileText size={15} />
+                Baixar orçamento (PDF)
+                {!isPro && <span className="pro-badge">PRO</span>}
+              </button>
+
+              <button
+                className="secondary-button full-width pro-action"
+                type="button"
+                onClick={handleToggleFeatured}
+                disabled={actionLoading || (isPro && !project.isPublic)}
+                title={
+                  isPro && !project.isPublic
+                    ? "Publique o projeto no feed para destacá-lo"
+                    : undefined
+                }
+              >
+                <Star size={15} fill={isFeatured ? "currentColor" : "none"} />
+                {isFeatured ? "Remover destaque" : "Destacar no perfil"}
+                {!isPro && <span className="pro-badge">PRO</span>}
+              </button>
+            </div>
+
+            <p className="side-card-sub">
+              O destaque fixa este projeto no topo do seu perfil. Só projetos
+              públicos podem ser destacados.
+            </p>
+          </div>
         </aside>
       </div>
 
-      <div className="project-parts">
-        <header className="project-parts-header">
-          <div className="project-parts-heading">
-            <h3>Peças do projeto</h3>
-            <span className="project-parts-count">{projectParts.length}</span>
-          </div>
+      {modal === "parts" && (
+        <Modal
+          title={`Peças do projeto (${projectParts.length})`}
+          className="modal-wide"
+          onClose={() => setModal(null)}
+          footer={
+            <>
+              {!isLocked && (
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={goToConfigurator}
+                >
+                  <Plus size={15} /> Adicionar peças
+                </button>
+              )}
 
-          {!isLocked && (
-            <button
-              className="secondary-button project-parts-add"
-              type="button"
-              aria-label="Adicionar peças"
-              onClick={goToConfigurator}
-            >
-              <Plus size={15} />
-              <span>Adicionar peças</span>
-            </button>
-          )}
-        </header>
-
-        {projectParts.length === 0 ? (
-          <div className="project-parts-empty">
-            <div className="project-parts-empty-icon">
-              <Package size={24} />
-            </div>
-            <strong>Nenhuma peça adicionada ainda</strong>
-            <p>Abra o configurador 3D para escolher as peças do seu projeto.</p>
-            {!isLocked && (
               <button
                 className="primary-button"
                 type="button"
-                onClick={goToConfigurator}
+                onClick={() => setModal(null)}
               >
-                Adicionar peças no 3D
+                Fechar
               </button>
-            )}
-          </div>
-        ) : (
-          <>
-            <div className="project-parts-list">
-              {projectParts.map((projectPart) => {
-                const part =
-                  projectPart.part || projectPartDetails[projectPart.partId];
-
-                const name = part?.name || `Peça #${projectPart.partId}`;
-                const quantity = Number(projectPart.quantity || 1);
-                const unitPrice = Number(projectPart.priceAtTime || 0);
-
-                return (
-                  <article className="part-card" key={projectPart.id}>
-                    <PartThumb part={part} />
-
-                    <div className="part-card-info">
-                      <h4>{name}</h4>
-
-                      <div className="part-card-meta">
-                        {part?.brand && (
-                          <span className="part-card-brand">{part.brand}</span>
-                        )}
-                        <span>{formatCurrency(unitPrice)} un.</span>
-                      </div>
-                    </div>
-
-                    <div className="part-qty" role="group" aria-label="Quantidade">
-                      <button
-                        type="button"
-                        aria-label="Diminuir quantidade"
-                        onClick={() =>
-                          handleUpdateQuantity(projectPart.partId, quantity - 1)
-                        }
-                        disabled={isLocked || quantity <= 1}
-                      >
-                        <Minus size={14} />
-                      </button>
-
-                      <span>{quantity}</span>
-
-                      <button
-                        type="button"
-                        aria-label="Aumentar quantidade"
-                        disabled={isLocked}
-                        onClick={() =>
-                          handleUpdateQuantity(projectPart.partId, quantity + 1)
-                        }
-                      >
-                        <Plus size={14} />
-                      </button>
-                    </div>
-
-                    <strong className="part-card-subtotal">
-                      {formatCurrency(unitPrice * quantity)}
-                    </strong>
-
-                    <button
-                      className="part-remove"
-                      type="button"
-                      aria-label={`Remover ${name}`}
-                      title="Remover do projeto"
-                      disabled={isLocked}
-                      onClick={() => handleRemovePart(projectPart.partId)}
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </article>
-                );
-              })}
+            </>
+          }
+        >
+          {projectParts.length === 0 ? (
+            <div className="project-parts-empty">
+              <div className="project-parts-empty-icon">
+                <Package size={24} />
+              </div>
+              <strong>Nenhuma peça adicionada ainda</strong>
+              <p>Abra o configurador 3D para escolher as peças do projeto.</p>
             </div>
+          ) : (
+            <div className="parts-modal-body">
+              <div className="project-parts-list">
+                {projectParts.map((projectPart) => {
+                  const part =
+                    projectPart.part || projectPartDetails[projectPart.partId];
 
-            <footer className="project-parts-footer">
-              <span>
-                Total estimado · {projectParts.length} peça
-                {projectParts.length !== 1 ? "s" : ""}
-              </span>
-              <strong>{formatCurrency(projectTotal)}</strong>
-            </footer>
-          </>
-        )}
-      </div>
+                  const name = part?.name || `Peça #${projectPart.partId}`;
+                  const quantity = Number(projectPart.quantity || 1);
+                  const unitPrice = Number(projectPart.priceAtTime || 0);
+
+                  return (
+                    <article className="part-card" key={projectPart.id}>
+                      <PartThumb part={part} />
+
+                      <div className="part-card-info">
+                        <h4>{name}</h4>
+
+                        <div className="part-card-meta">
+                          {part?.brand && (
+                            <span className="part-card-brand">{part.brand}</span>
+                          )}
+                          <span>{formatCurrency(unitPrice)} un.</span>
+                        </div>
+                      </div>
+
+                      <div className="part-qty" role="group" aria-label="Quantidade">
+                        <button
+                          type="button"
+                          aria-label="Diminuir quantidade"
+                          onClick={() =>
+                            handleUpdateQuantity(projectPart.partId, quantity - 1)
+                          }
+                          disabled={isLocked || quantity <= 1}
+                        >
+                          <Minus size={14} />
+                        </button>
+
+                        <span>{quantity}</span>
+
+                        <button
+                          type="button"
+                          aria-label="Aumentar quantidade"
+                          disabled={isLocked}
+                          onClick={() =>
+                            handleUpdateQuantity(projectPart.partId, quantity + 1)
+                          }
+                        >
+                          <Plus size={14} />
+                        </button>
+                      </div>
+
+                      <strong className="part-card-subtotal">
+                        {formatCurrency(unitPrice * quantity)}
+                      </strong>
+
+                      <button
+                        className="part-remove"
+                        type="button"
+                        aria-label={`Remover ${name}`}
+                        title="Remover do projeto"
+                        disabled={isLocked}
+                        onClick={() => handleRemovePart(projectPart.partId)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </article>
+                  );
+                })}
+              </div>
+
+              <footer className="project-parts-footer">
+                <span>
+                  Total estimado · {projectParts.length} peça
+                  {projectParts.length !== 1 ? "s" : ""}
+                </span>
+                <strong>{formatCurrency(projectTotal)}</strong>
+              </footer>
+            </div>
+          )}
+        </Modal>
+      )}
 
       {modal === "rename" && (
         <RenameModal
@@ -786,6 +1063,27 @@ export default function ProjectPage() {
           loading={actionLoading}
           onConfirm={handleUnpublish}
           onCancel={() => setModal(null)}
+        />
+      )}
+
+      {modal === "export-image" && (
+        <ExportImageModal
+          onExport={handleStartExport}
+          onClose={() => setModal(null)}
+        />
+      )}
+
+      {hdCapture && (
+        <CoverCapture
+          modelUrl={scene.modelUrl}
+          parts={scene.parts}
+          width={1920}
+          height={1080}
+          azimuth={hdCapture.angle.azimuth}
+          elevation={hdCapture.angle.elevation}
+          mimeType={hdCapture.format.mimeType}
+          quality={0.92}
+          onCapture={handleHdCaptured}
         />
       )}
 

@@ -3,7 +3,7 @@ import { Canvas, useThree } from "@react-three/fiber";
 import { Bounds, Environment } from "@react-three/drei";
 import CarScene from "./CarScene";
 
-// ---- ângulo e enquadramento FIXOS de todas as capas ----
+// ---- ângulo padrão (usado nas capas) e enquadramento ----
 const AZIMUTH_DEG = 250;   // giro ao redor do carro. Ajuste este valor
 const ELEVATION_DEG = 14; // altura da câmera (0 = rente ao chão)
 const CAMERA_DISTANCE = 5; // o Bounds reajusta, só mantém a direção
@@ -11,16 +11,18 @@ const CAMERA_FOV = 30;
 const FIT_MARGIN = 0.7;   // maior = carro menor na imagem
 const JPEG_QUALITY = 0.85;
 
-const az = (AZIMUTH_DEG * Math.PI) / 180;
-const el = (ELEVATION_DEG * Math.PI) / 180;
+function cameraPosition(azimuthDeg, elevationDeg) {
+  const az = (azimuthDeg * Math.PI) / 180;
+  const el = (elevationDeg * Math.PI) / 180;
 
-const CAMERA_POSITION = [
-  Math.sin(az) * Math.cos(el) * CAMERA_DISTANCE,
-  Math.sin(el) * CAMERA_DISTANCE,
-  Math.cos(az) * Math.cos(el) * CAMERA_DISTANCE,
-];
+  return [
+    Math.sin(az) * Math.cos(el) * CAMERA_DISTANCE,
+    Math.sin(el) * CAMERA_DISTANCE,
+    Math.cos(az) * Math.cos(el) * CAMERA_DISTANCE,
+  ];
+}
 
-function Capturer({ onCapture }) {
+function Capturer({ onCapture, mimeType, quality }) {
   const { gl, scene, camera } = useThree();
   const callbackRef = useRef(onCapture);
   callbackRef.current = onCapture;
@@ -39,17 +41,31 @@ function Capturer({ onCapture }) {
       }
 
       gl.render(scene, camera);
-      callbackRef.current(gl.domElement.toDataURL("image/jpeg", JPEG_QUALITY));
+      callbackRef.current(gl.domElement.toDataURL(mimeType, quality));
     }
 
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [gl, scene, camera]);
+  }, [gl, scene, camera, mimeType, quality]);
 
   return null;
 }
 
-export default function CoverCapture({ modelUrl, parts = [], onCapture }) {
+// Sem props extras, gera a capa do projeto (JPEG, ângulo padrão, tamanho do
+// CSS de .cover-capture). Com width/height, gera uma imagem maior; com
+// azimuth/elevation, escolhe o ângulo. É assim que o Pro exporta a imagem em
+// HD (ex.: 1920x1080, PNG, vista lateral).
+export default function CoverCapture({
+  modelUrl,
+  parts = [],
+  onCapture,
+  width,
+  height,
+  azimuth = AZIMUTH_DEG,
+  elevation = ELEVATION_DEG,
+  mimeType = "image/jpeg",
+  quality = JPEG_QUALITY,
+}) {
   const doneRef = useRef(false);
 
   function finish(image) {
@@ -66,10 +82,17 @@ export default function CoverCapture({ modelUrl, parts = [], onCapture }) {
   }, []);
 
   return (
-    <div className="cover-capture" aria-hidden="true">
+    <div
+      className="cover-capture"
+      aria-hidden="true"
+      style={width && height ? { width, height } : undefined}
+    >
       <Canvas
         dpr={1}
-        camera={{ position: CAMERA_POSITION, fov: CAMERA_FOV }}
+        camera={{
+          position: cameraPosition(azimuth, elevation),
+          fov: CAMERA_FOV,
+        }}
         gl={{ antialias: true, preserveDrawingBuffer: true }}
       >
         <color attach="background" args={["#07090b"]} />
@@ -82,7 +105,11 @@ export default function CoverCapture({ modelUrl, parts = [], onCapture }) {
           <Bounds fit clip margin={FIT_MARGIN}>
             <CarScene modelUrl={modelUrl} parts={parts} shadow={false} />
           </Bounds>
-          <Capturer onCapture={finish} />
+          <Capturer
+            onCapture={finish}
+            mimeType={mimeType}
+            quality={quality}
+          />
         </Suspense>
       </Canvas>
     </div>

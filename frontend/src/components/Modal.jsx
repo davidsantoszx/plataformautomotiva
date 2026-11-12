@@ -1,6 +1,8 @@
 import { useEffect } from "react";
 
-export default function Modal({ title, onClose, children, footer }) {
+// className (opcional) vai junto de "modal": serve para variações de tamanho,
+// como "modal-wide".
+export default function Modal({ title, onClose, children, footer, className = "" }) {
   useEffect(() => {
     function handleKey(event) {
       if (event.key === "Escape") onClose();
@@ -13,7 +15,7 @@ export default function Modal({ title, onClose, children, footer }) {
   return (
     <div className="modal-backdrop" onMouseDown={onClose}>
       <div
-        className="modal"
+        className={`modal ${className}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={title}

@@ -1,4 +1,5 @@
 import { db } from '../../prisma/db'
+import { isProActive } from '../plans/plans.service'
 import { getVehicleSummary } from '../projects/projects.service'
 
 function toTime(value: unknown) {
@@ -9,7 +10,14 @@ function toTime(value: unknown) {
 // Procura primeiro pelo username exato; se não achar, tenta em minúsculas
 // (quem digita a URL na mão pode usar maiúsculas).
 async function findUserByUsername(username: string) {
-  const select = ['id', 'username', 'name', 'createdAt'] as const
+  const select = [
+    'id',
+    'username',
+    'name',
+    'plan',
+    'planExpiresAt',
+    'createdAt',
+  ] as const
 
   const exact = await db.orm.public.User
     .select(...select)
@@ -26,10 +34,13 @@ async function findUserByUsername(username: string) {
 }
 
 // Perfil público: dados do usuário, estatísticas e só os projetos publicados.
+// O selo PRO e o projeto em destaque só valem enquanto o Pro estiver ativo.
 export async function getUserProfile(username: string) {
   const user = await findUserByUsername(username)
 
   if (!user) return null
+
+  const isPro = isProActive(user)
 
   const projects = await db.orm.public.Project
     .select(
@@ -41,19 +52,27 @@ export async function getUserProfile(username: string) {
       'mode',
       'isPublic',
       'shareToken',
+      'featuredAt',
       'publishedAt',
       'createdAt',
     )
     .where({ userId: user.id })
     .all()
 
+  const isFeatured = (project: { featuredAt?: unknown }) =>
+    isPro && Boolean(project.featuredAt)
+
+  // o projeto em destaque vem primeiro; o resto, do mais novo para o mais antigo
   const published = projects
     .filter((project) => project.isPublic && project.shareToken)
-    .sort(
-      (a, b) =>
+    .sort((a, b) => {
+      if (isFeatured(a) !== isFeatured(b)) return isFeatured(a) ? -1 : 1
+
+      return (
         toTime(b.publishedAt ?? b.createdAt) -
-        toTime(a.publishedAt ?? a.createdAt),
-    )
+        toTime(a.publishedAt ?? a.createdAt)
+      )
+    })
 
   const summaries = new Map()
 
@@ -90,6 +109,7 @@ export async function getUserProfile(username: string) {
         mode: project.mode,
         shareToken: project.shareToken,
         publishedAt: project.publishedAt ?? project.createdAt,
+        isFeatured: isFeatured(project),
         vehicle: summaries.get(project.vehicleId) ?? null,
         partsCount: projectParts.length,
         likesCount: likes.length,
@@ -104,6 +124,7 @@ export async function getUserProfile(username: string) {
     user: {
       username: user.username,
       name: user.name,
+      isPro,
       createdAt: user.createdAt,
     },
     stats: {

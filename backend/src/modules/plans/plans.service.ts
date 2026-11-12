@@ -10,6 +10,7 @@ export const PLAN_ERROR_MESSAGES: Record<string, string> = {
   PROJECT_LIMIT_REACHED: `Você atingiu o limite de ${FREE_PROJECT_LIMIT} projetos do plano Free. Exclua um projeto ou assine o Pro para criar mais.`,
   PROJECT_LOCKED:
     'Este projeto livre está bloqueado porque o seu plano Pro não está ativo. Renove o Pro para editá-lo.',
+  PRO_FEATURE_REQUIRED: 'Este recurso é exclusivo do plano Pro.',
   PREMIUM_VEHICLE: 'Este veículo é exclusivo do plano Pro.',
   PREMIUM_PART: 'Esta peça é exclusiva do plano Pro.',
 }

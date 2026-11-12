@@ -19,6 +19,7 @@ import {
   updateProjectPartQuantity,
   getProjectById,
   saveProjectCover,
+  setProjectFeatured,
 } from './projects.service'
 
 import { PLAN_ERROR_MESSAGES } from '../plans/plans.service'
@@ -878,6 +879,61 @@ export async function deleteProjectPart(
     return res.status(500).json({
       message:
         'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchProjectFeatured(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+    const { featured } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: 'ID do projeto inválido',
+      })
+    }
+
+    if (typeof featured !== 'boolean') {
+      return res.status(400).json({
+        message: 'featured deve ser booleano',
+      })
+    }
+
+    const project = await setProjectFeatured(id, req.userId!, featured)
+
+    return res.json({
+      message: featured
+        ? 'Projeto destacado no perfil'
+        : 'Destaque removido',
+      project,
+    })
+  } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
+    if (error instanceof Error) {
+      if (error.message === 'PROJECT_NOT_FOUND') {
+        return res.status(404).json({
+          message: 'Projeto não encontrado',
+        })
+      }
+
+      if (error.message === 'PROJECT_NOT_PUBLIC') {
+        return res.status(409).json({
+          message: 'Publique o projeto no feed para destacá-lo no perfil.',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
     })
   }
 }
