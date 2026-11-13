@@ -18,6 +18,7 @@ export default function CarPreview3D({
   parts = [],
   loading = false,
   zoomable = false,
+  paint = null,
 }) {
   if (loading) {
     return <div className="car-preview-empty">Carregando modelo 3D...</div>;
@@ -50,7 +51,12 @@ export default function CarPreview3D({
               de 8x8) fica FORA, senão o carro é enquadrado como se fosse do
               tamanho dela e aparece pequeno. */}
           <Bounds fit clip observe margin={FIT_MARGIN}>
-            <CarScene modelUrl={modelUrl} parts={parts} shadow={false} />
+            <CarScene
+              modelUrl={modelUrl}
+              parts={parts}
+              shadow={false}
+              paint={paint}
+            />
           </Bounds>
 
           <ContactShadows

@@ -1,9 +1,26 @@
-import { Suspense, useMemo } from "react";
+import { Suspense, useEffect, useMemo } from "react";
+import { useThree } from "@react-three/fiber";
 import { ContactShadows, useGLTF } from "@react-three/drei";
+import { applyPaint, cloneForPaint } from "../utils/paint";
 
-function CarModel({ modelUrl, shadow }) {
+function CarModel({ modelUrl, shadow, paint }) {
   const { scene } = useGLTF(modelUrl);
-  const model = useMemo(() => scene.clone(true), [scene]);
+  const invalidate = useThree((state) => state.invalidate);
+
+  // clone com materiais próprios: a pintura de um projeto não pode vazar para
+  // outros usos do mesmo carro (o .glb carregado é compartilhado)
+  const { model, materials } = useMemo(() => cloneForPaint(scene), [scene]);
+
+  useEffect(() => {
+    return () => materials.forEach((material) => material.dispose());
+  }, [materials]);
+
+  // só troca valores do shader (não recompila). O invalidate redesenha o
+  // quadro nos canvas com frameloop "demand".
+  useEffect(() => {
+    applyPaint(materials, paint);
+    invalidate();
+  }, [materials, paint, invalidate]);
 
   return (
     <>
@@ -50,10 +67,17 @@ function CarPartModel({
   );
 }
 
-export default function CarScene({ modelUrl, parts = [], shadow = true }) {
+// paint: { color: "#rrggbb", finish: "GLOSS" | ... } ou null (cor original).
+// Passe sempre o MESMO objeto enquanto a pintura não mudar (useMemo).
+export default function CarScene({
+  modelUrl,
+  parts = [],
+  shadow = true,
+  paint = null,
+}) {
   return (
     <group rotation={[0, Math.PI / 8, 0]}>
-      <CarModel modelUrl={modelUrl} shadow={shadow} />
+      <CarModel modelUrl={modelUrl} shadow={shadow} paint={paint} />
 
       {parts.map((part) => (
         // Suspense próprio: se o .glb da peça ainda está carregando,

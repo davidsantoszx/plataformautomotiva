@@ -7,6 +7,7 @@ import PartThumb from "../components/PartThumb";
 import { useAuth } from "../context/AuthContext";
 import { getPublicProject } from "../services/api";
 import { build3DScene } from "../utils/build3DScene";
+import { paintFromProject } from "../utils/paint";
 import { vehicleLabel } from "../utils/vehicleLabel";
 
 function formatCurrency(value) {
@@ -86,6 +87,11 @@ export default function PublicProjectPage({ shareToken }) {
   const scene = useMemo(
     () => build3DScene(vehicle, partDetails),
     [vehicle, partDetails],
+  );
+
+  const paint = useMemo(
+    () => paintFromProject(data?.project),
+    [data],
   );
 
   async function handleCopy() {
@@ -207,6 +213,7 @@ export default function PublicProjectPage({ shareToken }) {
               parts={scene.parts}
               loading={!vehicle}
               zoomable
+              paint={paint}
             />
 
             <div className="project-preview-caption">

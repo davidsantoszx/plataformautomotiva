@@ -139,6 +139,23 @@
   font-size: 13px;
 }
 
+.configurator-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.configurator-title-row .project-mode-badge {
+  flex-shrink: 0;
+}
+
+.configurator-readonly {
+  color: #e5a23c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .configurator-header-actions {
   display: flex;
   align-items: center;
@@ -205,6 +222,55 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.configurator-categories::-webkit-scrollbar {
+  display: none;
+}
+
+/* separa "Peças" de "Aparência" na coluna da esquerda */
+.configurator-rail-divider {
+  flex-shrink: 0;
+  height: 1px;
+  margin: 6px 0 2px;
+  background: #1c2229;
+}
+
+.configurator-categories .configurator-panel-title {
+  flex-shrink: 0;
+}
+
+.car-category-button {
+  flex-shrink: 0;
+}
+
+.car-category-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.car-category-button:disabled:hover {
+  border-color: #272e36;
+  background: rgba(15, 19, 24, 0.94);
+  color: #b9c1ca;
+}
+
+/* bolinha com a cor atual no botão Pintura */
+.rail-paint-dot {
+  width: 14px;
+  height: 14px;
+  margin-left: auto;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+.rail-paint-dot.original,
+.summary-paint-dot.original {
+  background: conic-gradient(#5b636d, #b9c1ca, #5b636d, #b9c1ca, #5b636d);
 }
 
 /* ---------- categorias (esquerda) ---------- */
@@ -403,6 +469,58 @@
 
 .configurator-summary .summary-total {
   display: block;
+}
+
+.summary-paint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #20252c;
+  border-radius: 9px;
+  background: #0d1014;
+  color: #e5e8eb;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s;
+}
+
+.summary-paint:hover:not(:disabled) {
+  border-color: #ff5a1f;
+}
+
+.summary-paint:disabled {
+  cursor: default;
+}
+
+.summary-paint-dot {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+}
+
+.summary-paint-info {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.summary-paint-name {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summary-paint-info small {
+  color: #929ba6;
+  font-size: 11px;
+}
+
+.summary-part-qty {
+  color: #929ba6;
 }
 
 .summary-parts {
@@ -880,18 +998,262 @@
   font-weight: 700;
 }
 
+/* =========================
+   PINTURA (painel na faixa de baixo)
+========================= */
+
+.paint-dock {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 10px;
+}
+
+.paint-dock-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-right: 40px;
+}
+
+.paint-dock-title {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  min-width: 0;
+}
+
+.paint-dock-title h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 15px;
+}
+
+.paint-dock-current {
+  overflow: hidden;
+  color: #929ba6;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.paint-dock-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  padding: 6px 10px;
+  border: 1px solid #292f37;
+  border-radius: 8px;
+  background: #11151a;
+  color: #b8bec6;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.paint-dock-reset:hover:not(:disabled) {
+  border-color: #ff5a1f;
+  color: #fff;
+}
+
+.paint-dock-reset:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.paint-dock-body {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 32px;
+}
+
+.paint-dock-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.paint-dock-label {
+  color: #7d8691;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.paint-dock-swatches,
+.paint-dock-finishes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.paint-dock-swatch {
+  position: relative;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 2px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  cursor: pointer;
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+}
+
+.paint-dock-swatch:hover {
+  transform: scale(1.1);
+}
+
+.paint-dock-swatch.selected {
+  border-color: #ff5a1f;
+  box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.35);
+}
+
+.paint-dock-swatch.locked {
+  opacity: 0.72;
+}
+
+.paint-dock-lock {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 15px;
+  height: 15px;
+  border: 1px solid #303740;
+  border-radius: 50%;
+  background: #0c0f12;
+  color: #ff7a49;
+}
+
+.paint-dock-custom {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  background: conic-gradient(red, yellow, lime, aqua, blue, magenta, red);
+}
+
+.paint-dock-custom input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.paint-dock-finish {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid #272e36;
+  border-radius: 8px;
+  background: rgba(15, 19, 24, 0.94);
+  color: #b9c1ca;
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    border-color 0.18s,
+    background 0.18s,
+    color 0.18s;
+}
+
+.paint-dock-finish:hover:not(:disabled),
+.paint-dock-finish.selected {
+  border-color: #ff5a1f;
+  background: rgba(255, 90, 31, 0.14);
+  color: #fff;
+}
+
+.paint-dock-finish.locked svg {
+  color: #ff7a49;
+}
+
+.paint-dock-finish:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* convite para o Pro (só aparece para quem está no plano Free) */
+.paint-dock-upsell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 90, 31, 0.35);
+  border-radius: 10px;
+  background: rgba(255, 90, 31, 0.08);
+  color: #ff7a49;
+}
+
+.paint-dock-upsell svg {
+  flex-shrink: 0;
+}
+
+.paint-dock-upsell p {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  color: #c7ccd3;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.paint-dock-upsell p strong {
+  color: #fff;
+  font-size: 12px;
+}
+
+.paint-dock-upsell .primary-button {
+  width: auto;
+  flex-shrink: 0;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.paint-dock-upsell.nudge {
+  animation: paint-nudge 0.6s ease;
+}
+
+@keyframes paint-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-6px);
+  }
+  40% {
+    transform: translateX(6px);
+  }
+  60% {
+    transform: translateX(-4px);
+  }
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+@media (max-width: 600px) {
+  .paint-dock-upsell {
+    flex-wrap: wrap;
+  }
+
+  .configurator-rail-divider {
+    grid-column: 1 / -1;
+  }
+}
+
 /* orçamento fechado: o catálogo usa a largura toda do canvas */
 .summary-closed .configurator-catalog {
   right: 16px;
-}
-
-.configurator-readonly {
-  color: #ff7a49;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.car-category-button:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
 }

@@ -65,6 +65,7 @@ export default function CoverCapture({
   elevation = ELEVATION_DEG,
   mimeType = "image/jpeg",
   quality = JPEG_QUALITY,
+  paint = null,
 }) {
   const doneRef = useRef(false);
 
@@ -103,7 +104,12 @@ export default function CoverCapture({
         <Suspense fallback={null}>
           <Environment preset="studio" environmentIntensity={0.8} />
           <Bounds fit clip margin={FIT_MARGIN}>
-            <CarScene modelUrl={modelUrl} parts={parts} shadow={false} />
+            <CarScene
+              modelUrl={modelUrl}
+              parts={parts}
+              shadow={false}
+              paint={paint}
+            />
           </Bounds>
           <Capturer
             onCapture={finish}

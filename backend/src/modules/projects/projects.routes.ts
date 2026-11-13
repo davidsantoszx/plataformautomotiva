@@ -14,6 +14,7 @@ import {
   patchProject,
   patchProjectFeatured,
   patchProjectPart,
+  patchProjectPaint,
   patchProjectPublication,
   postProject,
   postProjectPart,
@@ -93,6 +94,11 @@ router.patch(
 router.patch(
   '/:id/featured',
   patchProjectFeatured,
+)
+
+router.patch(
+  '/:id/paint',
+  patchProjectPaint,
 )
 
 router.get(

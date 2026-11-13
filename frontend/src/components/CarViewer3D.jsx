@@ -8,12 +8,15 @@ import {
   CircleDot,
   Cog,
   Disc3,
+  Palette,
   Wind,
 } from "lucide-react";
 
 import PartsCatalog from "./PartsCatalog";
+import PaintDock from "./PaintDock";
 import CarScene from "./CarScene";
 import { useGlobalLoading } from "../context/LoadingContext";
+import { paintColorName, paintFinishLabel } from "../utils/paint";
 
 const categoryButtons = [
   { id: "wheels", label: "Rodas e Pneus", icon: CircleDot },
@@ -25,6 +28,7 @@ const categoryButtons = [
 ];
 
 // objetos fora do componente: não mudam de identidade a cada render
+// (câmera e enquadramento do carro: mesmos valores de antes)
 const CAMERA = { position: [-2.4, 1.2, -6.2], fov: 30 };
 const GL_OPTIONS = { antialias: true, toneMappingExposure: 1.1 };
 
@@ -54,10 +58,15 @@ function ReadySignal({ onReady }) {
   return null;
 }
 
-// Isolado com memo: só re-renderiza se o modelo ou as peças 3D mudarem.
-// O Canvas renderiza só quando algo muda (frameloop "demand"): com o carro
-// parado a GPU fica livre enquanto a pessoa escolhe peças.
-const CarCanvas = memo(function CarCanvas({ modelUrl, parts, onReady }) {
+// Isolado com memo: só re-renderiza se o modelo, as peças 3D ou a pintura
+// mudarem. O Canvas renderiza só quando algo muda (frameloop "demand"): com o
+// carro parado a GPU fica livre enquanto a pessoa escolhe peças.
+const CarCanvas = memo(function CarCanvas({
+  modelUrl,
+  parts,
+  paint,
+  onReady,
+}) {
   return (
     <Canvas
       frameloop="demand"
@@ -73,7 +82,7 @@ const CarCanvas = memo(function CarCanvas({ modelUrl, parts, onReady }) {
       <Suspense fallback={null}>
         <Environment preset="studio" environmentIntensity={0.8} />
         <Bounds fit clip observe margin={0.35}>
-          <CarScene modelUrl={modelUrl} parts={parts} />
+          <CarScene modelUrl={modelUrl} parts={parts} paint={paint} />
         </Bounds>
         <ReadySignal onReady={onReady} />
       </Suspense>
@@ -102,6 +111,7 @@ export default function CarViewer3D({
   total = 0,
   projectName = "",
   vehicleLabel = "",
+  projectMode = "",
   isDirty = false,
   saving = false,
   onCancel,
@@ -119,8 +129,14 @@ export default function CarViewer3D({
   onRemovePart,
   onCatalogCategoryChange,
   readOnly = false,
+  paint = null,
+  paintDraft = { color: "", finish: "GLOSS" },
+  onPaintChange,
+  onPaintReset,
+  isPro = false,
 }) {
-  const [catalogOpen, setCatalogOpen] = useState(true);
+  // qual painel está aberto na faixa de baixo: peças, pintura ou nenhum
+  const [activeDock, setActiveDock] = useState(null);
 
   // A transição de carregamento só sai quando o carro 3D já está na tela.
   const [sceneReady, setSceneReady] = useState(false);
@@ -138,13 +154,27 @@ export default function CarViewer3D({
     () => typeof window === "undefined" || window.innerWidth >= 1100,
   );
 
-  useEffect(() => {
-    setCatalogOpen(true); // reabre ao trocar de categoria
-  }, [selectedCategory]);
+  // clicar de novo na categoria aberta fecha o painel
+  function handleCategoryClick(id, label) {
+    if (activeDock === "parts" && selectedCategory === id) {
+      setActiveDock(null);
+      return;
+    }
+
+    setActiveDock("parts");
+    onCategoryChange?.(id, label);
+  }
+
+  function handlePaintClick() {
+    setActiveDock((current) => (current === "paint" ? null : "paint"));
+  }
 
   const addedParts = projectParts
     .map((item) => ({ item, part: projectPartDetails[item.partId] }))
     .filter(({ part }) => part);
+
+  const showPartsDock = !readOnly && activeDock === "parts" && selectedCategory;
+  const showPaintDock = !readOnly && activeDock === "paint";
 
   return (
     <section
@@ -153,7 +183,19 @@ export default function CarViewer3D({
       <header className="configurator-header">
         <div className="configurator-header-titles">
           <span className="configurator-eyebrow">EDITANDO PROJETO</span>
-          <h1>{projectName || "Projeto sem nome"}</h1>
+
+          <div className="configurator-title-row">
+            <h1>{projectName || "Projeto sem nome"}</h1>
+
+            {projectMode && (
+              <span
+                className={`project-mode-badge ${projectMode.toLowerCase()}`}
+              >
+                {projectMode === "REAL" ? "Real" : "Livre"}
+              </span>
+            )}
+          </div>
+
           {vehicleLabel && (
             <span className="configurator-header-sub">{vehicleLabel}</span>
           )}
@@ -194,23 +236,46 @@ export default function CarViewer3D({
 
       <div className="configurator-workspace">
         <aside className="configurator-categories">
-          <span className="configurator-panel-title">CATEGORIAS</span>
+          <span className="configurator-panel-title">PEÇAS</span>
 
-          {categoryButtons.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              className={`car-category-button ${
-                selectedCategory === id ? "active" : ""
-              }`}
-              onClick={() => onCategoryChange?.(id, label)}
-              aria-pressed={selectedCategory === id}
-              disabled={readOnly}
-            >
-              <Icon size={19} />
-              <span>{label}</span>
-            </button>
-          ))}
+          {categoryButtons.map(({ id, label, icon: Icon }) => {
+            const active = activeDock === "parts" && selectedCategory === id;
+
+            return (
+              <button
+                key={id}
+                type="button"
+                className={`car-category-button ${active ? "active" : ""}`}
+                onClick={() => handleCategoryClick(id, label)}
+                aria-pressed={active}
+                disabled={readOnly}
+              >
+                <Icon size={19} />
+                <span>{label}</span>
+              </button>
+            );
+          })}
+
+          <div className="configurator-rail-divider" />
+
+          <span className="configurator-panel-title">APARÊNCIA</span>
+
+          <button
+            type="button"
+            className={`car-category-button ${
+              activeDock === "paint" ? "active" : ""
+            }`}
+            onClick={handlePaintClick}
+            aria-pressed={activeDock === "paint"}
+            disabled={readOnly}
+          >
+            <Palette size={19} />
+            <span>Pintura</span>
+            <i
+              className={`rail-paint-dot${paint ? "" : " original"}`}
+              style={paint ? { backgroundColor: paint.color } : undefined}
+            />
+          </button>
         </aside>
 
         {/* O canvas ocupa sempre a área toda. O orçamento é um painel por cima
@@ -221,6 +286,7 @@ export default function CarViewer3D({
             <CarCanvas
               modelUrl={modelUrl}
               parts={parts}
+              paint={paint}
               onReady={handleSceneReady}
             />
           ) : (
@@ -252,19 +318,52 @@ export default function CarViewer3D({
 
             <strong className="summary-total">{formatCurrency(total)}</strong>
 
+            <button
+              type="button"
+              className="summary-paint"
+              onClick={() => setActiveDock("paint")}
+              disabled={readOnly}
+              title="Editar a pintura"
+            >
+              <i
+                className={`summary-paint-dot${paint ? "" : " original"}`}
+                style={paint ? { backgroundColor: paint.color } : undefined}
+              />
+
+              <span className="summary-paint-info">
+                <span className="summary-paint-name">Pintura</span>
+                <small>
+                  {paint
+                    ? `${paintColorName(paint.color)} · ${paintFinishLabel(
+                        paint.finish,
+                      )}`
+                    : "Cor original do carro"}
+                </small>
+              </span>
+            </button>
+
             <div className="summary-parts">
               {addedParts.length === 0 ? (
                 <span className="summary-empty">Nenhuma peça adicionada</span>
               ) : (
                 addedParts.map(({ item, part }) => {
+                  const quantity = Number(item.quantity ?? 1);
                   const price =
                     Number(item.priceAtTime ?? part.estimatedPrice ?? 0) *
-                    Number(item.quantity ?? 1);
+                    quantity;
 
                   return (
                     <div className="summary-part" key={item.partId}>
                       <div className="summary-part-info">
-                        <span className="summary-part-name">{part.name}</span>
+                        <span className="summary-part-name">
+                          {part.name}
+                          {quantity > 1 && (
+                            <span className="summary-part-qty">
+                              {" "}
+                              ×{quantity}
+                            </span>
+                          )}
+                        </span>
                         <span className="summary-part-price">
                           {formatCurrency(price)}
                         </span>
@@ -301,12 +400,12 @@ export default function CarViewer3D({
         </div>
       </div>
 
-      {selectedCategory && catalogOpen && !readOnly && (
+      {showPartsDock && (
         <div className="configurator-catalog">
           <button
             type="button"
             className="catalog-close"
-            onClick={() => setCatalogOpen(false)}
+            onClick={() => setActiveDock(null)}
             aria-label="Fechar peças"
           >
             ✕
@@ -324,6 +423,27 @@ export default function CarViewer3D({
             onAddPart={onAddPart}
             onCategoryChange={onCatalogCategoryChange}
             onRemovePart={onRemovePart}
+          />
+        </div>
+      )}
+
+      {showPaintDock && (
+        <div className="configurator-catalog">
+          <button
+            type="button"
+            className="catalog-close"
+            onClick={() => setActiveDock(null)}
+            aria-label="Fechar pintura"
+          >
+            ✕
+          </button>
+
+          <PaintDock
+            color={paintDraft.color}
+            finish={paintDraft.finish}
+            isPro={isPro}
+            onChange={onPaintChange}
+            onReset={onPaintReset}
           />
         </div>
       )}

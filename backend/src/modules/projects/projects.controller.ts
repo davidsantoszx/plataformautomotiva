@@ -20,6 +20,7 @@ import {
   getProjectById,
   saveProjectCover,
   setProjectFeatured,
+  setProjectPaint,
 } from './projects.service'
 
 import { PLAN_ERROR_MESSAGES } from '../plans/plans.service'
@@ -926,6 +927,74 @@ export async function patchProjectFeatured(
       if (error.message === 'PROJECT_NOT_PUBLIC') {
         return res.status(409).json({
           message: 'Publique o projeto no feed para destacá-lo no perfil.',
+        })
+      }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+export async function patchProjectPaint(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+    const { color, finish } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: 'ID do projeto inválido',
+      })
+    }
+
+    if (color !== null && typeof color !== 'string') {
+      return res.status(400).json({
+        message: 'color deve ser um texto (#rrggbb) ou null',
+      })
+    }
+
+    if (
+      finish !== undefined &&
+      finish !== null &&
+      typeof finish !== 'string'
+    ) {
+      return res.status(400).json({
+        message: 'finish inválido',
+      })
+    }
+
+    const project = await setProjectPaint(
+      id,
+      req.userId!,
+      color,
+      finish ?? null,
+    )
+
+    return res.json({
+      message: color === null ? 'Pintura original restaurada' : 'Pintura salva',
+      project,
+    })
+  } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
+    if (error instanceof Error) {
+      if (error.message === 'PROJECT_NOT_FOUND') {
+        return res.status(404).json({
+          message: 'Projeto não encontrado',
+        })
+      }
+
+      if (error.message === 'INVALID_PAINT') {
+        return res.status(400).json({
+          message: 'Cor ou acabamento inválido',
         })
       }
     }

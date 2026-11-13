@@ -22,6 +22,7 @@ import Modal, { ConfirmModal } from "../components/Modal";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
 import { downloadBudgetPdf } from "../utils/budgetPdf";
+import { paintFromProject } from "../utils/paint";
 import { vehicleLabel } from "../utils/vehicleLabel";
 import {
   getProject,
@@ -325,7 +326,6 @@ export default function ProjectPage() {
   const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish" | "export-image" | "parts"
   const [hdCapture, setHdCapture] = useState(null); // opções da imagem HD em geração
 
-
   // carrega projeto (já com o veículo) e peças
   useEffect(() => {
     let cancelled = false;
@@ -386,6 +386,15 @@ export default function ProjectPage() {
   const scene = useMemo(
     () => build3DScene(vehicle, projectPartDetails),
     [vehicle, projectPartDetails],
+  );
+
+  // objetos estáveis: o carro 3D só atualiza a pintura quando ela muda de fato
+  const savedColor = project?.paintColor;
+  const savedFinish = project?.paintFinish;
+
+  const savedPaint = useMemo(
+    () => paintFromProject({ paintColor: savedColor, paintFinish: savedFinish }),
+    [savedColor, savedFinish],
   );
 
   const projectTotal = projectParts.reduce((total, item) => {
@@ -775,6 +784,7 @@ export default function ProjectPage() {
             modelUrl={scene.modelUrl}
             parts={scene.parts}
             loading={!vehicle}
+            paint={savedPaint}
           />
 
           <div className="project-preview-caption">
@@ -1079,6 +1089,7 @@ export default function ProjectPage() {
           parts={scene.parts}
           width={1920}
           height={1080}
+          paint={savedPaint}
           azimuth={hdCapture.angle.azimuth}
           elevation={hdCapture.angle.elevation}
           mimeType={hdCapture.format.mimeType}

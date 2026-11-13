@@ -366,6 +366,8 @@ export async function duplicateProject(id: number, userId: number) {
     description: project.description,
     mode: project.mode,
     isPublic: false,
+    paintColor: project.paintColor,
+    paintFinish: project.paintFinish,
   });
 
   const projectParts = await db.orm.public.ProjectPart.select(
@@ -536,6 +538,8 @@ export async function getPublicProject(shareToken: string) {
       author,
       vehicle,
       coverUrl: project.coverUrl,
+      paintColor: project.paintColor,
+      paintFinish: project.paintFinish,
     },
     parts,
   };
@@ -820,5 +824,61 @@ export async function setProjectFeatured(
 
   return db.orm.public.Project.where({ id }).update({
     featuredAt: new Date().toISOString(),
+  });
+}
+
+const PAINT_FINISHES = ["GLOSS", "MATTE", "METALLIC", "PEARL"];
+const HEX_COLOR = /^#[0-9a-fA-F]{6}$/;
+
+// O plano Free pinta só de preto, cinza ou branco, com acabamento brilhante.
+// Precisa ser igual a PAINT_COLORS (free: true) em frontend/src/utils/paint.js.
+const FREE_PAINT_COLORS = ["#111214", "#6b7280", "#f2f2f2"];
+const FREE_PAINT_FINISH = "GLOSS";
+
+// Pintura do carro (cor + acabamento). O Free escolhe entre preto, cinza e
+// branco (brilhante); o Pro tem todas as cores, cor livre e todos os
+// acabamentos. Voltar para a cor original (color = null) é sempre permitido.
+export async function setProjectPaint(
+  id: number,
+  userId: number,
+  color: string | null,
+  finish: string | null,
+) {
+  const project = await db.orm.public.Project.first({ id, userId });
+
+  if (!project) {
+    throw new Error("PROJECT_NOT_FOUND");
+  }
+
+  if (color === null) {
+    return db.orm.public.Project.where({ id }).update({
+      paintColor: null,
+      paintFinish: null,
+    });
+  }
+
+  if (!HEX_COLOR.test(color)) {
+    throw new Error("INVALID_PAINT");
+  }
+
+  const finalFinish = finish ?? "GLOSS";
+
+  if (!PAINT_FINISHES.includes(finalFinish)) {
+    throw new Error("INVALID_PAINT");
+  }
+
+  const { isPro } = await getUserPlan(userId);
+
+  if (
+    !isPro &&
+    (!FREE_PAINT_COLORS.includes(color.toLowerCase()) ||
+      finalFinish !== FREE_PAINT_FINISH)
+  ) {
+    throw new Error("PRO_FEATURE_REQUIRED");
+  }
+
+  return db.orm.public.Project.where({ id }).update({
+    paintColor: color.toLowerCase(),
+    paintFinish: finalFinish,
   });
 }

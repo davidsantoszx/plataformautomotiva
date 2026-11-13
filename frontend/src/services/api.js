@@ -586,3 +586,23 @@ export async function deleteAccount(token, password) {
 
   return data
 }
+
+// color = "#rrggbb" ou null (volta para a cor original); finish = GLOSS | MATTE | METALLIC | PEARL
+export async function updateProjectPaint(token, projectId, color, finish) {
+  const response = await fetch(`${API_URL}/projects/${projectId}/paint`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ color, finish }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao salvar a pintura')
+  }
+
+  return data
+}

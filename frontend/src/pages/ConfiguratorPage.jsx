@@ -6,6 +6,7 @@ import CoverCapture from "../components/CoverCapture";
 import { useGlobalLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
 import { build3DScene } from "../utils/build3DScene";
+import { DEFAULT_FINISH, paintFromProject } from "../utils/paint";
 import { vehicleLabel as formatVehicleLabel } from "../utils/vehicleLabel";
 import {
   getProject,
@@ -15,6 +16,7 @@ import {
   getCompatibilitiesByVehicle,
   addPartToProject,
   removePartFromProject,
+  updateProjectPaint,
   uploadProjectCover,
 } from "../services/api";
 
@@ -55,6 +57,14 @@ export default function ConfiguratorPage() {
   // detalhes dessas mesmas peças (o rascunho pode remover peças de
   // projectPartDetails, mas a capa precisa do estado que está salvo)
   const initialDetailsRef = useRef({});
+
+  // pintura: o rascunho aparece no carro na hora e só vale depois de salvar
+  const [paintDraft, setPaintDraft] = useState({
+    color: "",
+    finish: DEFAULT_FINISH,
+  });
+  // pintura como estava no banco quando a tela abriu (ou foi salva por último)
+  const initialPaintRef = useRef({ color: "", finish: DEFAULT_FINISH });
 
   // cena usada na foto da capa quando a pessoa sai sem salvar
   const [captureScene, setCaptureScene] = useState(null);
@@ -104,6 +114,14 @@ export default function ConfiguratorPage() {
 
         initialDetailsRef.current = details;
 
+        const loadedPaint = {
+          color: loadedProject.paintColor || "",
+          finish: loadedProject.paintFinish || DEFAULT_FINISH,
+        };
+
+        initialPaintRef.current = loadedPaint;
+        setPaintDraft(loadedPaint);
+
         setProject(loadedProject);
         // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
         setVehicle(loadedProject.vehicle || null);
@@ -128,9 +146,17 @@ export default function ConfiguratorPage() {
 
   // há alterações em relação ao que está salvo?
   const initialIds = initialPartIdsRef.current;
-  const isDirty =
+  const partsDirty =
     initialIds.length !== projectParts.length ||
     projectParts.some((item) => !initialIds.includes(item.partId));
+
+  const paintDirty =
+    paintDraft.color.toLowerCase() !==
+      initialPaintRef.current.color.toLowerCase() ||
+    (Boolean(paintDraft.color) &&
+      paintDraft.finish !== initialPaintRef.current.finish);
+
+  const isDirty = partsDirty || paintDirty;
 
   // avisa se tentarem fechar a aba com alterações pendentes
   useEffect(() => {
@@ -149,6 +175,19 @@ export default function ConfiguratorPage() {
     () => build3DScene(vehicle, projectPartDetails),
     [vehicle, projectPartDetails],
   );
+
+  // pintura mostrada no carro: o rascunho (objeto estável, só muda com a cor/acabamento)
+  const draftColor = paintDraft.color;
+  const draftFinish = paintDraft.finish;
+
+  const paint = useMemo(
+    () => (draftColor ? { color: draftColor, finish: draftFinish } : null),
+    [draftColor, draftFinish],
+  );
+
+  function handlePaintReset() {
+    setPaintDraft({ color: "", finish: DEFAULT_FINISH });
+  }
 
   // Modelos 3D que podem aparecer na tela ao adicionar uma peça da categoria
   // aberta (inclui a troca de modelo base do Astra com rodas).
@@ -344,7 +383,11 @@ export default function ConfiguratorPage() {
       }
     });
 
-    const savedScene = build3DScene(vehicle, savedDetails);
+    const savedPaint = initialPaintRef.current.color
+      ? { ...initialPaintRef.current }
+      : null;
+
+    const savedScene = { ...build3DScene(vehicle, savedDetails), paint: savedPaint };
 
     if (!savedScene.modelUrl) {
       backToProject();
@@ -398,6 +441,19 @@ export default function ConfiguratorPage() {
       );
 
       initialPartIdsRef.current = currentIds;
+
+      // pintura: só vai ao servidor se mudou (assim quem é Free e só mexeu em
+      // peças não esbarra na regra de cores do Pro)
+      if (paintDirty) {
+        await updateProjectPaint(
+          token,
+          project.id,
+          paintDraft.color || null,
+          paintDraft.color ? paintDraft.finish : null,
+        );
+
+        initialPaintRef.current = { ...paintDraft };
+      }
     } catch (err) {
       setError(err.message || "Erro ao salvar o projeto.");
       savingRef.current = false;
@@ -440,6 +496,11 @@ export default function ConfiguratorPage() {
         onSave={handleSave}
         projectMode={project.mode}
         readOnly={readOnly}
+        paint={paint}
+        paintDraft={paintDraft}
+        onPaintChange={setPaintDraft}
+        onPaintReset={handlePaintReset}
+        isPro={Boolean(user?.isPro)}
         categories={categories}
         catalogParts={parts}
         compatibilities={compatibilities}
@@ -458,6 +519,7 @@ export default function ConfiguratorPage() {
         <CoverCapture
           modelUrl={captureScene?.modelUrl ?? vehicleModelUrl}
           parts={captureScene?.parts ?? visible3DParts}
+          paint={captureScene ? captureScene.paint : paint}
           onCapture={handleCoverCaptured}
         />
       )}
