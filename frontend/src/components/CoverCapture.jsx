@@ -1,7 +1,7 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Bounds, Environment } from "@react-three/drei";
-import CarScene from "./CarScene";
+import { Bounds } from "@react-three/drei";
+import CarScene, { SceneLights } from "./CarScene";
 
 // ---- ângulo padrão (usado nas capas) e enquadramento ----
 const AZIMUTH_DEG = 250;   // giro ao redor do carro. Ajuste este valor
@@ -97,17 +97,13 @@ export default function CoverCapture({
         gl={{ antialias: true, preserveDrawingBuffer: true }}
       >
         <color attach="background" args={["#07090b"]} />
-        <ambientLight intensity={0.45} />
-        <directionalLight position={[5, 7, 5]} intensity={2} />
-        <directionalLight position={[-5, 3, -3]} intensity={1.2} />
 
         <Suspense fallback={null}>
-          <Environment preset="studio" environmentIntensity={0.8} />
+          <SceneLights />
           <Bounds fit clip margin={FIT_MARGIN}>
             <CarScene
               modelUrl={modelUrl}
               parts={parts}
-              shadow={false}
               paint={paint}
             />
           </Bounds>

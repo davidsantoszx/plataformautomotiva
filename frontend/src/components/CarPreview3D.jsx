@@ -1,12 +1,8 @@
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { Canvas } from "@react-three/fiber";
-import {
-  Bounds,
-  ContactShadows,
-  Environment,
-  OrbitControls,
-} from "@react-three/drei";
-import CarScene from "./CarScene";
+import { Bounds, OrbitControls } from "@react-three/drei";
+import CarScene, { SceneLights } from "./CarScene";
+import CarStage from "./CarStage";
 
 // Quão perto a câmera fica do carro. MENOR = carro maior e mais perto;
 // MAIOR = mais folga ao redor. Se o carro ficar cortado nas bordas, suba um
@@ -20,6 +16,9 @@ export default function CarPreview3D({
   zoomable = false,
   paint = null,
 }) {
+  // medidas do carro: a sombra fica exatamente na altura das rodas
+  const [stage, setStage] = useState(null);
+
   if (loading) {
     return <div className="car-preview-empty">Carregando modelo 3D...</div>;
   }
@@ -40,33 +39,23 @@ export default function CarPreview3D({
         gl={{ antialias: true }}
       >
         <color attach="background" args={["#07090b"]} />
-        <ambientLight intensity={0.45} />
-        <directionalLight position={[5, 7, 5]} intensity={2} />
-        <directionalLight position={[-5, 3, -3]} intensity={1.2} />
 
         <Suspense fallback={null}>
-          <Environment preset="studio" environmentIntensity={0.8} />
+          <SceneLights />
 
-          {/* O Bounds enquadra tudo o que está dentro dele. A sombra (um plano
-              de 8x8) fica FORA, senão o carro é enquadrado como se fosse do
-              tamanho dela e aparece pequeno. */}
+          {/* O Bounds enquadra tudo o que está dentro dele. A sombra fica
+              FORA, senão o carro é enquadrado como se fosse do tamanho dela e
+              aparece pequeno. */}
           <Bounds fit clip observe margin={FIT_MARGIN}>
             <CarScene
               modelUrl={modelUrl}
               parts={parts}
-              shadow={false}
               paint={paint}
+              onStage={setStage}
             />
           </Bounds>
 
-          <ContactShadows
-            position={[0, -0.75, 0]}
-            opacity={0.55}
-            scale={8}
-            blur={2.5}
-            far={4}
-            frames={2}
-          />
+          <CarStage stage={stage} ring={false} />
         </Suspense>
 
         <OrbitControls

@@ -9,7 +9,7 @@
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #080a0c;
+  background: #05070d;
 }
 
 .configurator-status {
@@ -79,242 +79,59 @@
 
 /* =========================
    CONFIGURADOR
+   O carro (canvas) ocupa a tela toda e tudo o mais flutua por cima.
 ========================= */
 
 .configurator-screen {
-  --cfg-left: 160px;
-  --cfg-summary: 260px;
+  /* cores do visualizador: troque --cfg-accent para mudar o tom dos destaques
+     (o círculo do chão fica em CarStage.jsx) */
+  --cfg-accent: #38bdf8;
+  --cfg-accent-soft: rgba(56, 189, 248, 0.16);
+  --cfg-glass: rgba(9, 14, 28, 0.88);
+  --cfg-glass-strong: rgba(8, 13, 26, 0.9);
+  --cfg-line: rgba(255, 255, 255, 0.09);
+  --cfg-text: #e6ecf5;
+  --cfg-muted: #8fa0b8;
+
+  --cfg-gap: 16px; /* margem das bordas da tela */
+  --cfg-bar: 60px; /* altura da faixa do topo */
+  --cfg-tools: 60px; /* largura da barra de ferramentas */
+  --cfg-summary: 260px; /* largura do orçamento e dos botões Salvar/Cancelar */
+  --cfg-actions: 104px; /* altura do bloco Salvar/Cancelar */
 
   position: relative;
   width: 100%;
-  height: calc(100vh - 16px);
-  min-height: 0;
-  padding: 16px;
-  border: 1px solid #252a30;
-  border-radius: 12px;
-  background: #080a0c;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-sizing: border-box;
+  height: 100%;
   overflow: hidden;
+  color: var(--cfg-text);
+  background: radial-gradient(
+    ellipse 75% 65% at 50% 60%,
+    #14264a 0%,
+    #0a1429 45%,
+    #05070d 88%
+  );
 }
 
-/* ---------- cabeçalho ---------- */
-
-.configurator-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
+/* painéis escuros semitransparentes sobre o carro. Sem backdrop-filter de
+   propósito: o desfoque era recalculado a cada quadro do carro girando e
+   deixava os atalhos de câmera travados */
+.configurator-actions,
+.configurator-views,
+.configurator-categories,
+.configurator-summary,
+.configurator-catalog,
+.summary-reopen {
+  border: 1px solid var(--cfg-line);
+  background: var(--cfg-glass);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
 }
 
-.configurator-header-titles {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-.configurator-eyebrow {
-  color: #ff5a1f;
-  font-size: 10px;
-  font-weight: 900;
-  letter-spacing: 0.16em;
-}
-
-.configurator-header h1 {
-  margin: 0;
-  font-size: 20px;
-  line-height: 1.2;
-  color: #fff;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.configurator-header-sub {
-  color: #929ba6;
-  font-size: 13px;
-}
-
-.configurator-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.configurator-title-row .project-mode-badge {
-  flex-shrink: 0;
-}
-
-.configurator-readonly {
-  color: #e5a23c;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.configurator-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.configurator-header-actions .primary-button {
-  width: auto;
-  padding: 10px 24px;
-  font-size: 14px;
-}
-
-.configurator-header-actions button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.configurator-dirty {
-  margin-right: 6px;
-  color: #e5a23c;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.configurator-back-button {
-  border: 1px solid #303740;
-  border-radius: 8px;
-  padding: 10px 18px;
-  background: #111519;
-  color: #fff;
-  font-size: 14px;
-  cursor: pointer;
-  transition:
-    border-color 0.18s,
-    background 0.18s;
-}
-
-.configurator-back-button:hover:not(:disabled) {
-  border-color: #4a535e;
-  background: #171c21;
-}
-
-.configurator-panel-title {
-  color: #ff5722;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  margin-bottom: 4px;
-}
-
-/* ---------- área principal ---------- */
-
-.configurator-workspace {
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--cfg-left) minmax(0, 1fr);
-  gap: 12px;
-  flex: 1;
-  min-height: 0;
-}
-
-.configurator-categories {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-  overflow-y: auto;
-  scrollbar-width: none;
-}
-
-.configurator-categories::-webkit-scrollbar {
-  display: none;
-}
-
-/* separa "Peças" de "Aparência" na coluna da esquerda */
-.configurator-rail-divider {
-  flex-shrink: 0;
-  height: 1px;
-  margin: 6px 0 2px;
-  background: #1c2229;
-}
-
-.configurator-categories .configurator-panel-title {
-  flex-shrink: 0;
-}
-
-.car-category-button {
-  flex-shrink: 0;
-}
-
-.car-category-button:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-}
-
-.car-category-button:disabled:hover {
-  border-color: #272e36;
-  background: rgba(15, 19, 24, 0.94);
-  color: #b9c1ca;
-}
-
-/* bolinha com a cor atual no botão Pintura */
-.rail-paint-dot {
-  width: 14px;
-  height: 14px;
-  margin-left: auto;
-  flex-shrink: 0;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 50%;
-}
-
-.rail-paint-dot.original,
-.summary-paint-dot.original {
-  background: conic-gradient(#5b636d, #b9c1ca, #5b636d, #b9c1ca, #5b636d);
-}
-
-/* ---------- categorias (esquerda) ---------- */
-
-.car-category-button {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 10px;
-  width: 150px;
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #272e36;
-  border-radius: 9px;
-  background: rgba(15, 19, 24, 0.94);
-  color: #b9c1ca;
-  text-align: left;
-  font-size: 12px;
-  transition:
-    border-color 0.18s,
-    background 0.18s,
-    color 0.18s;
-}
-
-.car-category-button:hover,
-.car-category-button.active {
-  border-color: #ff5a1f;
-  background: rgba(255, 90, 31, 0.14);
-  color: #fff;
-}
-
-.car-category-button.active svg {
-  color: #ff5a1f;
-}
-
-/* ---------- carro (centro) ---------- */
+/* ---------- carro (tela toda, por baixo) ---------- */
 
 .configurator-car {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
-  overflow: hidden;
-  border-radius: 12px;
-  background: #07090b;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
 }
 
 .configurator-car canvas {
@@ -339,27 +156,310 @@
   font-size: 13px;
 }
 
-/* ---------- orçamento (painel por cima do canvas) ----------
-   O canvas nunca muda de tamanho: abrir/fechar só move o painel com
-   transform + opacity (GPU), sem layout e sem reenquadrar a câmera. */
+/* ---------- topo: nome do projeto e ações ---------- */
+
+.configurator-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: var(--cfg-gap);
+  /* escurece só o topo para o texto ler bem sobre o fundo */
+  background: linear-gradient(to bottom, rgba(5, 7, 13, 0.7), transparent);
+  /* o espaço vazio não bloqueia o arrastar do carro */
+  pointer-events: none;
+}
+
+.configurator-header > * {
+  pointer-events: auto;
+}
+
+.configurator-header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.configurator-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.configurator-title-row .project-mode-badge {
+  flex-shrink: 0;
+}
+
+.configurator-header h1 {
+  margin: 0;
+  overflow: hidden;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.configurator-header-sub {
+  color: var(--cfg-muted);
+  font-size: 12.5px;
+}
+
+/* Salvar e Cancelar: canto inferior direito, embaixo do orçamento */
+.configurator-actions {
+  position: absolute;
+  right: var(--cfg-gap);
+  bottom: var(--cfg-gap);
+  z-index: 8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: var(--cfg-summary);
+  max-width: calc(100% - 2 * var(--cfg-gap));
+  padding: 10px;
+  border-radius: 16px;
+  box-sizing: border-box;
+}
+
+.configurator-actions-row {
+  display: flex;
+  gap: 8px;
+}
+
+.configurator-actions-row > button {
+  flex: 1;
+}
+
+.configurator-actions .primary-button {
+  width: auto;
+  padding: 10px 0;
+  font-size: 14px;
+}
+
+.configurator-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.configurator-dirty {
+  margin: 2px 2px 0;
+  color: #e5a23c;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.configurator-readonly {
+  margin: 2px 2px 0;
+  color: #e5a23c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.configurator-back-button {
+  padding: 10px 0;
+  border: 1px solid var(--cfg-line);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--cfg-text);
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    border-color 0.18s,
+    background 0.18s;
+}
+
+.configurator-back-button:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.configurator-panel-title {
+  color: var(--cfg-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+/* ---------- atalhos de câmera (topo, centro) ---------- */
+
+.configurator-views {
+  position: absolute;
+  top: var(--cfg-gap);
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border-radius: 999px;
+  transform: translateX(-50%);
+}
+
+.configurator-view-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--cfg-muted);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.configurator-view-button:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.configurator-view-button.active {
+  background: var(--cfg-accent-soft);
+  color: var(--cfg-accent);
+}
+
+.configurator-views-divider {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background: var(--cfg-line);
+}
+
+/* ---------- ferramentas (esquerda): só ícones, o nome aparece ao passar o mouse ---------- */
+
+.configurator-categories {
+  position: absolute;
+  top: 50%;
+  left: var(--cfg-gap);
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: var(--cfg-tools);
+  padding: 8px;
+  border-radius: 18px;
+  box-sizing: border-box;
+  transform: translateY(-50%);
+}
+
+.configurator-rail-divider {
+  flex-shrink: 0;
+  height: 1px;
+  margin: 4px 6px;
+  background: var(--cfg-line);
+}
+
+.car-category-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  color: #b4c0d2;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    border-color 0.18s,
+    color 0.18s;
+}
+
+.car-category-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+  color: #fff;
+}
+
+.car-category-button.active {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: var(--cfg-accent-soft);
+  color: var(--cfg-accent);
+}
+
+.car-category-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* nome da ferramenta ao passar o mouse */
+.car-category-button[data-label]::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 14px);
+  padding: 6px 10px;
+  border: 1px solid var(--cfg-line);
+  border-radius: 8px;
+  background: var(--cfg-glass-strong);
+  color: var(--cfg-text);
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-4px, -50%);
+  transition:
+    opacity 0.15s,
+    transform 0.15s;
+}
+
+.car-category-button:hover::after,
+.car-category-button:focus-visible::after {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+/* bolinha com a cor atual no botão Pintura */
+.rail-paint-dot {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 11px;
+  height: 11px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+}
+
+.rail-paint-dot.original,
+.summary-paint-dot.original {
+  background: conic-gradient(#5b636d, #b9c1ca, #5b636d, #b9c1ca, #5b636d);
+}
+
+/* ---------- orçamento (direita) ---------- */
 
 .configurator-summary {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  bottom: 12px;
-  z-index: 4;
+  top: var(--cfg-gap);
+  right: var(--cfg-gap);
+  z-index: 5;
   width: var(--cfg-summary);
-  max-width: calc(100% - 24px);
+  max-width: calc(100% - 2 * var(--cfg-gap));
+  /* não passa por cima do Salvar/Cancelar */
+  max-height: calc(100% - 3 * var(--cfg-gap) - var(--cfg-actions));
   min-width: 0;
   padding: 14px;
-  border: 1px solid #252a30;
-  border-radius: 12px;
-  background: rgba(12, 15, 18, 0.95);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+  border-radius: 16px;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   transform: translate3d(0, 0, 0);
   opacity: 1;
   visibility: visible;
@@ -367,7 +467,6 @@
     transform 0.22s ease,
     opacity 0.22s ease,
     visibility 0s;
-  will-change: transform, opacity;
 }
 
 .summary-closed .configurator-summary {
@@ -387,10 +486,6 @@
   justify-content: space-between;
 }
 
-.summary-header .configurator-panel-title {
-  margin-bottom: 0;
-}
-
 .summary-close {
   width: 24px;
   height: 24px;
@@ -398,50 +493,45 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #292f37;
+  border: 1px solid var(--cfg-line);
   border-radius: 6px;
-  background: #11151a;
-  color: #8b939d;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cfg-muted);
   font-size: 11px;
   line-height: 1;
   cursor: pointer;
 }
 
 .summary-close:hover {
-  border-color: #ff5a1f;
+  border-color: rgba(56, 189, 248, 0.5);
   color: #fff;
 }
 
 /* botão que reabre o orçamento, com o total à vista */
 .summary-reopen {
   position: absolute;
-  top: 12px;
-  right: 12px;
-  z-index: 4;
+  top: var(--cfg-gap);
+  right: var(--cfg-gap);
+  z-index: 5;
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  border: 1px solid #303740;
   border-radius: 999px;
-  background: rgba(15, 19, 24, 0.95);
   color: #fff;
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
   animation: summary-reopen-in 0.2s ease both;
-  transition:
-    border-color 0.18s,
-    background 0.18s;
+  transition: border-color 0.18s;
 }
 
 .summary-reopen svg {
-  color: #ff5a1f;
+  color: var(--cfg-accent);
 }
 
 .summary-reopen:hover {
-  border-color: #ff5a1f;
-  background: rgba(255, 90, 31, 0.14);
+  border-color: rgba(56, 189, 248, 0.5);
 }
 
 @keyframes summary-reopen-in {
@@ -456,14 +546,15 @@
 }
 
 .configurator-summary p {
-  color: #a6adb7;
-  font-size: 13px;
   margin: 0;
+  color: var(--cfg-muted);
+  font-size: 12.5px;
 }
 
 .configurator-summary strong {
   color: #fff;
-  font-size: 23px;
+  font-size: 24px;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 
@@ -477,17 +568,17 @@
   gap: 10px;
   width: 100%;
   padding: 10px;
-  border: 1px solid #20252c;
-  border-radius: 9px;
-  background: #0d1014;
-  color: #e5e8eb;
+  border: 1px solid var(--cfg-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--cfg-text);
   text-align: left;
   cursor: pointer;
   transition: border-color 0.18s;
 }
 
 .summary-paint:hover:not(:disabled) {
-  border-color: #ff5a1f;
+  border-color: rgba(56, 189, 248, 0.5);
 }
 
 .summary-paint:disabled {
@@ -515,12 +606,8 @@
 }
 
 .summary-paint-info small {
-  color: #929ba6;
+  color: var(--cfg-muted);
   font-size: 11px;
-}
-
-.summary-part-qty {
-  color: #929ba6;
 }
 
 .summary-parts {
@@ -529,8 +616,8 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding-top: 12px;
-  border-top: 1px solid #1c2229;
+  padding-top: 10px;
+  border-top: 1px solid var(--cfg-line);
   overflow-y: auto;
   scrollbar-width: none;
 }
@@ -540,7 +627,7 @@
 }
 
 .summary-empty {
-  color: #666f7a;
+  color: #66758c;
   font-size: 12px;
 }
 
@@ -550,9 +637,9 @@
   justify-content: space-between;
   gap: 8px;
   padding: 10px;
-  border: 1px solid #20252c;
-  border-radius: 9px;
-  background: #0d1014;
+  border: 1px solid var(--cfg-line);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .summary-part-info {
@@ -563,15 +650,19 @@
 }
 
 .summary-part-name {
-  color: #e5e8eb;
+  color: var(--cfg-text);
   font-size: 12px;
   line-height: 1.3;
 }
 
+.summary-part-qty {
+  color: var(--cfg-muted);
+}
+
 .summary-part-price {
-  color: #ff7a49;
+  color: var(--cfg-accent);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .summary-part-remove {
@@ -579,44 +670,42 @@
   width: 24px;
   height: 24px;
   padding: 0;
-  border: 1px solid #292f37;
+  border: 1px solid var(--cfg-line);
   border-radius: 6px;
-  background: #11151a;
-  color: #8b939d;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--cfg-muted);
   font-size: 11px;
   line-height: 1;
+  cursor: pointer;
 }
 
 .summary-part-remove:hover {
-  border-color: #ff5a1f;
+  border-color: rgba(229, 139, 130, 0.6);
   color: #fff;
 }
 
 /* =========================
-   CATÁLOGO COMO OVERLAY
+   PAINÉIS DE BAIXO (peças e pintura)
 ========================= */
 
 .configurator-catalog {
   position: absolute;
-  /* alinhado com o canvas: padding 16 + coluna das categorias + gap 12;
-     com o orçamento aberto, deixa o espaço do painel (12 + largura + 12) */
-  left: calc(16px + var(--cfg-left) + 12px);
-  right: calc(16px + 12px + var(--cfg-summary) + 12px);
-  bottom: 16px;
-  z-index: 5;
+  /* entre a barra de ferramentas e a coluna da direita (orçamento + botões) */
+  left: calc(var(--cfg-gap) + var(--cfg-tools) + 12px);
+  right: calc(var(--cfg-gap) + var(--cfg-summary) + 12px);
+  bottom: var(--cfg-gap);
+  z-index: 7;
   flex: none;
   overflow: visible;
   max-height: none;
-  padding: 10px 14px 2px;
+  padding: 14px 16px 6px;
+  border-radius: 18px;
+  box-sizing: border-box;
+  animation: catalog-slide-up 0.25s ease-out;
 
   /* AJUSTES DOS CARDS: mexa só nestes dois valores */
   --part-card-w: 190px; /* largura de cada card */
   --part-card-img: 56px; /* altura da área da foto da peça */
-
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
-  background: rgba(10, 13, 16, 0.94);
-  animation: catalog-slide-up 0.25s ease-out;
 }
 
 @keyframes catalog-slide-up {
@@ -630,9 +719,17 @@
   }
 }
 
+.dock-title {
+  margin: 0 0 10px;
+  padding-right: 40px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+}
+
 .configurator-catalog .catalog-select,
 .configurator-catalog .section-eyebrow,
-.configurator-catalog .section-heading > p {
+.configurator-catalog .section-heading {
   display: none;
 }
 
@@ -645,21 +742,10 @@
   background: transparent;
 }
 
-.configurator-catalog .section-heading {
-  padding-right: 40px;
-  margin-bottom: 8px;
-}
-
-.configurator-catalog .section-heading h2 {
-  margin: 0;
-  font-size: 15px;
-  letter-spacing: 0;
-}
-
 .configurator-catalog .catalog-close {
   position: absolute;
-  top: 10px;
-  right: 12px;
+  top: 12px;
+  right: 14px;
   z-index: 10;
   width: 28px;
   height: 28px;
@@ -667,16 +753,17 @@
   align-items: center;
   justify-content: center;
   padding: 0;
-  border: 1px solid #292f37;
+  border: 1px solid var(--cfg-line);
   border-radius: 8px;
-  background: #11151a;
-  color: #b8bec6;
+  background: rgba(255, 255, 255, 0.05);
+  color: #b8c3d4;
   font-size: 12px;
   line-height: 1;
+  cursor: pointer;
 }
 
 .configurator-catalog .catalog-close:hover {
-  border-color: #ff5a1f;
+  border-color: rgba(56, 189, 248, 0.5);
   color: #fff;
 }
 
@@ -712,12 +799,13 @@
   align-items: center;
   justify-content: center;
   padding: 0 0 3px;
-  border: 1px solid #292f37;
+  border: 1px solid var(--cfg-line);
   border-radius: 50%;
-  background: rgba(17, 21, 26, 0.95);
+  background: var(--cfg-glass-strong);
   color: #e5e8eb;
   font-size: 22px;
   line-height: 1;
+  cursor: pointer;
   transform: translateY(-50%);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   transition:
@@ -727,9 +815,9 @@
 }
 
 .parts-arrow:hover {
-  border-color: #ff5a1f;
-  background: #ff5a1f;
-  color: #fff;
+  border-color: var(--cfg-accent);
+  background: var(--cfg-accent);
+  color: #04101c;
 }
 
 .parts-arrow-left {
@@ -749,18 +837,20 @@
   width: var(--part-card-w);
   height: auto;
   overflow: hidden;
+  border-color: var(--cfg-line);
+  background: rgba(255, 255, 255, 0.04);
   transition:
     border-color 0.18s,
     transform 0.18s;
 }
 
 .configurator-catalog .part-card:hover {
-  border-color: #3a424c;
+  border-color: rgba(255, 255, 255, 0.22);
   transform: translateY(-2px);
 }
 
 .configurator-catalog .part-card.selected {
-  border-color: #ff5a1f;
+  border-color: var(--cfg-accent);
 }
 
 /* área da foto: a imagem inteira aparece (contain), sem cortar */
@@ -827,179 +917,7 @@
 }
 
 /* =========================
-   MODAL DE CONFIRMAÇÃO
-========================= */
-
-.configurator-modal-backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-}
-
-.configurator-modal {
-  width: min(420px, 90vw);
-  padding: 24px;
-  border: 1px solid #252a30;
-  border-radius: 14px;
-  background: #0c0f12;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
-}
-
-.configurator-modal h3 {
-  margin: 0 0 8px;
-  color: #fff;
-  font-size: 17px;
-}
-
-.configurator-modal p {
-  margin: 0 0 22px;
-  color: #a6adb7;
-  font-size: 14px;
-}
-
-.configurator-modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.configurator-danger-button {
-  border: 1px solid rgba(220, 70, 60, 0.5);
-  border-radius: 8px;
-  padding: 10px 16px;
-  background: rgba(220, 70, 60, 0.15);
-  color: #e58b82;
-  font-size: 14px;
-  cursor: pointer;
-  transition:
-    background 0.18s,
-    color 0.18s;
-}
-
-.configurator-danger-button:hover {
-  background: rgba(220, 70, 60, 0.28);
-  color: #fff;
-}
-
-/* =========================
-   RESPONSIVO
-========================= */
-
-@media (max-width: 900px) {
-  .configurator-screen {
-    height: auto;
-    min-height: 100vh;
-    overflow: visible;
-  }
-
-  .configurator-screen {
-    --cfg-left: 140px;
-  }
-
-  .configurator-car,
-  .configurator-car canvas {
-    min-height: 360px;
-  }
-
-  /* faixa fixa na largura toda */
-  .configurator-catalog {
-    position: fixed;
-    left: 10px;
-    right: 10px;
-    bottom: 10px;
-  }
-}
-
-@media (max-width: 700px) {
-  .car-viewer-3d {
-    height: 470px;
-    border-radius: 10px;
-  }
-
-  .car-category-button {
-    justify-content: center;
-    width: 46px;
-    min-height: 44px;
-    padding: 8px;
-  }
-
-  .car-category-button span {
-    display: none;
-  }
-
-  .configurator-header {
-    flex-wrap: wrap;
-  }
-
-  .configurator-dirty {
-    display: none;
-  }
-}
-
-@media (max-width: 600px) {
-  .configurator-screen {
-    padding: 10px;
-  }
-
-  .configurator-workspace {
-    grid-template-columns: 1fr;
-  }
-
-  .configurator-categories {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 8px;
-  }
-
-  .configurator-panel-title {
-    grid-column: 1 / -1;
-  }
-
-  .configurator-car,
-  .configurator-car canvas {
-    min-height: 300px;
-  }
-
-  .configurator-modal-actions {
-    flex-direction: column-reverse;
-  }
-}
-
-/* =========================
-   CAPA E SALVAMENTO
-========================= */
-
-/* canvas invisível usado só para gerar a capa */
-.cover-capture {
-  position: fixed;
-  left: -10000px;
-  top: 0;
-  width: 960px;
-  height: 540px;
-  pointer-events: none;
-}
-
-.configurator-saving {
-  position: absolute;
-  inset: 0;
-  z-index: 50;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(8, 10, 12, 0.85);
-  color: #c7ccd3;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-/* =========================
-   PINTURA (painel na faixa de baixo)
+   PINTURA (painel de baixo)
 ========================= */
 
 .paint-dock {
@@ -1028,11 +946,12 @@
   margin: 0;
   color: #fff;
   font-size: 15px;
+  font-weight: 600;
 }
 
 .paint-dock-current {
   overflow: hidden;
-  color: #929ba6;
+  color: var(--cfg-muted);
   font-size: 12px;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1044,16 +963,16 @@
   gap: 6px;
   flex-shrink: 0;
   padding: 6px 10px;
-  border: 1px solid #292f37;
+  border: 1px solid var(--cfg-line);
   border-radius: 8px;
-  background: #11151a;
-  color: #b8bec6;
+  background: rgba(255, 255, 255, 0.05);
+  color: #b8c3d4;
   font-size: 12px;
   cursor: pointer;
 }
 
 .paint-dock-reset:hover:not(:disabled) {
-  border-color: #ff5a1f;
+  border-color: rgba(56, 189, 248, 0.5);
   color: #fff;
 }
 
@@ -1076,7 +995,7 @@
 }
 
 .paint-dock-label {
-  color: #7d8691;
+  color: #7283a0;
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -1094,7 +1013,7 @@
   width: 30px;
   height: 30px;
   padding: 0;
-  border: 2px solid rgba(255, 255, 255, 0.18);
+  border: 2px solid rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   cursor: pointer;
   transition:
@@ -1107,8 +1026,8 @@
 }
 
 .paint-dock-swatch.selected {
-  border-color: #ff5a1f;
-  box-shadow: 0 0 0 2px rgba(255, 90, 31, 0.35);
+  border-color: var(--cfg-accent);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35);
 }
 
 .paint-dock-swatch.locked {
@@ -1124,9 +1043,9 @@
   justify-content: center;
   width: 15px;
   height: 15px;
-  border: 1px solid #303740;
+  border: 1px solid var(--cfg-line);
   border-radius: 50%;
-  background: #0c0f12;
+  background: #0a1020;
   color: #ff7a49;
 }
 
@@ -1155,10 +1074,10 @@
   align-items: center;
   gap: 5px;
   padding: 7px 12px;
-  border: 1px solid #272e36;
+  border: 1px solid var(--cfg-line);
   border-radius: 8px;
-  background: rgba(15, 19, 24, 0.94);
-  color: #b9c1ca;
+  background: rgba(255, 255, 255, 0.04);
+  color: #b8c3d4;
   font-size: 12px;
   cursor: pointer;
   transition:
@@ -1167,11 +1086,15 @@
     color 0.18s;
 }
 
-.paint-dock-finish:hover:not(:disabled),
-.paint-dock-finish.selected {
-  border-color: #ff5a1f;
-  background: rgba(255, 90, 31, 0.14);
+.paint-dock-finish:hover:not(:disabled) {
+  border-color: rgba(56, 189, 248, 0.5);
   color: #fff;
+}
+
+.paint-dock-finish.selected {
+  border-color: rgba(56, 189, 248, 0.55);
+  background: var(--cfg-accent-soft);
+  color: var(--cfg-accent);
 }
 
 .paint-dock-finish.locked svg {
@@ -1243,17 +1166,183 @@
   }
 }
 
-@media (max-width: 600px) {
-  .paint-dock-upsell {
-    flex-wrap: wrap;
-  }
+/* =========================
+   MODAL DE CONFIRMAÇÃO
+========================= */
 
-  .configurator-rail-divider {
-    grid-column: 1 / -1;
+.configurator-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.configurator-modal {
+  width: min(420px, 90vw);
+  padding: 24px;
+  border: 1px solid #252a30;
+  border-radius: 14px;
+  background: #0c0f12;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+}
+
+.configurator-modal h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 17px;
+}
+
+.configurator-modal p {
+  margin: 0 0 22px;
+  color: #a6adb7;
+  font-size: 14px;
+}
+
+.configurator-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.configurator-danger-button {
+  border: 1px solid rgba(220, 70, 60, 0.5);
+  border-radius: 8px;
+  padding: 10px 16px;
+  background: rgba(220, 70, 60, 0.15);
+  color: #e58b82;
+  font-size: 14px;
+  cursor: pointer;
+  transition:
+    background 0.18s,
+    color 0.18s;
+}
+
+.configurator-danger-button:hover {
+  background: rgba(220, 70, 60, 0.28);
+  color: #fff;
+}
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+/* telas médias: os atalhos de câmera descem para não bater no topo */
+@media (max-width: 1100px) {
+  .configurator-views {
+    top: calc(var(--cfg-bar) + 4px);
   }
 }
 
-/* orçamento fechado: o catálogo usa a largura toda do canvas */
-.summary-closed .configurator-catalog {
-  right: 16px;
+/* celular: ferramentas viram uma barra embaixo */
+@media (max-width: 700px) {
+  .configurator-screen {
+    --cfg-gap: 10px;
+  }
+
+  .configurator-header-sub,
+  .configurator-dirty {
+    display: none;
+  }
+
+  .configurator-header h1 {
+    font-size: 16px;
+  }
+
+  .configurator-categories {
+    top: auto;
+    bottom: var(--cfg-gap);
+    left: var(--cfg-gap);
+    right: var(--cfg-gap);
+    width: auto;
+    flex-direction: row;
+    justify-content: center;
+    transform: none;
+  }
+
+  .configurator-rail-divider {
+    width: 1px;
+    height: auto;
+    margin: 6px 4px;
+  }
+
+  .car-category-button[data-label]::after {
+    display: none;
+  }
+
+  /* no celular Salvar/Cancelar voltam para o topo */
+  .configurator-actions {
+    top: var(--cfg-gap);
+    bottom: auto;
+    width: auto;
+    padding: 6px;
+  }
+
+  .configurator-actions .configurator-dirty,
+  .configurator-actions .configurator-readonly {
+    display: none;
+  }
+
+  .configurator-actions-row > button {
+    flex: none;
+    padding: 8px 16px;
+  }
+
+  .configurator-summary,
+  .summary-reopen {
+    top: calc(var(--cfg-bar) + var(--cfg-gap));
+  }
+
+  .configurator-summary {
+    max-height: 45%;
+  }
+
+  .configurator-catalog {
+    left: var(--cfg-gap);
+    right: var(--cfg-gap);
+    bottom: calc(var(--cfg-gap) + 68px);
+  }
+
+  .configurator-view-button {
+    padding: 6px 10px;
+  }
+
+  .configurator-modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .paint-dock-upsell {
+    flex-wrap: wrap;
+  }
+}
+
+/* =========================
+   CAPA E SALVAMENTO
+========================= */
+
+/* canvas invisível usado só para gerar a capa */
+.cover-capture {
+  position: fixed;
+  left: -10000px;
+  top: 0;
+  width: 960px;
+  height: 540px;
+  pointer-events: none;
+}
+
+.configurator-saving {
+  position: absolute;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(8, 10, 12, 0.85);
+  color: #c7ccd3;
+  font-size: 15px;
+  font-weight: 700;
 }

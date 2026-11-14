@@ -1,9 +1,33 @@
 import { Suspense, useEffect, useMemo } from "react";
 import { useThree } from "@react-three/fiber";
-import { ContactShadows, useGLTF } from "@react-three/drei";
+import { Environment, useGLTF } from "@react-three/drei";
+import { Box3, Vector3 } from "three";
 import { applyPaint, cloneForPaint } from "../utils/paint";
 
-function CarModel({ modelUrl, shadow, paint }) {
+// Luz padrão de todas as cenas do carro (configurador, prévia e capa), para
+// o carro aparecer igual em todo lugar. Mais suave que a antiga: o branco
+// não estoura e dá para enxergar as formas da lataria.
+// Use DENTRO de um <Suspense> (o Environment carrega um arquivo).
+export function SceneLights() {
+  const gl = useThree((state) => state.gl);
+  const invalidate = useThree((state) => state.invalidate);
+
+  useEffect(() => {
+    gl.toneMappingExposure = 0.95;
+    invalidate();
+  }, [gl, invalidate]);
+
+  return (
+    <>
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[5, 7, 5]} intensity={1.5} />
+      <directionalLight position={[-5, 3, -3]} intensity={0.8} />
+      <Environment preset="studio" environmentIntensity={0.6} />
+    </>
+  );
+}
+
+function CarModel({ modelUrl, paint, onStage }) {
   const { scene } = useGLTF(modelUrl);
   const invalidate = useThree((state) => state.invalidate);
 
@@ -22,30 +46,28 @@ function CarModel({ modelUrl, shadow, paint }) {
     invalidate();
   }, [materials, paint, invalidate]);
 
-  return (
-    <>
-      <primitive object={model} />
+  // Medidas reais do carro: onde fica o chão (as rodas) e o tamanho. O chão do
+  // palco e a sombra usam isso, em vez de um valor fixo que não servia para
+  // todos os modelos.
+  const stage = useMemo(() => {
+    const box = new Box3().setFromObject(model);
+    const size = box.getSize(new Vector3());
+    const center = box.getCenter(new Vector3());
 
-      {shadow && (
-        // A sombra é "assada": o ContactShadows redesenha a cena inteira a cada
-        // frame se não houver limite, e isso pesava na rotação. Com frames={2}
-        // ele desenha 2 frames sempre que este componente renderiza (ao montar
-        // o carro e quando as peças mudam) e depois fica parado.
-        // Fica aqui dentro para só montar quando o carro já apareceu, e o grupo
-        // desfaz a rotação do grupo pai para a sombra continuar alinhada.
-        <group rotation={[0, -Math.PI / 8, 0]}>
-          <ContactShadows
-            position={[0, -0.75, 0]}
-            opacity={0.55}
-            scale={8}
-            blur={2.5}
-            far={4}
-            frames={2}
-          />
-        </group>
-      )}
-    </>
-  );
+    return {
+      minY: box.min.y,
+      cx: center.x,
+      cz: center.z,
+      length: Math.max(size.x, size.z),
+      height: size.y,
+    };
+  }, [model]);
+
+  useEffect(() => {
+    onStage?.(stage);
+  }, [stage, onStage]);
+
+  return <primitive object={model} />;
 }
 
 function CarPartModel({
@@ -69,15 +91,16 @@ function CarPartModel({
 
 // paint: { color: "#rrggbb", finish: "GLOSS" | ... } ou null (cor original).
 // Passe sempre o MESMO objeto enquanto a pintura não mudar (useMemo).
+// onStage(medidas): chamado quando o carro carrega (veja CarStage).
 export default function CarScene({
   modelUrl,
   parts = [],
-  shadow = true,
   paint = null,
+  onStage,
 }) {
   return (
     <group rotation={[0, Math.PI / 8, 0]}>
-      <CarModel modelUrl={modelUrl} shadow={shadow} paint={paint} />
+      <CarModel modelUrl={modelUrl} paint={paint} onStage={onStage} />
 
       {parts.map((part) => (
         // Suspense próprio: se o .glb da peça ainda está carregando,
