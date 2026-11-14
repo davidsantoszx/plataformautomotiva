@@ -6,8 +6,8 @@ import {
   useRef,
   useState,
 } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
-import { AdaptiveDpr, Bounds, OrbitControls } from "@react-three/drei";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Bounds, OrbitControls } from "@react-three/drei";
 import {
   Activity,
   Banknote,
@@ -39,12 +39,13 @@ const categoryButtons = [
 // objetos fora do componente: não mudam de identidade a cada render
 const CAMERA = { position: [-2.4, 1.2, -6.2], fov: 30 };
 const GL_OPTIONS = { antialias: true, alpha: true }; // o fundo vem do CSS
+const DPR = [1, 2];
 
 // Tamanho do carro na tela: MENOR = carro maior; MAIOR = mais folga ao redor.
 const FIT_MARGIN = 1.0;
 
 // Quanto dura a virada da câmera nos atalhos (em ms). 0 = vira na hora.
-const VIEW_DURATION = 450;
+const VIEW_DURATION = 350;
 
 // Espaço do topo ocupado pelos atalhos de câmera (px): o carro é centralizado
 // na área livre abaixo disso quando um painel de baixo está aberto.
@@ -87,14 +88,23 @@ function ReadySignal({ onReady }) {
 
 // Leva a câmera até um dos atalhos com uma animação suave, mantendo a
 // distância atual (se a pessoa deu zoom, o zoom continua).
+//
+// A animação roda DENTRO do loop de desenho (useFrame), um passo por quadro
+// desenhado, e é guiada pelo relógio: se o computador for lento, ela pula
+// quadros em vez de atrasar. Importante: não chamar invalidate() a cada passo.
+// Cada chamada enfileira um quadro novo, e com o modelo pesado a fila
+// continuava desenhando quadros iguais por segundos depois do clique (era a
+// travada). O controle de órbita já pede o próximo quadro sozinho quando a
+// câmera se mexe.
 function CameraRig({ view }) {
   const get = useThree((state) => state.get);
+  const anim = useRef(null);
 
   useEffect(() => {
-    if (!view) return undefined;
+    if (!view) return;
 
     const { camera, controls, invalidate } = get();
-    if (!controls) return undefined;
+    if (!controls) return;
 
     const toRad = (deg) => (deg * Math.PI) / 180;
     const target = controls.target.clone();
@@ -107,39 +117,47 @@ function CameraRig({ view }) {
     // 2° a 54°: os limites do OrbitControls abaixo
     const endEl = toRad(Math.max(2, Math.min(54, view.el)));
 
-    // gira pelo caminho mais curto
-    const deltaAz = Math.atan2(
-      Math.sin(endAz - startAz),
-      Math.cos(endAz - startAz),
-    );
-    const deltaEl = endEl - startEl;
+    anim.current = {
+      target,
+      dist,
+      startAz,
+      startEl,
+      // gira pelo caminho mais curto
+      deltaAz: Math.atan2(
+        Math.sin(endAz - startAz),
+        Math.cos(endAz - startAz),
+      ),
+      deltaEl: endEl - startEl,
+      startTime: performance.now(),
+    };
 
-    const DURATION = VIEW_DURATION;
-    const startTime = performance.now();
-    let raf;
-
-    function step(now) {
-      const t = DURATION > 0 ? Math.min((now - startTime) / DURATION, 1) : 1;
-      // começa rápido e desacelera no fim: responde assim que clica
-      const k = 1 - Math.pow(1 - t, 3);
-      const az = startAz + deltaAz * k;
-      const el = startEl + deltaEl * k;
-
-      camera.position.set(
-        target.x + dist * Math.sin(az) * Math.cos(el),
-        target.y + dist * Math.sin(el),
-        target.z + dist * Math.cos(az) * Math.cos(el),
-      );
-
-      controls.update();
-      invalidate();
-
-      if (t < 1) raf = requestAnimationFrame(step);
-    }
-
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    invalidate(); // só para o primeiro quadro; os seguintes vêm do useFrame
   }, [view, get]);
+
+  useFrame(({ camera, controls }) => {
+    const a = anim.current;
+    if (!a || !controls) return;
+
+    const t =
+      VIEW_DURATION > 0
+        ? Math.min((performance.now() - a.startTime) / VIEW_DURATION, 1)
+        : 1;
+    // começa rápido e desacelera no fim: responde assim que clica
+    const k = 1 - Math.pow(1 - t, 3);
+    const az = a.startAz + a.deltaAz * k;
+    const el = a.startEl + a.deltaEl * k;
+
+    camera.position.set(
+      a.target.x + a.dist * Math.sin(az) * Math.cos(el),
+      a.target.y + a.dist * Math.sin(el),
+      a.target.z + a.dist * Math.cos(az) * Math.cos(el),
+    );
+
+    // atualiza a câmera; o controle avisa o canvas para desenhar o próximo
+    controls.update();
+
+    if (t >= 1) anim.current = null;
+  });
 
   return null;
 }
@@ -147,47 +165,41 @@ function CameraRig({ view }) {
 // Sobe o carro na tela (sem mudar o zoom nem o ângulo) para ele não ficar
 // atrás do painel de baixo. É um deslocamento da imagem da câmera, não da
 // cena: as peças, o círculo e a sombra sobem juntos.
+// Também guiado pelo relógio dentro do useFrame, sem fila de quadros.
 function ViewShift({ shift }) {
   const get = useThree((state) => state.get);
   const width = useThree((state) => state.size.width);
   const height = useThree((state) => state.size.height);
   const current = useRef(0);
+  const anim = useRef(null);
 
   useEffect(() => {
-    const { camera, invalidate } = get();
+    const { invalidate } = get();
 
-    function apply(value) {
-      if (Math.abs(value) < 0.5) camera.clearViewOffset();
-      else camera.setViewOffset(width, height, 0, value, width, height);
+    anim.current = {
+      from: current.current,
+      to: shift,
+      startTime: performance.now(),
+    };
 
-      invalidate();
-    }
-
-    const from = current.current;
-
-    // mesma posição (ex.: a janela mudou de tamanho): só reaplica
-    if (from === shift) {
-      apply(shift);
-      return undefined;
-    }
-
-    const DURATION = 320;
-    const startTime = performance.now();
-    let raf;
-
-    function step(now) {
-      const t = Math.min(Math.max((now - startTime) / DURATION, 0), 1);
-      const k = 1 - Math.pow(1 - t, 3);
-
-      current.current = from + (shift - from) * k;
-      apply(current.current);
-
-      if (t < 1) raf = requestAnimationFrame(step);
-    }
-
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    invalidate();
   }, [shift, width, height, get]);
+
+  useFrame(({ camera, invalidate }) => {
+    const a = anim.current;
+    if (!a) return;
+
+    const t = Math.min((performance.now() - a.startTime) / 320, 1);
+    const k = 1 - Math.pow(1 - t, 3);
+
+    current.current = a.from + (a.to - a.from) * k;
+
+    if (Math.abs(current.current) < 0.5) camera.clearViewOffset();
+    else camera.setViewOffset(width, height, 0, current.current, width, height);
+
+    if (t < 1) invalidate();
+    else anim.current = null;
+  });
 
   return null;
 }
@@ -210,15 +222,10 @@ const CarCanvas = memo(function CarCanvas({
   return (
     <Canvas
       frameloop="demand"
-      dpr={[1, 2]}
+      dpr={DPR}
       camera={CAMERA}
       gl={GL_OPTIONS}
-      performance={{ min: 0.5 }}
     >
-      {/* enquanto a câmera se move, desenha em resolução menor (volta ao
-          normal quando para): o giro fica fluido mesmo com modelo pesado */}
-      <AdaptiveDpr />
-
       <Suspense fallback={null}>
         <SceneLights />
 
@@ -232,7 +239,7 @@ const CarCanvas = memo(function CarCanvas({
         </Bounds>
 
         {/* fora do Bounds: a câmera enquadra o carro, não o chão */}
-        <CarStage stage={stage} />
+        <CarStage stage={stage} shadowKey={parts.map((part) => part.key).join("|")} />
 
         <ReadySignal onReady={onReady} />
       </Suspense>
@@ -253,7 +260,6 @@ const CarCanvas = memo(function CarCanvas({
         zoomSpeed={0.7}
         autoRotate={autoRotate}
         autoRotateSpeed={1.2}
-        regress
       />
     </Canvas>
   );
