@@ -6,17 +6,21 @@ import {
   deleteProjectController,
   deleteProjectPart,
   duplicateProjectController,
+  getCompareController,
   getFeedController,
   getProject,
   getProjectParts,
+  getProjectStatsController,
   getProjects,
   getPublicProjectController,
   patchProject,
   patchProjectFeatured,
+  patchProjectLink,
   patchProjectPart,
   patchProjectPaint,
   patchProjectPublication,
   postProject,
+  postProjectViewController,
   postProjectPart,
   putProjectCoverController,
 } from './projects.controller'
@@ -40,6 +44,12 @@ router.get(
   getPublicProjectController,
 )
 
+// conta uma visualização (a página pública avisa uma vez por sessão)
+router.post(
+  '/share/:shareToken/view',
+  postProjectViewController,
+)
+
 
 // =========================
 // PROJETOS AUTENTICADOS
@@ -49,6 +59,9 @@ router.use(authMiddleware)
 
 // precisa vir antes de GET /:id, senão "liked" seria lido como um id
 router.get('/liked', getLikedController)
+
+// também antes de GET /:id
+router.get('/compare', getCompareController)
 
 router.put('/:id/like', putLikeController)
 router.delete('/:id/like', deleteLikeController)
@@ -63,6 +76,12 @@ router.get(
 router.get(
   '/:id',
   getProject,
+)
+
+// números do projeto (recurso Pro)
+router.get(
+  '/:id/stats',
+  getProjectStatsController,
 )
 
 router.post(
@@ -94,6 +113,12 @@ router.patch(
 router.patch(
   '/:id/featured',
   patchProjectFeatured,
+)
+
+// compartilhar só com link (recurso Pro)
+router.patch(
+  '/:id/link',
+  patchProjectLink,
 )
 
 router.patch(

@@ -140,6 +140,7 @@ export async function listProjectsByUser(userId: number) {
     "featuredAt",
     "mode",
     "isPublic",
+    "linkEnabled",
     "shareToken",
     "createdAt",
     "updatedAt",
@@ -441,6 +442,7 @@ export async function publishProject(
 
   const data: {
     isPublic: boolean;
+    linkEnabled: boolean;
     shareToken: string | null;
     publishedAt: string | null;
     featuredAt?: null;
@@ -448,6 +450,9 @@ export async function publishProject(
     description?: string | null;
   } = {
     isPublic,
+    // publicar ou despublicar encerra o "só com link": são três estados
+    // exclusivos (privado, só com link, público no feed)
+    linkEnabled: false,
     shareToken: isPublic ? shareToken : null,
     // ao editar uma publicação já ativa, mantém a data original
     publishedAt: isPublic
@@ -473,19 +478,76 @@ export async function publishProject(
   return db.orm.public.Project.where({ id }).update(data);
 }
 
-export async function getPublicProject(shareToken: string) {
-  if (!shareToken.trim()) {
-    throw new Error("SHARE_TOKEN_INVALID");
-  }
-
+// Projeto aberto por link: público no feed, ou "só com link" enquanto o dono
+// estiver no Pro. Qualquer outro caso é "não encontrado".
+async function findSharedProject(shareToken: string) {
   const project = await db.orm.public.Project.first({
     shareToken: shareToken.trim(),
-    isPublic: true,
   });
 
   if (!project) {
     throw new Error("PUBLIC_PROJECT_NOT_FOUND");
   }
+
+  if (!project.isPublic) {
+    const { isPro } = project.linkEnabled
+      ? await getUserPlan(project.userId)
+      : { isPro: false };
+
+    if (!isPro) {
+      throw new Error("PUBLIC_PROJECT_NOT_FOUND");
+    }
+  }
+
+  return project;
+}
+
+// Liga ou desliga o compartilhamento "só com link" (recurso Pro).
+// Desligar apaga o link: ligar de novo gera um endereço novo.
+export async function setProjectLinkSharing(
+  id: number,
+  userId: number,
+  enabled: boolean,
+) {
+  const project = await db.orm.public.Project.first({
+    id,
+    userId,
+  });
+
+  if (!project) {
+    throw new Error("PROJECT_NOT_FOUND");
+  }
+
+  // um projeto público já tem link: não há o que ligar
+  if (project.isPublic) {
+    return project;
+  }
+
+  if (enabled) {
+    const { isPro } = await getUserPlan(userId);
+
+    if (!isPro) {
+      throw new Error("PRO_FEATURE_REQUIRED");
+    }
+
+    return db.orm.public.Project.where({ id }).update({
+      linkEnabled: true,
+      shareToken: project.shareToken ?? crypto.randomUUID(),
+    });
+  }
+
+  return db.orm.public.Project.where({ id }).update({
+    linkEnabled: false,
+    shareToken: null,
+  });
+}
+
+export async function getPublicProject(shareToken: string) {
+  if (!shareToken.trim()) {
+    throw new Error("SHARE_TOKEN_INVALID");
+  }
+
+  const project = await findSharedProject(shareToken);
 
   const projectParts = await db.orm.public.ProjectPart.select(
     "id",
@@ -545,7 +607,13 @@ export async function getPublicProject(shareToken: string) {
   };
 }
 
-export async function getFeed(page: number, limit: number) {
+export type FeedSort = "recent" | "views" | "likes";
+
+export async function getFeed(
+  page: number,
+  limit: number,
+  sort: FeedSort = "recent",
+) {
   const publicProjects = await db.orm.public.Project.select(
     "id",
     "userId",
@@ -555,32 +623,54 @@ export async function getFeed(page: number, limit: number) {
     "coverUrl",
     "mode",
     "shareToken",
+    "viewsCount",
     "publishedAt",
     "createdAt",
   )
     .where({ isPublic: true })
     .all();
 
+  // curtidas de todos os projetos numa consulta só (serve para ordenar e exibir)
+  const allLikes = await db.orm.public.ProjectLike.select("projectId").all();
+  const likesByProject = new Map<number, number>();
+
+  allLikes.forEach((like) => {
+    likesByProject.set(
+      like.projectId,
+      (likesByProject.get(like.projectId) ?? 0) + 1,
+    );
+  });
+
+  const byRecent = (a: (typeof publicProjects)[number], b: (typeof publicProjects)[number]) =>
+    toTime(b.publishedAt ?? b.createdAt) - toTime(a.publishedAt ?? a.createdAt);
+
+  // mais vistos / mais curtidos; empate resolve pelo mais recente
   const sorted = publicProjects
     .filter((project) => project.shareToken)
-    .sort(
-      (a, b) =>
-        toTime(b.publishedAt ?? b.createdAt) -
-        toTime(a.publishedAt ?? a.createdAt),
-    );
+    .sort((a, b) => {
+      if (sort === "views") {
+        return b.viewsCount - a.viewsCount || byRecent(a, b);
+      }
+
+      if (sort === "likes") {
+        return (
+          (likesByProject.get(b.id) ?? 0) - (likesByProject.get(a.id) ?? 0) ||
+          byRecent(a, b)
+        );
+      }
+
+      return byRecent(a, b);
+    });
 
   const totalPages = Math.max(1, Math.ceil(sorted.length / limit));
   const pageItems = sorted.slice((page - 1) * limit, page * limit);
 
   const projects = await Promise.all(
     pageItems.map(async (project) => {
-      const [author, vehicle, projectParts, likes] = await Promise.all([
+      const [author, vehicle, projectParts] = await Promise.all([
         getAuthor(project.userId),
         getVehicleSummary(project.vehicleId),
         db.orm.public.ProjectPart.select("quantity", "priceAtTime")
-          .where({ projectId: project.id })
-          .all(),
-        db.orm.public.ProjectLike.select("id")
           .where({ projectId: project.id })
           .all(),
       ]);
@@ -601,7 +691,8 @@ export async function getFeed(page: number, limit: number) {
         author,
         vehicle,
         partsCount: projectParts.length,
-        likesCount: likes.length,
+        likesCount: likesByProject.get(project.id) ?? 0,
+        viewsCount: project.viewsCount,
         total,
       };
     }),
@@ -881,4 +972,70 @@ export async function setProjectPaint(
     paintColor: color.toLowerCase(),
     paintFinish: finalFinish,
   });
+}
+
+// Compara dois projetos do próprio usuário (recurso Pro).
+// Devolve cada projeto já com o veículo e as peças detalhadas.
+export async function compareProjects(
+  aId: number,
+  bId: number,
+  userId: number,
+) {
+  const { isPro } = await getUserPlan(userId);
+
+  if (!isPro) {
+    throw new Error("PRO_FEATURE_REQUIRED");
+  }
+
+  async function loadSide(projectId: number) {
+    const project = await getProjectById(projectId, userId);
+
+    if (!project) {
+      throw new Error("PROJECT_NOT_FOUND");
+    }
+
+    const parts = await listProjectParts(projectId, userId);
+
+    return { project, parts };
+  }
+
+  const [a, b] = await Promise.all([loadSide(aId), loadSide(bId)]);
+
+  return { a, b };
+}
+
+// ---- estatísticas ----------------------------------------------------------
+
+// Conta uma visualização (o frontend só avisa uma vez por sessão e não conta
+// o próprio dono).
+export async function registerProjectView(shareToken: string) {
+  const project = await findSharedProject(shareToken);
+
+  await db.orm.public.Project.where({ id: project.id }).update({
+    viewsCount: project.viewsCount + 1,
+  });
+}
+
+// Números do projeto para o dono. Recurso Pro.
+export async function getProjectStats(id: number, userId: number) {
+  const { isPro } = await getUserPlan(userId);
+
+  if (!isPro) {
+    throw new Error("PRO_FEATURE_REQUIRED");
+  }
+
+  const project = await db.orm.public.Project.first({ id, userId });
+
+  if (!project) {
+    throw new Error("PROJECT_NOT_FOUND");
+  }
+
+  const likes = await db.orm.public.ProjectLike.select("id")
+    .where({ projectId: id })
+    .all();
+
+  return {
+    views: project.viewsCount,
+    likes: likes.length,
+  };
 }

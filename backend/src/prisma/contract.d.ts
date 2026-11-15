@@ -33,7 +33,7 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'94c4b2db77b03f27ff50d978fa493f4b1c982490cdf9a8a4887f555b2e2c89cf'>;
+  StorageHashBase<'044a38e055b5011b3e689906517a10c3079b78e82a83cd20818b77f23c46edcc'>;
 export type ExecutionHash =
   ExecutionHashBase<'5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab'>;
 export type ProfileHash =
@@ -306,8 +306,10 @@ export type FieldOutputTypes = {
       readonly mode: 'REAL' | 'FREE';
       readonly isPublic: CodecTypes['pg/bool@1']['output'];
       readonly shareToken: CodecTypes['pg/text@1']['output'] | null;
+      readonly linkEnabled: CodecTypes['pg/bool@1']['output'];
       readonly publishedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
       readonly coverUrl: CodecTypes['pg/text@1']['output'] | null;
+      readonly viewsCount: CodecTypes['pg/int4@1']['output'];
       readonly featuredAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
       readonly paintColor: CodecTypes['pg/text@1']['output'] | null;
       readonly paintFinish: CodecTypes['pg/text@1']['output'] | null;
@@ -439,8 +441,10 @@ export type FieldInputTypes = {
       readonly mode: 'REAL' | 'FREE';
       readonly isPublic: CodecTypes['pg/bool@1']['input'];
       readonly shareToken: CodecTypes['pg/text@1']['input'] | null;
+      readonly linkEnabled: CodecTypes['pg/bool@1']['input'];
       readonly publishedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly coverUrl: CodecTypes['pg/text@1']['input'] | null;
+      readonly viewsCount: CodecTypes['pg/int4@1']['input'];
       readonly featuredAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly paintColor: CodecTypes['pg/text@1']['input'] | null;
       readonly paintFinish: CodecTypes['pg/text@1']['input'] | null;
@@ -570,6 +574,7 @@ export type StorageColumnTypes = {
       readonly featuredAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly isPublic: CodecTypes['pg/bool@1']['output'];
+      readonly linkEnabled: CodecTypes['pg/bool@1']['output'];
       readonly mode: 'REAL' | 'FREE';
       readonly name: CodecTypes['pg/text@1']['output'];
       readonly paintColor: CodecTypes['pg/text@1']['output'] | null;
@@ -579,6 +584,7 @@ export type StorageColumnTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly userId: CodecTypes['pg/int4@1']['output'];
       readonly vehicleId: CodecTypes['pg/int4@1']['output'];
+      readonly viewsCount: CodecTypes['pg/int4@1']['output'];
     };
     readonly projectLike: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -703,6 +709,7 @@ export type StorageColumnInputTypes = {
       readonly featuredAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly id: CodecTypes['pg/int4@1']['input'];
       readonly isPublic: CodecTypes['pg/bool@1']['input'];
+      readonly linkEnabled: CodecTypes['pg/bool@1']['input'];
       readonly mode: 'REAL' | 'FREE';
       readonly name: CodecTypes['pg/text@1']['input'];
       readonly paintColor: CodecTypes['pg/text@1']['input'] | null;
@@ -712,6 +719,7 @@ export type StorageColumnInputTypes = {
       readonly updatedAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly userId: CodecTypes['pg/int4@1']['input'];
       readonly vehicleId: CodecTypes['pg/int4@1']['input'];
+      readonly viewsCount: CodecTypes['pg/int4@1']['input'];
     };
     readonly projectLike: {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
@@ -1253,6 +1261,15 @@ type ContractBase = Omit<
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
                 };
+                readonly linkEnabled: {
+                  readonly nativeType: 'bool';
+                  readonly codecId: 'pg/bool@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/bool@1', false>;
+                  };
+                };
                 readonly publishedAt: {
                   readonly nativeType: 'timestamptz';
                   readonly codecId: 'pg/timestamptz-string@1';
@@ -1262,6 +1279,15 @@ type ContractBase = Omit<
                   readonly nativeType: 'text';
                   readonly codecId: 'pg/text@1';
                   readonly nullable: true;
+                };
+                readonly viewsCount: {
+                  readonly nativeType: 'int4';
+                  readonly codecId: 'pg/int4@1';
+                  readonly nullable: false;
+                  readonly default: {
+                    readonly kind: 'literal';
+                    readonly value: DefaultLiteralValue<'pg/int4@1', 0>;
+                  };
                 };
                 readonly featuredAt: {
                   readonly nativeType: 'timestamptz';
@@ -2268,6 +2294,10 @@ type ContractBase = Omit<
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
               };
+              readonly linkEnabled: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/bool@1' };
+              };
               readonly publishedAt: {
                 readonly nullable: true;
                 readonly type: {
@@ -2278,6 +2308,10 @@ type ContractBase = Omit<
               readonly coverUrl: {
                 readonly nullable: true;
                 readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
+              };
+              readonly viewsCount: {
+                readonly nullable: false;
+                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
               };
               readonly featuredAt: {
                 readonly nullable: true;
@@ -2364,8 +2398,10 @@ type ContractBase = Omit<
                 readonly mode: { readonly column: 'mode' };
                 readonly isPublic: { readonly column: 'isPublic' };
                 readonly shareToken: { readonly column: 'shareToken' };
+                readonly linkEnabled: { readonly column: 'linkEnabled' };
                 readonly publishedAt: { readonly column: 'publishedAt' };
                 readonly coverUrl: { readonly column: 'coverUrl' };
+                readonly viewsCount: { readonly column: 'viewsCount' };
                 readonly featuredAt: { readonly column: 'featuredAt' };
                 readonly paintColor: { readonly column: 'paintColor' };
                 readonly paintFinish: { readonly column: 'paintFinish' };

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { CarFront, Heart } from "lucide-react";
+import { Check, CarFront, ChevronDown, Eye, Heart } from "lucide-react";
 import { useGlobalLoading } from "../context/LoadingContext";
 import { useAuth } from "../context/AuthContext";
 import { getFeed, assetUrl } from "../services/api";
@@ -36,6 +36,12 @@ function formatDate(value) {
   });
 }
 
+const SORT_OPTIONS = [
+  { value: "recent", label: "Mais recentes" },
+  { value: "views", label: "Mais vistos" },
+  { value: "likes", label: "Mais curtidos" },
+];
+
 function vehicleLabel(vehicle) {
   if (!vehicle) return "";
 
@@ -50,10 +56,14 @@ export default function FeedPage() {
 
   const [projects, setProjects] = useState([]);
   const [likedIds, setLikedIds] = useState(() => new Set());
+  const [sort, setSort] = useState("recent");
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [refreshing, setRefreshing] = useState(false); // troca de ordem: lista antiga fica na tela
   const [error, setError] = useState("");
 
   useGlobalLoading(loading);
@@ -61,19 +71,32 @@ export default function FeedPage() {
   // projetos com uma requisição de curtida em andamento (evita clique duplo)
   const pendingRef = useRef(new Set());
 
-  async function load(nextPage) {
+  // só a resposta mais recente vale (clicar rápido em duas ordens)
+  const requestRef = useRef(0);
+  const firstLoadRef = useRef(true);
+
+  // silent: troca de ordem. Não mostra tela de carregamento nem esqueleto:
+  // a lista atual continua visível (levemente apagada) até a nova chegar.
+  async function load(nextPage, nextSort = sort, silent = false) {
+    const requestId = ++requestRef.current;
+
     try {
-      nextPage === 1 ? setLoading(true) : setLoadingMore(true);
+      if (nextPage > 1) setLoadingMore(true);
+      else if (silent) setRefreshing(true);
+      else setLoading(true);
+
       setError("");
 
       const [data, liked] = await Promise.all([
-        getFeed({ page: nextPage }),
+        getFeed({ page: nextPage, sort: nextSort }),
         // a lista de curtidas vem inteira, então basta buscar na primeira página;
         // se falhar, o feed continua funcionando só sem os corações pintados
         nextPage === 1
           ? getLikedProjectIds(token).catch(() => null)
           : Promise.resolve(null),
       ]);
+
+      if (requestId !== requestRef.current) return;
 
       if (liked) setLikedIds(new Set(liked));
 
@@ -87,15 +110,45 @@ export default function FeedPage() {
     } catch (err) {
       setError(err.message || "Não foi possível carregar o feed.");
     } finally {
-      setLoading(false);
-      setLoadingMore(false);
+      if (requestId === requestRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+        setRefreshing(false);
+      }
     }
   }
 
+  // fecha o menu de ordem ao clicar fora ou apertar Esc
   useEffect(() => {
-    load(1);
+    if (!sortOpen) return;
+
+    function handleClick(event) {
+      if (sortRef.current && !sortRef.current.contains(event.target)) {
+        setSortOpen(false);
+      }
+    }
+
+    function handleKey(event) {
+      if (event.key === "Escape") setSortOpen(false);
+    }
+
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKey);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKey);
+    };
+  }, [sortOpen]);
+
+  // carrega de novo, desde a primeira página, sempre que a ordem muda
+  useEffect(() => {
+    const isFirst = firstLoadRef.current;
+    firstLoadRef.current = false;
+
+    load(1, sort, !isFirst);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [sort]);
 
   function applyLike(projectId, liked, likesCount) {
     setLikedIds((current) => {
@@ -151,6 +204,40 @@ export default function FeedPage() {
           <p>Projetos publicados pela comunidade.</p>
         </div>
 
+        <div className="feed-sort" ref={sortRef}>
+          <button
+            type="button"
+            className="feed-sort-trigger"
+            aria-haspopup="menu"
+            aria-expanded={sortOpen}
+            onClick={() => setSortOpen((open) => !open)}
+          >
+            {SORT_OPTIONS.find((option) => option.value === sort)?.label}
+            <ChevronDown size={15} />
+          </button>
+
+          {sortOpen && (
+            <div className="feed-sort-menu" role="menu">
+              {SORT_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={sort === option.value}
+                  className={sort === option.value ? "active" : ""}
+                  onClick={() => {
+                    setSortOpen(false);
+                    setSort(option.value);
+                  }}
+                >
+                  {option.label}
+                  {sort === option.value && <Check size={14} />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
         {loading && (
           <div className="feed-list">
             {[0, 1].map((item) => (
@@ -180,7 +267,7 @@ export default function FeedPage() {
         )}
 
         {!loading && projects.length > 0 && (
-          <div className="feed-list">
+          <div className={`feed-list ${refreshing ? "refreshing" : ""}`}>
             {projects.map((project) => {
               const authorName =
                 project.author?.name?.trim() ||
@@ -251,6 +338,14 @@ export default function FeedPage() {
                       />
                       <span>{likesCount}</span>
                     </button>
+
+                    <span
+                      className="feed-views"
+                      title={`${project.viewsCount || 0} visualizações`}
+                    >
+                      <Eye size={20} />
+                      <span>{Number(project.viewsCount || 0)}</span>
+                    </span>
                   </div>
 
                   <div className="feed-post-body">

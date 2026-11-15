@@ -2,10 +2,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
+  CarFront,
   Copy,
+  Eye,
   FileText,
+  GitCompare,
   Globe,
+  Heart,
   Image as ImageIcon,
+  Link2,
   Lock,
   Minus,
   Package,
@@ -24,13 +29,18 @@ import { build3DScene } from "../utils/build3DScene";
 import { downloadBudgetPdf } from "../utils/budgetPdf";
 import { paintFromProject } from "../utils/paint";
 import { vehicleLabel } from "../utils/vehicleLabel";
+import "../styles/ComparePage.css";
 import {
+  assetUrl,
   getProject,
+  getProjects,
   getProjectParts,
+  getProjectStats,
   updateProject,
   deleteProject,
   duplicateProject,
   updateProjectFeatured,
+  updateProjectLink,
   updateProjectPublication,
   updateProjectPartQuantity,
   removePartFromProject,
@@ -142,7 +152,9 @@ function RenameModal({ project, loading, canUseFreeMode, onSave, onClose }) {
 // Direção em que a FRENTE do carro aponta para a câmera (graus). Todos os
 // ângulos abaixo são calculados a partir dela. Se "Frente" sair mostrando a
 // traseira nos seus modelos, mude para 90.
-const FRONT_AZIMUTH = 270;
+// 270 + 22,5: o carro é girado 22,5° na cena (CarScene), então a "frente" de
+// verdade fica nesse ângulo e as outras vistas saem alinhadas com o carro.
+const FRONT_AZIMUTH = 292.5;
 
 const EXPORT_ANGLES = [
   { id: "side", label: "Lateral", hint: "frente para a direita", azimuth: FRONT_AZIMUTH - 90, elevation: 4 },
@@ -235,6 +247,97 @@ function ExportImageModal({ onExport, onClose }) {
   );
 }
 
+function CompareModal({ project, token, onSubmit, onClose }) {
+  const [options, setOptions] = useState(null);
+  const [selected, setSelected] = useState(null);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getProjects(token)
+      .then((data) => {
+        if (cancelled) return;
+        const others = (data.projects || []).filter(
+          (item) => item.id !== project.id,
+        );
+        setOptions(others);
+        if (others.length === 1) setSelected(others[0].id);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err.message || "Erro ao buscar projetos.");
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, project.id]);
+
+  return (
+    <Modal
+      title="Comparar com qual projeto?"
+      className="modal-wide"
+      onClose={onClose}
+      footer={
+        <>
+          <button className="secondary-button" type="button" onClick={onClose}>
+            Cancelar
+          </button>
+
+          <button
+            className="primary-button"
+            type="button"
+            disabled={!selected}
+            onClick={() => onSubmit(selected)}
+          >
+            Comparar
+          </button>
+        </>
+      }
+    >
+      {error && <p className="form-error">{error}</p>}
+
+      {!error && !options && <p>Carregando seus projetos...</p>}
+
+      {options && options.length === 0 && (
+        <p>Você ainda não tem outro projeto para comparar com este.</p>
+      )}
+
+      {options && options.length > 0 && (
+        <div className="compare-picker">
+          {options.map((item) => (
+            <label
+              key={item.id}
+              className={selected === item.id ? "selected" : ""}
+            >
+              <input
+                type="radio"
+                name="compare-project"
+                value={item.id}
+                checked={selected === item.id}
+                onChange={() => setSelected(item.id)}
+              />
+
+              <span className="compare-picker-cover">
+                {item.coverUrl ? (
+                  <img src={assetUrl(item.coverUrl)} alt="" />
+                ) : (
+                  <CarFront size={28} />
+                )}
+              </span>
+
+              <strong>{item.name}</strong>
+              <small>
+                {vehicleLabel(item.vehicle) || `Veículo #${item.vehicleId}`}
+              </small>
+            </label>
+          ))}
+        </div>
+      )}
+    </Modal>
+  );
+}
+
 function PublishModal({ project, loading, onSubmit, onClose }) {
   const [name, setName] = useState(project.name);
   const [description, setDescription] = useState(project.description || "");
@@ -323,8 +426,9 @@ export default function ProjectPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish" | "export-image" | "parts"
+  const [modal, setModal] = useState(null); // "rename" | "delete" | "publish" | "unpublish" | "export-image" | "parts" | "compare"
   const [hdCapture, setHdCapture] = useState(null); // opções da imagem HD em geração
+  const [stats, setStats] = useState(null); // { views, likes } (Pro)
 
   // carrega projeto (já com o veículo) e peças
   useEffect(() => {
@@ -368,6 +472,32 @@ export default function ProjectPage() {
 
 
 
+  // estatísticas: só para o Pro e só enquanto o projeto é compartilhado
+  const statsEnabled =
+    Boolean(user?.isPro) &&
+    Boolean(project?.isPublic || project?.linkEnabled);
+
+  useEffect(() => {
+    if (!statsEnabled) {
+      setStats(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    getProjectStats(token, id)
+      .then((data) => {
+        if (!cancelled) setStats(data);
+      })
+      .catch(() => {
+        if (!cancelled) setStats(null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [statsEnabled, token, id]);
+
   // some com o aviso depois de 3s
   useEffect(() => {
     if (!notice) return;
@@ -403,8 +533,11 @@ export default function ProjectPage() {
     return total + price * Number(item.quantity ?? 1);
   }, 0);
 
+  // o "só com link" vale enquanto o Pro estiver ativo
+  const linkActive = Boolean(project?.linkEnabled) && Boolean(user?.isPro);
+
   const shareUrl =
-    project?.isPublic && project.shareToken
+    (project?.isPublic || linkActive) && project.shareToken
       ? `${window.location.origin}/p/${project.shareToken}`
       : "";
 
@@ -499,6 +632,28 @@ export default function ProjectPage() {
     }
   }
 
+  async function handleToggleLink() {
+    if (!isPro) {
+      navigate("/planos");
+      return;
+    }
+
+    try {
+      setActionLoading(true);
+      setError("");
+
+      const enabling = !project.linkEnabled;
+      const data = await updateProjectLink(token, project.id, enabling);
+
+      setProject(data.project);
+      setNotice(enabling ? "Link ativado." : "Link desativado.");
+    } catch (err) {
+      setError(err.message || "Erro ao alterar o link do projeto.");
+    } finally {
+      setActionLoading(false);
+    }
+  }
+
   async function handleCopyLink() {
     if (!shareUrl) return;
 
@@ -525,6 +680,15 @@ export default function ProjectPage() {
     }
 
     if (!hdCapture) setModal("export-image");
+  }
+
+  function handleCompare() {
+    if (!isPro) {
+      navigate("/planos");
+      return;
+    }
+
+    setModal("compare");
   }
 
   function handleStartExport(angle, format) {
@@ -818,14 +982,30 @@ export default function ProjectPage() {
             <span className="side-card-label">VISIBILIDADE</span>
 
             <div className="side-visibility">
-              {project.isPublic ? <Globe size={16} /> : <Lock size={16} />}
-              <strong>{project.isPublic ? "Público" : "Privado"}</strong>
+              {project.isPublic ? (
+                <Globe size={16} />
+              ) : project.linkEnabled ? (
+                <Link2 size={16} />
+              ) : (
+                <Lock size={16} />
+              )}
+              <strong>
+                {project.isPublic
+                  ? "Público"
+                  : project.linkEnabled
+                    ? "Só com link"
+                    : "Privado"}
+              </strong>
             </div>
 
             <p className="side-card-sub">
               {project.isPublic
-                ? "Qualquer pessoa com o link pode ver este projeto."
-                : "Só você consegue ver este projeto."}
+                ? "Aparece no feed. Qualquer pessoa pode ver este projeto."
+                : project.linkEnabled
+                  ? isPro
+                    ? "Fora do feed: só quem tem o link consegue abrir."
+                    : "Link pausado: renove o Pro para ele voltar a abrir."
+                  : "Só você consegue ver este projeto."}
             </p>
 
             {shareUrl && (
@@ -866,16 +1046,64 @@ export default function ProjectPage() {
                 </button>
               </div>
             ) : (
-              <button
-                className="primary-button full-width"
-                type="button"
-                onClick={() => setModal("publish")}
-                disabled={actionLoading}
-              >
-                Publicar no feed
-              </button>
+              <div className="side-actions">
+                <button
+                  className="primary-button full-width"
+                  type="button"
+                  onClick={() => setModal("publish")}
+                  disabled={actionLoading}
+                >
+                  Publicar no feed
+                </button>
+
+                <button
+                  className="secondary-button full-width pro-action"
+                  type="button"
+                  onClick={handleToggleLink}
+                  disabled={actionLoading}
+                >
+                  <Link2 size={15} />
+                  {project.linkEnabled
+                    ? "Desativar link"
+                    : "Compartilhar só com link"}
+                  {!isPro && <span className="pro-badge">PRO</span>}
+                </button>
+              </div>
             )}
           </div>
+
+          {(project.isPublic || project.linkEnabled) && (
+            <div className="side-card">
+              <span className="side-card-label">
+                ESTATÍSTICAS
+                {!isPro && <span className="pro-badge">PRO</span>}
+              </span>
+
+              <div className="stat-tiles">
+                <div>
+                  <Eye size={15} />
+                  <strong>{stats ? stats.views : "—"}</strong>
+                  <small>Visualizações</small>
+                </div>
+
+                <div>
+                  <Heart size={15} />
+                  <strong>{stats ? stats.likes : "—"}</strong>
+                  <small>Curtidas</small>
+                </div>
+              </div>
+
+              {!isPro && (
+                <button
+                  className="secondary-button full-width"
+                  type="button"
+                  onClick={() => navigate("/planos")}
+                >
+                  Ver estatísticas com o Pro
+                </button>
+              )}
+            </div>
+          )}
 
           <div className="side-card">
             <span className="side-card-label">RECURSOS PRO</span>
@@ -915,6 +1143,16 @@ export default function ProjectPage() {
               >
                 <Star size={15} fill={isFeatured ? "currentColor" : "none"} />
                 {isFeatured ? "Remover destaque" : "Destacar no perfil"}
+                {!isPro && <span className="pro-badge">PRO</span>}
+              </button>
+
+              <button
+                className="secondary-button full-width pro-action"
+                type="button"
+                onClick={handleCompare}
+              >
+                <GitCompare size={15} />
+                Comparar com outro projeto
                 {!isPro && <span className="pro-badge">PRO</span>}
               </button>
             </div>
@@ -1043,6 +1281,17 @@ export default function ProjectPage() {
             </div>
           )}
         </Modal>
+      )}
+
+      {modal === "compare" && (
+        <CompareModal
+          project={project}
+          token={token}
+          onClose={() => setModal(null)}
+          onSubmit={(otherId) =>
+            navigate(`/comparar?a=${project.id}&b=${otherId}`)
+          }
+        />
       )}
 
       {modal === "rename" && (

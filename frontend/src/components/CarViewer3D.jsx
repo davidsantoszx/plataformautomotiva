@@ -7,7 +7,8 @@ import {
   useState,
 } from "react";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
-import { Bounds, OrbitControls } from "@react-three/drei";
+import { OrbitControls } from "@react-three/drei";
+import { Vector3 } from "three";
 import {
   Activity,
   Banknote,
@@ -44,6 +45,9 @@ const DPR = [1, 2];
 // Tamanho do carro na tela: MENOR = carro maior; MAIOR = mais folga ao redor.
 const FIT_MARGIN = 1.0;
 
+// Mesmo giro aplicado ao carro no CarScene
+const SCENE_ROTATION = Math.PI / 8;
+
 // Quanto dura a virada da câmera nos atalhos (em ms). 0 = vira na hora.
 const VIEW_DURATION = 350;
 
@@ -51,13 +55,16 @@ const VIEW_DURATION = 350;
 // na área livre abaixo disso quando um painel de baixo está aberto.
 const TOP_RESERVED = 70;
 
-// Atalhos de câmera (mesmos ângulos da exportação de imagem HD):
-// az = giro ao redor do carro, el = altura da câmera, em graus.
+// Atalhos de câmera. az = giro ao redor do carro e el = altura da câmera, em
+// graus. O CarScene gira o carro 22,5° no mundo, então todos os ângulos somam
+// CAR_YAW: sem isso a "Lateral" aparece meio de trás, a "Frente" de quina etc.
+// (Os mesmos valores valem na exportação de imagem HD, em ProjectPage.jsx.)
+const CAR_YAW = 22.5;
 const VIEWS = [
-  { id: "iso", label: "3/4", az: 225, el: 10 },
-  { id: "side", label: "Lateral", az: 180, el: 4 },
-  { id: "front", label: "Frente", az: 270, el: 6 },
-  { id: "rear", label: "Traseira", az: 90, el: 6 },
+  { id: "iso", label: "3/4", az: 225 + CAR_YAW, el: 10 },
+  { id: "side", label: "Lateral", az: 180 + CAR_YAW, el: 4 },
+  { id: "front", label: "Frente", az: 270 + CAR_YAW, el: 6 },
+  { id: "rear", label: "Traseira", az: 90 + CAR_YAW, el: 6 },
 ];
 
 function formatCurrency(value) {
@@ -82,6 +89,65 @@ function ReadySignal({ onReady }) {
 
     return () => cancelAnimationFrame(id);
   }, [invalidate, onReady]);
+
+  return null;
+}
+
+// Enquadra o carro na câmera UMA vez, quando ele carrega (mesma conta do
+// <Bounds> do drei, que usávamos antes). Fica tudo aqui de propósito: o Bounds
+// refaz o enquadramento sozinho em várias situações e isso puxava a câmera de
+// volta para a posição inicial depois dos atalhos. Agora, depois do primeiro
+// ajuste, só o mouse, os atalhos e o Girar mexem na câmera.
+function AutoFit({ stage }) {
+  const get = useThree((state) => state.get);
+  const fittedCenter = useRef(null);
+
+  useEffect(() => {
+    if (!stage) return;
+
+    const { camera, controls, size, invalidate } = get();
+    if (!controls) return;
+
+    // centro do carro no mundo (o CarScene gira o carro em SCENE_ROTATION)
+    const center = new Vector3(stage.cx, stage.cy, stage.cz).applyAxisAngle(
+      new Vector3(0, 1, 0),
+      SCENE_ROTATION,
+    );
+
+    if (fittedCenter.current) {
+      // outro modelo do mesmo carro (ex.: Astra com rodas trocadas): só
+      // acompanha o novo centro, sem mexer no zoom nem no ângulo
+      const delta = center.clone().sub(fittedCenter.current);
+      controls.target.add(delta);
+      camera.position.add(delta);
+    } else {
+      const cos = Math.abs(Math.cos(SCENE_ROTATION));
+      const sin = Math.abs(Math.sin(SCENE_ROTATION));
+      const width = stage.sx * cos + stage.sz * sin;
+      const depth = stage.sx * sin + stage.sz * cos;
+      const maxSize = Math.max(width, depth, stage.height);
+
+      const fitHeight = maxSize / (2 * Math.atan((Math.PI * camera.fov) / 360));
+      const fitWidth = fitHeight / (size.width / size.height);
+      const distance = FIT_MARGIN * Math.max(fitHeight, fitWidth);
+
+      // mantém a direção inicial da câmera (a do CAMERA lá em cima)
+      const direction = camera.position
+        .clone()
+        .sub(controls.target)
+        .normalize();
+
+      controls.target.copy(center);
+      camera.position.copy(center).addScaledVector(direction, distance);
+      camera.near = distance / 100;
+      camera.far = distance * 100;
+      camera.updateProjectionMatrix();
+    }
+
+    fittedCenter.current = center;
+    controls.update();
+    invalidate();
+  }, [stage, get]);
 
   return null;
 }
@@ -229,21 +295,21 @@ const CarCanvas = memo(function CarCanvas({
       <Suspense fallback={null}>
         <SceneLights />
 
-        <Bounds fit clip observe margin={FIT_MARGIN}>
-          <CarScene
-            modelUrl={modelUrl}
-            parts={parts}
-            paint={paint}
-            onStage={setStage}
-          />
-        </Bounds>
+        <CarScene
+          modelUrl={modelUrl}
+          parts={parts}
+          paint={paint}
+          onStage={setStage}
+        />
 
-        {/* fora do Bounds: a câmera enquadra o carro, não o chão */}
+        {/* o enquadramento mede só o carro, não o chão */}
         <CarStage stage={stage} shadowKey={parts.map((part) => part.key).join("|")} />
 
-        <ReadySignal onReady={onReady} />
+        {/* só avisa que está pronto depois do enquadramento (AutoFit) */}
+        {stage && <ReadySignal onReady={onReady} />}
       </Suspense>
 
+      <AutoFit stage={stage} />
       <CameraRig view={view} />
       <ViewShift shift={shift} />
 

@@ -21,6 +21,7 @@ import ConfiguratorPage from "./pages/ConfiguratorPage";
 import FeedPage from "./pages/FeedPage";
 import ProfilePage from "./pages/ProfilePage";
 import PlansPage from "./pages/PlansPage";
+import ComparePage from "./pages/ComparePage";
 
 function LandingRoute() {
   const { token } = useAuth();
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/perfil" element={<OwnProfileRoute />} />
           <Route path="/perfil/:username" element={<ProfilePage />} />
           <Route path="/planos" element={<PlansPage />} />
+          <Route path="/comparar" element={<ComparePage />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

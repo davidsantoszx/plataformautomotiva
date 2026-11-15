@@ -57,7 +57,10 @@ function CarModel({ modelUrl, paint, onStage }) {
     return {
       minY: box.min.y,
       cx: center.x,
+      cy: center.y,
       cz: center.z,
+      sx: size.x,
+      sz: size.z,
       length: Math.max(size.x, size.z),
       height: size.y,
     };

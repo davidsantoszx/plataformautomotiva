@@ -181,8 +181,16 @@ model Project {
   mode        ProjectMode @default(REAL)
   isPublic    Boolean @default(false)
   shareToken  String?     @unique
+
+  // Pro: projeto privado que abre para quem tem o link (fora do feed e do perfil)
+  linkEnabled Boolean @default(false)
+
   publishedAt TimestamptzString?
   coverUrl    String?
+
+
+  //visualizações no feed
+  viewsCount Int @default(0)
 
   // data em que o Pro fixou o projeto no perfil (null = não está em destaque)
   featuredAt  TimestamptzString?

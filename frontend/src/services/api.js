@@ -1,4 +1,4 @@
-export const API_URL = 'http://localhost:3000/api'
+export const API_URL = 'http://localhost:4000/api'
 
 // Quem está logado manda o token também nas listas do catálogo: é com ele que
 // o servidor libera os carros e peças do plano Pro.
@@ -477,9 +477,10 @@ export async function updateProjectPublication(
   return data
 }
 
-export async function getFeed({ page = 1, limit = 12 } = {}) {
+// sort: 'recent' (padrão) | 'views' | 'likes'
+export async function getFeed({ page = 1, limit = 12, sort = 'recent' } = {}) {
   const response = await fetch(
-    `${API_URL}/projects/feed?page=${page}&limit=${limit}`,
+    `${API_URL}/projects/feed?page=${page}&limit=${limit}&sort=${sort}`,
   )
 
   const data = await response.json()
@@ -605,4 +606,72 @@ export async function updateProjectPaint(token, projectId, color, finish) {
   }
 
   return data
+}
+
+// Compara dois projetos do usuário lado a lado. Recurso Pro.
+export async function compareProjects(token, a, b) {
+  const response = await fetch(
+    `${API_URL}/projects/compare?a=${encodeURIComponent(a)}&b=${encodeURIComponent(b)}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(data.message || 'Erro ao comparar projetos')
+    error.code = data.code
+    throw error
+  }
+
+  return data
+}
+
+// Liga/desliga o compartilhamento só com link. Recurso Pro.
+export async function updateProjectLink(token, projectId, enabled) {
+  const response = await fetch(`${API_URL}/projects/${projectId}/link`, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ enabled }),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(data.message || 'Erro ao alterar o link do projeto')
+    error.code = data.code
+    throw error
+  }
+
+  return data
+}
+
+// Avisa o servidor que alguém abriu o projeto compartilhado (uma vez por sessão).
+export async function registerProjectView(shareToken) {
+  await fetch(`${API_URL}/projects/share/${shareToken}/view`, {
+    method: 'POST',
+  })
+}
+
+// Números do projeto para o dono: { views, likes }. Recurso Pro.
+export async function getProjectStats(token, projectId) {
+  const response = await fetch(`${API_URL}/projects/${projectId}/stats`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao buscar as estatísticas')
+  }
+
+  return data.stats
 }

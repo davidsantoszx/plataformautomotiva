@@ -5,7 +5,7 @@ import { useGlobalLoading } from "../context/LoadingContext";
 import CarPreview3D from "../components/CarPreview3D";
 import PartThumb from "../components/PartThumb";
 import { useAuth } from "../context/AuthContext";
-import { getPublicProject } from "../services/api";
+import { getPublicProject, registerProjectView } from "../services/api";
 import { build3DScene } from "../utils/build3DScene";
 import { paintFromProject } from "../utils/paint";
 import { vehicleLabel } from "../utils/vehicleLabel";
@@ -36,7 +36,7 @@ function formatDate(value) {
 }
 
 export default function PublicProjectPage({ shareToken }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +72,25 @@ export default function PublicProjectPage({ shareToken }) {
       cancelled = true;
     };
   }, [shareToken]);
+
+  // conta a visualização uma vez por sessão, sem contar o próprio dono
+  const authorUsername = data?.project?.author?.username;
+  const isOwner = Boolean(user?.username) && user.username === authorUsername;
+
+  useEffect(() => {
+    if (!data || isOwner) return;
+
+    const key = `viewed:${shareToken}`;
+
+    try {
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, "1");
+    } catch {
+      /* sem sessionStorage: conta mesmo assim */
+    }
+
+    registerProjectView(shareToken).catch(() => {});
+  }, [data, isOwner, shareToken]);
 
   // o backend já devolve o veículo (id, model3dUrl, marca, modelo...)
   const vehicle = data?.project?.vehicle || null;

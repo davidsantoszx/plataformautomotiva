@@ -812,6 +812,13 @@
                   "kind": "scalar"
                 }
               },
+              "linkEnabled": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/bool@1",
+                  "kind": "scalar"
+                }
+              },
               "mode": {
                 "nullable": false,
                 "type": {
@@ -875,6 +882,13 @@
                 }
               },
               "vehicleId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "viewsCount": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/int4@1",
@@ -964,6 +978,9 @@
                 "isPublic": {
                   "column": "isPublic"
                 },
+                "linkEnabled": {
+                  "column": "linkEnabled"
+                },
                 "mode": {
                   "column": "mode"
                 },
@@ -990,6 +1007,9 @@
                 },
                 "vehicleId": {
                   "column": "vehicleId"
+                },
+                "viewsCount": {
+                  "column": "viewsCount"
                 }
               },
               "namespaceId": "public",
@@ -2258,6 +2278,15 @@
                   "nativeType": "bool",
                   "nullable": false
                 },
+                "linkEnabled": {
+                  "codecId": "pg/bool@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": false
+                  },
+                  "nativeType": "bool",
+                  "nullable": false
+                },
                 "mode": {
                   "codecId": "pg/text@1",
                   "default": {
@@ -2310,6 +2339,15 @@
                 },
                 "vehicleId": {
                   "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "viewsCount": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 0
+                  },
                   "nativeType": "int4",
                   "nullable": false
                 }
@@ -2899,7 +2937,7 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "94c4b2db77b03f27ff50d978fa493f4b1c982490cdf9a8a4887f555b2e2c89cf"
+    "storageHash": "044a38e055b5011b3e689906517a10c3079b78e82a83cd20818b77f23c46edcc"
   },
   "execution": {
     "executionHash": "5639bd368e3b919b0b7f71c9334378b2291471add01db7bc996ea519dcd505ab",

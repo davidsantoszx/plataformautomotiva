@@ -6,6 +6,7 @@ import type {
 
 import {
   addPartToProject,
+  compareProjects,
   createProject,
   deleteProject,
   duplicateProject,
@@ -18,8 +19,11 @@ import {
   updateProject,
   updateProjectPartQuantity,
   getProjectById,
+  getProjectStats,
+  registerProjectView,
   saveProjectCover,
   setProjectFeatured,
+  setProjectLinkSharing,
   setProjectPaint,
 } from './projects.service'
 
@@ -510,7 +514,12 @@ export async function getFeedController(
     const page = Math.max(1, Number(req.query.page) || 1)
     const limit = Math.min(30, Math.max(1, Number(req.query.limit) || 12))
 
-    const feed = await getFeed(page, limit)
+    const sort =
+      req.query.sort === 'views' || req.query.sort === 'likes'
+        ? req.query.sort
+        : 'recent'
+
+    const feed = await getFeed(page, limit, sort)
 
     return res.json(feed)
   } catch (error) {
@@ -997,6 +1006,173 @@ export async function patchProjectPaint(
           message: 'Cor ou acabamento inválido',
         })
       }
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+// GET /projects/compare?a=1&b=2  (recurso Pro)
+export async function getCompareController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const a = Number(req.query.a)
+    const b = Number(req.query.b)
+
+    if (!Number.isInteger(a) || !Number.isInteger(b)) {
+      return res.status(400).json({
+        message: 'Escolha dois projetos para comparar',
+      })
+    }
+
+    if (a === b) {
+      return res.status(400).json({
+        message: 'Escolha dois projetos diferentes',
+      })
+    }
+
+    const result = await compareProjects(a, b, req.userId!)
+
+    return res.json(result)
+  } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
+    if (
+      error instanceof Error &&
+      error.message === 'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message: 'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+// PATCH /projects/:id/link  { enabled: boolean }  (recurso Pro)
+export async function patchProjectLink(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+    const { enabled } = req.body
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: 'ID do projeto inválido',
+      })
+    }
+
+    if (typeof enabled !== 'boolean') {
+      return res.status(400).json({
+        message: 'enabled deve ser booleano',
+      })
+    }
+
+    const project = await setProjectLinkSharing(
+      id,
+      req.userId!,
+      enabled,
+    )
+
+    return res.json({
+      message: enabled
+        ? 'Link de compartilhamento ativado'
+        : 'Link de compartilhamento desativado',
+      project,
+    })
+  } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
+    if (
+      error instanceof Error &&
+      error.message === 'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message: 'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+// POST /projects/share/:shareToken/view  (público)
+export async function postProjectViewController(
+  req: Request,
+  res: Response,
+) {
+  try {
+    await registerProjectView(String(req.params.shareToken))
+
+    return res.status(204).send()
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.message === 'PUBLIC_PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message: 'Projeto não encontrado',
+      })
+    }
+
+    console.error(error)
+
+    return res.status(500).json({
+      message: 'Erro interno do servidor',
+    })
+  }
+}
+
+// GET /projects/:id/stats  (recurso Pro)
+export async function getProjectStatsController(
+  req: AuthenticatedRequest,
+  res: Response,
+) {
+  try {
+    const id = Number(req.params.id)
+
+    if (!Number.isInteger(id)) {
+      return res.status(400).json({
+        message: 'ID do projeto inválido',
+      })
+    }
+
+    const stats = await getProjectStats(id, req.userId!)
+
+    return res.json({ stats })
+  } catch (error) {
+    const planResponse = planErrorResponse(error, res)
+
+    if (planResponse) return planResponse
+
+    if (
+      error instanceof Error &&
+      error.message === 'PROJECT_NOT_FOUND'
+    ) {
+      return res.status(404).json({
+        message: 'Projeto não encontrado',
+      })
     }
 
     console.error(error)
