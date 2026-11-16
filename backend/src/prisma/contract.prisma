@@ -23,6 +23,7 @@ model User {
 
   projects  Project[]
   likes     ProjectLike[]
+  subscriptions Subscription[]
 
   createdAt TimestamptzString @default(now())
   updatedAt temporal.updatedAtString()
@@ -235,4 +236,22 @@ model ProjectLike {
   createdAt   TimestamptzString @default(now())
 
   @@unique([userId, projectId])
+}
+
+model Subscription {
+  id                 Int               @id @default(autoincrement())
+  userId             Int
+  period             String
+  status             String            @default("ACTIVE")
+  provider           String            @default("mock")
+  providerRef        String?
+  amountCents        Int
+  currentPeriodStart TimestamptzString
+  currentPeriodEnd   TimestamptzString
+  canceledAt         TimestamptzString?
+
+  user               User              @relation(fields: [userId], references: [id])
+
+  createdAt          TimestamptzString @default(now())
+  updatedAt          temporal.updatedAtString()
 }

@@ -675,3 +675,44 @@ export async function getProjectStats(token, projectId) {
 
   return data.stats
 }
+
+// ---- assinatura (plano Pro) -------------------------------------------------
+
+async function subscriptionRequest(token, path = '', method = 'GET', body) {
+  const response = await fetch(`${API_URL}/subscription${path}`, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    const error = new Error(data.message || 'Erro na assinatura')
+    error.code = data.code
+    throw error
+  }
+
+  return data.subscription
+}
+
+// { state: NONE | ACTIVE | CANCELED | EXPIRED | MANUAL, period, currentPeriodEnd, ... }
+export function getSubscription(token) {
+  return subscriptionRequest(token)
+}
+
+// period: 'MONTHLY' | 'YEARLY'; card: { number, name, expiry (MM/AA), cvc }
+export function subscribePro(token, period, card) {
+  return subscriptionRequest(token, '', 'POST', { period, card })
+}
+
+export function cancelSubscription(token) {
+  return subscriptionRequest(token, '/cancel', 'POST')
+}
+
+export function reactivateSubscription(token) {
+  return subscriptionRequest(token, '/reactivate', 'POST')
+}

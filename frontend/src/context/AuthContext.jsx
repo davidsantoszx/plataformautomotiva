@@ -72,6 +72,19 @@ export function AuthProvider({ children }) {
     window.location.replace(path);
   }
 
+  // Busca o usuário de novo no servidor. Usado depois de assinar, cancelar ou
+  // renovar, para o plano (isPro, vencimento) mudar na tela na hora.
+  async function refreshUser() {
+    if (!token) return;
+
+    const data = await getMe(token);
+
+    if (data?.user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+      setUser(data.user);
+    }
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -81,6 +94,7 @@ export function AuthProvider({ children }) {
         register: registerUser,
         logout,
         logoutAndRedirect,
+        refreshUser,
       }}
     >
       {children}

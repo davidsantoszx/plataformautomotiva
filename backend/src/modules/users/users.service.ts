@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt'
 
 import { db } from '../../prisma/db'
 import { deleteProject } from '../projects/projects.service'
+import { deleteUserSubscriptions } from '../subscriptions/subscriptions.service'
 
 // 6 a 15 caracteres: letras minúsculas, números e "_"
 const USERNAME_MIN = 6
@@ -97,7 +98,8 @@ export async function createUser(
 // têm ON DELETE CASCADE, então a ordem importa:
 //   1. projetos do usuário (deleteProject já apaga curtidas, peças e a capa)
 //   2. curtidas que o usuário deu em projetos de outras pessoas
-//   3. o próprio usuário
+//   3. assinaturas (cancela no provedor de pagamento e apaga o histórico)
+//   4. o próprio usuário
 // A senha é conferida antes de apagar qualquer coisa.
 export async function deleteUser(userId: number, password: string) {
   if (!password) {
@@ -135,6 +137,8 @@ export async function deleteUser(userId: number, password: string) {
       db.orm.public.ProjectLike.where({ id: like.id }).delete(),
     ),
   )
+
+  await deleteUserSubscriptions(userId)
 
   return db.orm.public.User.where({ id: userId }).delete()
 }
