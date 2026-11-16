@@ -2,7 +2,14 @@ import { useEffect, useState } from "react";
 import { Check, Sparkles, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
-import { getProjects } from "../services/api";
+import { ConfirmModal } from "../components/Modal";
+import CheckoutModal from "../components/CheckoutModal";
+import {
+  cancelSubscription,
+  getProjects,
+  getSubscription,
+  reactivateSubscription,
+} from "../services/api";
 import {
   COMING_SOON_PRO,
   FREE_PROJECT_LIMIT,
@@ -62,11 +69,15 @@ function FeatureList({ plan }) {
 }
 
 export default function PlansPage() {
-  const { token, user } = useAuth();
+  const { token, user, refreshUser } = useAuth();
   const { showToast } = useToast();
 
-  const [billing, setBilling] = useState("yearly");
+  const [billing, setBilling] = useState("monthly");
   const [projectCount, setProjectCount] = useState(null);
+  const [subscription, setSubscription] = useState(null);
+  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [confirmCancel, setConfirmCancel] = useState(false);
+  const [busy, setBusy] = useState(false);
 
   const isPro = Boolean(user?.isPro);
   const expiredPro = user?.plan === "PRO" && !isPro;
@@ -92,10 +103,57 @@ export default function PlansPage() {
     };
   }, [token, isPro]);
 
-  function handleSubscribe() {
-    // o pagamento entra na etapa de assinatura
-    showToast("O pagamento será liberado em breve.");
+  // situação da assinatura (ativa, cancelada, vencida...)
+  async function loadSubscription() {
+    try {
+      setSubscription(await getSubscription(token));
+    } catch {
+      // sem a assinatura a página continua mostrando o plano do usuário
+    }
   }
+
+  useEffect(() => {
+    loadSubscription();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
+
+  // depois de qualquer mudança: assinatura e usuário (isPro) atualizados
+  async function refreshAll() {
+    await Promise.all([loadSubscription(), refreshUser()]);
+  }
+
+  async function handleCancel() {
+    try {
+      setBusy(true);
+      await cancelSubscription(token);
+      await refreshAll();
+      setConfirmCancel(false);
+      showToast("Assinatura cancelada. O Pro continua até o fim do período.");
+    } catch (err) {
+      showToast(err.message || "Não foi possível cancelar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleReactivate() {
+    try {
+      setBusy(true);
+      await reactivateSubscription(token);
+      await refreshAll();
+      showToast("Assinatura reativada.");
+    } catch (err) {
+      showToast(err.message || "Não foi possível reativar.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const state = subscription?.state;
+  const canceled = state === "CANCELED";
+  const renews = state === "ACTIVE";
+  const periodEnd = formatDate(subscription?.currentPeriodEnd);
+  const periodLabel = subscription?.period === "YEARLY" ? "anual" : "mensal";
 
   return (
     <section className="dashboard-section plans-page">
@@ -111,29 +169,62 @@ export default function PlansPage() {
       <div className={`plan-status ${isPro ? "pro" : ""}`}>
         <Sparkles size={18} />
 
-        {isPro && (
-          <p>
-            <strong>Plano Pro ativo.</strong>{" "}
-            {expiresAt
-              ? `Válido até ${expiresAt}.`
-              : "Sem data de vencimento."}
+        {isPro && !canceled && (
+          <p className="plan-status-text">
+            <strong>
+              Plano Pro ativo{renews ? ` (${periodLabel})` : ""}.
+            </strong>{" "}
+            {renews && periodEnd
+              ? `Renova em ${periodEnd}.`
+              : expiresAt
+                ? `Válido até ${expiresAt}.`
+                : "Sem data de vencimento."}
+          </p>
+        )}
+
+        {canceled && (
+          <p className="plan-status-text">
+            <strong>Assinatura cancelada.</strong> Você continua com o Pro até{" "}
+            {periodEnd || expiresAt}.
           </p>
         )}
 
         {expiredPro && (
-          <p>
+          <p className="plan-status-text">
             <strong>Seu Pro venceu{expiresAt ? ` em ${expiresAt}` : ""}.</strong>{" "}
             Seus projetos livres ficam bloqueados até você renovar.
           </p>
         )}
 
         {!isPro && !expiredPro && (
-          <p>
+          <p className="plan-status-text">
             <strong>Seu plano atual: Free.</strong>{" "}
             {projectCount !== null
               ? `${projectCount} de ${FREE_PROJECT_LIMIT} projetos usados.`
               : ""}
           </p>
+        )}
+
+        {renews && (
+          <button
+            type="button"
+            className="plan-status-action"
+            onClick={() => setConfirmCancel(true)}
+            disabled={busy}
+          >
+            Cancelar assinatura
+          </button>
+        )}
+
+        {canceled && (
+          <button
+            type="button"
+            className="plan-status-action highlight"
+            onClick={handleReactivate}
+            disabled={busy}
+          >
+            {busy ? "Aguarde..." : "Reativar assinatura"}
+          </button>
         )}
       </div>
 
@@ -203,7 +294,7 @@ export default function PlansPage() {
           <button
             className="primary-button plan-cta"
             type="button"
-            onClick={handleSubscribe}
+            onClick={() => setCheckoutOpen(true)}
             disabled={isPro}
           >
             {isPro ? "Seu plano atual" : expiredPro ? "Renovar o Pro" : "Assinar o Pro"}
@@ -220,6 +311,26 @@ export default function PlansPage() {
           ))}
         </ul>
       </div>
+
+      {checkoutOpen && (
+        <CheckoutModal
+          period={billing === "yearly" ? "YEARLY" : "MONTHLY"}
+          onClose={() => setCheckoutOpen(false)}
+          onSuccess={refreshAll}
+        />
+      )}
+
+      {confirmCancel && (
+        <ConfirmModal
+          title="Cancelar assinatura?"
+          message={`Você continua com o Pro até ${periodEnd || "o fim do período"} e a assinatura não será renovada. Depois disso, seus projetos livres ficam bloqueados. Dá para reativar antes dessa data.`}
+          confirmLabel="Cancelar assinatura"
+          danger
+          loading={busy}
+          onConfirm={handleCancel}
+          onCancel={() => setConfirmCancel(false)}
+        />
+      )}
     </section>
   );
 }
