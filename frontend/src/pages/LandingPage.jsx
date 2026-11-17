@@ -211,7 +211,7 @@ function PartBuilder({ onEnter }) {
 export default function LandingPage({ onEnter }) {
   const [ready, setReady] = useState(false)
   const [introDone, setIntroDone] = useState(false)
-  const [step, setStep] = useState(0)
+  const [step, setStep] = useState(-1)
   const [heroOff, setHeroOff] = useState(false)
   const [activeCard, setActiveCard] = useState(null)
 
@@ -220,6 +220,25 @@ export default function LandingPage({ onEnter }) {
   const giantRef = useRef(null)
 
   const shownTotal = useCountUp(step >= 2 ? PINS_TOTAL : 0, 1100)
+
+  // Quando a cena dos passos aparece, os tópicos entram um de cada vez, sozinhos
+  useEffect(() => {
+    if (!heroOff) {
+      setStep(-1)
+      return undefined
+    }
+
+    if (prefersReducedMotion()) {
+      setStep(STEPS.length - 1)
+      return undefined
+    }
+
+    const timers = STEPS.map((_, index) =>
+      setTimeout(() => setStep(index), 500 + index * 1900),
+    )
+
+    return () => timers.forEach(clearTimeout)
+  }, [heroOff])
 
   // Abertura: o nome gigante sobe, depois a cortina some e o topo anima
   useEffect(() => {
@@ -280,13 +299,11 @@ export default function LandingPage({ onEnter }) {
         const p = total > 0 ? Math.min(1, Math.max(0, (navHeight - rect.top) / total)) : 0
 
         // 0 = topo (carro à direita, texto) · 1 = vitrine (carro no centro, nome gigante)
-        const raw = Math.min(1, Math.max(0, (p - 0.05) / 0.15))
+        const raw = Math.min(1, Math.max(0, (p - 0.05) / 0.4))
         const t = raw * raw * (3 - 2 * raw)
-        const after = Math.min(0.999, Math.max(0, (p - 0.2) / 0.78))
 
         stage.style.setProperty('--t', t.toFixed(3))
         setHeroOff(t > 0.5)
-        setStep(Math.floor(after * STEPS.length))
       }
 
       const giant = giantRef.current
@@ -424,8 +441,8 @@ export default function LandingPage({ onEnter }) {
               {STEPS.map(([title, text], index) => (
                 <li
                   key={title}
-                  className={`story-step ${index === step ? 'active' : ''} ${
-                    index < step ? 'done' : ''
+                  className={`story-step ${index <= step ? 'shown' : ''} ${
+                    index === step ? 'active' : ''
                   }`}
                 >
                   <span className="story-step-dot">{index + 1}</span>
@@ -464,7 +481,7 @@ export default function LandingPage({ onEnter }) {
             </div>
           </div>
 
-          <div className="stage-picker">
+          <div className={`stage-picker ${step >= 0 ? 'on' : ''}`}>
             {['Mitsubishi', 'Lancer', 'GT'].map((item, index) => (
               <span key={item} style={{ '--i': index }}>
                 {item}

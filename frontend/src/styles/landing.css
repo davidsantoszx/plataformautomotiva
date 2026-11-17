@@ -955,7 +955,7 @@
 
 .stage {
   position: relative;
-  height: 560vh;
+  height: 300vh;
   scroll-margin-top: 65px;
   --t: 0;
   --sc: #ff5a1f;
@@ -1183,7 +1183,7 @@
 
 @media (max-width: 1000px) {
   .stage {
-    height: 480vh;
+    height: 280vh;
   }
 
   .stage-hero-text {
@@ -1294,12 +1294,18 @@
   padding: 16px 18px;
   border: 1px solid transparent;
   border-radius: 14px;
-  opacity: 0.4;
-  transition: opacity 0.5s ease, border-color 0.5s ease, background 0.5s ease;
+  opacity: 0;
+  transform: translateX(-36px);
+  transition:
+    opacity 0.7s ease,
+    transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.5s ease,
+    background 0.5s ease;
 }
 
-.story-step.done {
-  opacity: 0.65;
+.story-step.shown {
+  opacity: 0.55;
+  transform: none;
 }
 
 .story-step.active {
@@ -1322,8 +1328,7 @@
   transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
 }
 
-.story-step.active .story-step-dot,
-.story-step.done .story-step-dot {
+.story-step.shown .story-step-dot {
   border-color: #fff;
   background: #fff;
   color: #1a0c06;
@@ -1346,8 +1351,15 @@
   right: 6%;
   display: flex;
   gap: 8px;
-  opacity: clamp(0, calc((var(--t) - 0.7) * 3), 1);
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
   z-index: 3;
+}
+
+.stage-picker.on {
+  opacity: 1;
+  transform: none;
 }
 
 .stage-picker span {
