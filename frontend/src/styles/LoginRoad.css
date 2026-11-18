@@ -153,3 +153,51 @@
     transform: translateX(24px);
   }
 }
+
+/* =========================
+   RECUPERAÇÃO DE SENHA
+========================= */
+
+.auth-forgot-link {
+  align-self: flex-end;
+  margin-top: -6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #ff7a49;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.auth-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.auth-code-input {
+  padding-left: 0.5em;
+  text-align: center;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.5em;
+}
+
+.auth-secondary {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  border: 0;
+  background: none;
+  color: #8e97a3;
+  font-size: 14px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.auth-secondary:hover:not(:disabled) {
+  color: #fff;
+}
+
+.auth-secondary:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

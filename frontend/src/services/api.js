@@ -716,3 +716,38 @@ export function cancelSubscription(token) {
 export function reactivateSubscription(token) {
   return subscriptionRequest(token, '/reactivate', 'POST')
 }
+
+// ---- recuperação de senha ---------------------------------------------------
+
+async function passwordRequest(path, body) {
+  const response = await fetch(`${API_URL}/auth/password/${path}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Erro ao recuperar a senha')
+  }
+
+  return data
+}
+
+// Pede o código por e-mail (a resposta é a mesma exista o e-mail ou não)
+export function forgotPassword(email) {
+  return passwordRequest('forgot', { email })
+}
+
+// Confere o código de 6 dígitos
+export function verifyResetCode(email, code) {
+  return passwordRequest('verify', { email, code })
+}
+
+// Define a nova senha com o e-mail e o código confirmados
+export function resetPassword(email, code, password) {
+  return passwordRequest('reset', { email, code, password })
+}

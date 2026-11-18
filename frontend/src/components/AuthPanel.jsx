@@ -48,6 +48,7 @@ export default function AuthPanel({
   onPasswordChange,
   onNameChange,
   onUsernameChange,
+  onForgot,
   onSubmit,
   onBack,
 }) {
@@ -202,6 +203,16 @@ export default function AuthPanel({
               aria-required="true"
             />
           </div>
+
+          {!isRegister && onForgot && (
+            <button
+              className="auth-forgot-link"
+              type="button"
+              onClick={onForgot}
+            >
+              Esqueci minha senha
+            </button>
+          )}
 
           <button
             className="auth-submit"

@@ -5,6 +5,11 @@ import bcrypt from 'bcrypt'
 import { db } from '../../prisma/db'
 import { getPlanInfo } from '../plans/plans.service'
 import { createUser } from '../users/users.service'
+import {
+  requestPasswordReset,
+  resetPassword,
+  verifyPasswordResetCode,
+} from './passwordReset.service'
 
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -150,5 +155,117 @@ export async function login(req: Request, res: Response) {
     return res.status(500).json({
       message: 'Erro interno do servidor',
     })
+  }
+}
+
+// ---- recuperação de senha ---------------------------------------------------
+
+// Limite simples por IP (na memória do servidor): 15 pedidos a cada 15 minutos
+// nas rotas de recuperação, para ninguém ficar testando códigos em sequência.
+const RESET_WINDOW_MS = 15 * 60_000
+const RESET_MAX_REQUESTS = 15
+const resetHits = new Map<string, { count: number; startedAt: number }>()
+
+function isRateLimited(req: Request) {
+  const key = req.ip ?? 'unknown'
+  const now = Date.now()
+  const hit = resetHits.get(key)
+
+  if (!hit || now - hit.startedAt > RESET_WINDOW_MS) {
+    resetHits.set(key, { count: 1, startedAt: now })
+    return false
+  }
+
+  hit.count += 1
+
+  return hit.count > RESET_MAX_REQUESTS
+}
+
+function tooManyRequests(res: Response) {
+  return res.status(429).json({
+    message: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
+  })
+}
+
+function resetErrorResponse(error: unknown, res: Response) {
+  if (error instanceof Error) {
+    if (error.message === 'EMAIL_INVALID') {
+      return res.status(400).json({
+        message: 'Informe um e-mail válido',
+      })
+    }
+
+    if (error.message === 'RESET_CODE_INVALID') {
+      return res.status(400).json({
+        message: 'Código inválido ou expirado',
+      })
+    }
+
+    if (error.message === 'RESET_CODE_LOCKED') {
+      return res.status(429).json({
+        message: 'Muitas tentativas erradas. Peça um novo código.',
+      })
+    }
+
+    if (error.message === 'PASSWORD_TOO_SHORT') {
+      return res.status(400).json({
+        message: 'A senha deve possuir pelo menos 6 caracteres',
+      })
+    }
+  }
+
+  console.error(error)
+
+  return res.status(500).json({
+    message: 'Erro interno do servidor',
+  })
+}
+
+export async function forgotPassword(req: Request, res: Response) {
+  if (isRateLimited(req)) return tooManyRequests(res)
+
+  try {
+    await requestPasswordReset(req.body?.email)
+
+    // mesma resposta exista o e-mail ou não
+    return res.json({
+      message: 'Se o e-mail estiver cadastrado, enviamos um código para ele.',
+    })
+  } catch (error) {
+    return resetErrorResponse(error, res)
+  }
+}
+
+export async function verifyResetCodeController(
+  req: Request,
+  res: Response,
+) {
+  if (isRateLimited(req)) return tooManyRequests(res)
+
+  try {
+    await verifyPasswordResetCode(req.body?.email, req.body?.code)
+
+    return res.json({ message: 'Código confirmado' })
+  } catch (error) {
+    return resetErrorResponse(error, res)
+  }
+}
+
+export async function resetPasswordController(
+  req: Request,
+  res: Response,
+) {
+  if (isRateLimited(req)) return tooManyRequests(res)
+
+  try {
+    await resetPassword(
+      req.body?.email,
+      req.body?.code,
+      req.body?.password,
+    )
+
+    return res.json({ message: 'Senha alterada com sucesso' })
+  } catch (error) {
+    return resetErrorResponse(error, res)
   }
 }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 import AuthPanel from "../components/AuthPanel";
+import ForgotPasswordPanel from "../components/ForgotPasswordPanel";
 import LoginRoad from "../components/LoginRoad";
 import { useAuth } from "../context/AuthContext";
 import { useGlobalLoading } from "../context/LoadingContext";
@@ -8,6 +9,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const { token, login, register } = useAuth();
 
+  // "login" | "register" | "forgot" (recuperação de senha)
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -72,27 +74,51 @@ export default function LoginPage() {
     }
   }
 
+  function openForgot() {
+    setError("");
+    setMessage("");
+    setMode("forgot");
+  }
+
+  // senha trocada: volta para o login com o e-mail já preenchido
+  function handlePasswordReset(resetEmail) {
+    setEmail(resetEmail);
+    setPassword("");
+    setError("");
+    setMessage("Senha alterada. Agora faça login com a nova senha.");
+    setMode("login");
+  }
+
   return (
     <div className="login-stage">
       <LoginRoad />
 
-      <AuthPanel
-        mode={mode}
-        email={email}
-        password={password}
-        name={name}
-        username={username}
-        loading={loading}
-        error={error}
-        message={message}
-        onModeChange={setMode}
-        onEmailChange={setEmail}
-        onPasswordChange={setPassword}
-        onNameChange={setName}
-        onUsernameChange={setUsername}
-        onSubmit={mode === "login" ? handleLogin : handleRegister}
-        onBack={() => navigate("/")}
-      />
+      {mode === "forgot" ? (
+        <ForgotPasswordPanel
+          initialEmail={email}
+          onBack={() => setMode("login")}
+          onDone={handlePasswordReset}
+        />
+      ) : (
+        <AuthPanel
+          mode={mode}
+          email={email}
+          password={password}
+          name={name}
+          username={username}
+          loading={loading}
+          error={error}
+          message={message}
+          onModeChange={setMode}
+          onEmailChange={setEmail}
+          onPasswordChange={setPassword}
+          onNameChange={setName}
+          onUsernameChange={setUsername}
+          onForgot={openForgot}
+          onSubmit={mode === "login" ? handleLogin : handleRegister}
+          onBack={() => navigate("/")}
+        />
+      )}
     </div>
   );
 }

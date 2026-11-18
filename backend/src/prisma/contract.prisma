@@ -255,3 +255,14 @@ model Subscription {
   createdAt          TimestamptzString @default(now())
   updatedAt          temporal.updatedAtString()
 }
+
+model PasswordReset {
+  id        Int                @id @default(autoincrement())
+  email     String
+  codeHash  String
+  expiresAt TimestamptzString
+  attempts  Int                @default(0)
+  usedAt    TimestamptzString?
+
+  createdAt TimestamptzString @default(now())
+}

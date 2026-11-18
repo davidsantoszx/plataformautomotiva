@@ -33,21 +33,15 @@ const PINS = [
 
 const PINS_TOTAL = PINS.reduce((sum, pin) => sum + pin.price, 0)
 
-// Peças do montador de exemplo (valores ilustrativos)
-const DEMO_PARTS = [
-  { id: 'rodas', name: 'Jogo de rodas aro 18', price: 4500, fit: 'ok', color: '#ff5a1f' },
-  { id: 'molas', name: 'Molas esportivas', price: 1800, fit: 'ok', color: '#ff8a4c' },
-  { id: 'saias', name: 'Kit de saias laterais', price: 3100, fit: 'adapt', color: '#ffb27a' },
-  { id: 'escape', name: 'Cat-back esportivo', price: 5200, fit: 'ok', color: '#c4410f' },
-  { id: 'aerofolio', name: 'Aerofólio traseiro', price: 2400, fit: 'adapt', color: '#ffd2b0' },
-]
-
 const FEATURES = [
   { icon: LayoutGrid, title: 'Catálogo de peças', text: 'Categorias organizadas para encontrar rapidamente o que você procura.' },
   { icon: ShieldCheck, title: 'Compatibilidade', text: 'O projeto indica peças compatíveis, adaptações ou incompatibilidades.' },
   { icon: FolderOpen, title: 'Meus projetos', text: 'Salve, edite, duplique e continue seus projetos quando quiser.' },
   { icon: Share2, title: 'Compartilhe', text: 'Publique seu projeto e permita que outras pessoas conheçam sua configuração.' },
 ]
+
+// tempo de cada passo no loop (ms)
+const STEP_DURATION = 3800
 
 const STEPS = [
   ['Escolha o carro', 'Selecione marca, modelo, geração, ano e versão do veículo.'],
@@ -115,130 +109,102 @@ function scrollToSection(id) {
   document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 }
 
-// ---------- montador de exemplo ----------
-
-function PartBuilder({ onEnter }) {
-  const [selected, setSelected] = useState(['rodas', 'molas'])
-
-  const chosen = DEMO_PARTS.filter((part) => selected.includes(part.id))
-  const total = chosen.reduce((sum, part) => sum + part.price, 0)
-  const adaptations = chosen.filter((part) => part.fit === 'adapt').length
-  const shownTotal = useCountUp(total)
-
-  function toggle(id) {
-    setSelected((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id],
-    )
-  }
-
-  return (
-    <div className="builder" data-rv>
-      <ul className="builder-parts">
-        {DEMO_PARTS.map((part) => {
-          const on = selected.includes(part.id)
-
-          return (
-            <li key={part.id}>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={on}
-                className={`builder-part ${on ? 'on' : ''}`}
-                onClick={() => toggle(part.id)}
-              >
-                <span className="builder-check">
-                  <Check size={14} />
-                </span>
-
-                <span className="builder-part-text">
-                  <strong>{part.name}</strong>
-                  <small className={part.fit}>
-                    {part.fit === 'ok' ? 'Compatível' : 'Requer adaptação'}
-                  </small>
-                </span>
-
-                <span className="builder-price">{formatBRL(part.price)}</span>
-              </button>
-            </li>
-          )
-        })}
-      </ul>
-
-      <aside className="builder-summary" aria-live="polite">
-        <span className="builder-summary-label">Total estimado</span>
-
-        <strong className="builder-total">{formatBRL(shownTotal)}</strong>
-
-        <div className="builder-bar" aria-hidden="true">
-          {chosen.map((part) => (
-            <span
-              key={part.id}
-              style={{ flexGrow: part.price, background: part.color }}
-            />
-          ))}
-        </div>
-
-        <p className="builder-status">
-          {chosen.length === 0
-            ? 'Marque uma peça para começar.'
-            : `${chosen.length} ${chosen.length === 1 ? 'peça' : 'peças'} no projeto. ${
-                adaptations === 0
-                  ? 'Tudo compatível.'
-                  : adaptations === 1
-                    ? '1 peça exige adaptação.'
-                    : `${adaptations} peças exigem adaptação.`
-              }`}
-        </p>
-
-        <button type="button" className="builder-cta" onClick={onEnter}>
-          Criar meu projeto
-          <ArrowRight size={16} />
-        </button>
-
-        <small className="builder-note">
-          Exemplo ilustrativo. No projeto de verdade, as peças e os valores
-          vêm do catálogo do seu carro.
-        </small>
-      </aside>
-    </div>
-  )
-}
-
 // ---------- página ----------
 
 export default function LandingPage({ onEnter }) {
   const [ready, setReady] = useState(false)
   const [introDone, setIntroDone] = useState(false)
   const [step, setStep] = useState(-1)
-  const [heroOff, setHeroOff] = useState(false)
+  const [stepsShown, setStepsShown] = useState(false)
+  const [howHover, setHowHover] = useState(false)
   const [activeCard, setActiveCard] = useState(null)
 
   const pageRef = useRef(null)
-  const stageRef = useRef(null)
+  const howRef = useRef(null)
   const giantRef = useRef(null)
 
-  const shownTotal = useCountUp(step >= 2 ? PINS_TOTAL : 0, 1100)
+  const shownTotal = useCountUp(step === 2 ? PINS_TOTAL : 0, 1100)
 
-  // Quando a cena dos passos aparece, os tópicos entram um de cada vez, sozinhos
+  // Quando a seção dos passos aparece na tela, os tópicos entram um de cada vez
   useEffect(() => {
-    if (!heroOff) {
-      setStep(-1)
+    const section = howRef.current
+
+    if (!section) return undefined
+
+    if (!('IntersectionObserver' in window)) {
+      setStepsShown(true)
       return undefined
     }
 
-    if (prefersReducedMotion()) {
-      setStep(STEPS.length - 1)
-      return undefined
-    }
-
-    const timers = STEPS.map((_, index) =>
-      setTimeout(() => setStep(index), 500 + index * 1900),
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          setStepsShown(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.35 },
     )
 
-    return () => timers.forEach(clearTimeout)
-  }, [heroOff])
+    observer.observe(section)
+
+    return () => observer.disconnect()
+  }, [])
+
+  // Os passos giram sozinhos em loop. Passar o mouse na seção pausa, e clicar
+  // em um passo troca a tela na hora.
+  useEffect(() => {
+    if (!stepsShown) return undefined
+
+    if (prefersReducedMotion()) {
+      setStep((current) => (current < 0 ? 0 : current))
+      return undefined
+    }
+
+    if (howHover && step >= 0) return undefined
+
+    const wait = step < 0 ? 400 : STEP_DURATION
+    const timer = setTimeout(
+      () => setStep(step < 0 ? 0 : (step + 1) % STEPS.length),
+      wait,
+    )
+
+    return () => clearTimeout(timer)
+  }, [stepsShown, howHover, step])
+
+  // Ao abrir (ou recarregar) a página, sempre começa no topo e a rolagem fica
+  // travada enquanto a abertura aparece
+  useEffect(() => {
+    const previous = window.history.scrollRestoration
+
+    try {
+      window.history.scrollRestoration = 'manual'
+    } catch {
+      // navegador sem suporte: segue só com o scrollTo
+    }
+
+    window.scrollTo(0, 0)
+
+    return () => {
+      try {
+        window.history.scrollRestoration = previous
+      } catch {
+        // ignora
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (introDone) return undefined
+
+    const previous = document.body.style.overflow
+
+    document.body.style.overflow = 'hidden'
+
+    return () => {
+      document.body.style.overflow = previous
+    }
+  }, [introDone])
 
   // Abertura: o nome gigante sobe, depois a cortina some e o topo anima
   useEffect(() => {
@@ -283,28 +249,13 @@ export default function LandingPage({ onEnter }) {
     return () => observer.disconnect()
   }, [])
 
-  // Rolagem: a vitrine troca de projeto e o título gigante do fim se preenche
+  // Rolagem: só o título gigante do fim se preenche
   useEffect(() => {
     let frame = 0
 
     function update() {
       frame = 0
       const vh = window.innerHeight
-
-      const stage = stageRef.current
-      if (stage) {
-        const rect = stage.getBoundingClientRect()
-        const navHeight = 65
-        const total = rect.height - (vh - navHeight)
-        const p = total > 0 ? Math.min(1, Math.max(0, (navHeight - rect.top) / total)) : 0
-
-        // 0 = topo (carro à direita, texto) · 1 = vitrine (carro no centro, nome gigante)
-        const raw = Math.min(1, Math.max(0, (p - 0.05) / 0.4))
-        const t = raw * raw * (3 - 2 * raw)
-
-        stage.style.setProperty('--t', t.toFixed(3))
-        setHeroOff(t > 0.5)
-      }
 
       const giant = giantRef.current
       if (giant) {
@@ -380,9 +331,6 @@ export default function LandingPage({ onEnter }) {
           <button type="button" onClick={() => scrollToSection('como-funciona')}>
             Como funciona
           </button>
-          <button type="button" onClick={() => scrollToSection('experimente')}>
-            Experimente
-          </button>
           <button type="button" onClick={() => scrollToSection('comunidade')}>
             Comunidade
           </button>
@@ -393,125 +341,165 @@ export default function LandingPage({ onEnter }) {
         </button>
       </nav>
 
-      <section
-        className={`stage ${heroOff ? 'hero-off' : ''}`}
-        id="vitrine"
-        ref={stageRef}
-      >
-        <span className="stage-anchor" id="como-funciona" aria-hidden="true" />
+      <section className="hero">
+        <div className="hero-band" aria-hidden="true" />
 
-        <div className="stage-sticky">
-          <div className="stage-color" aria-hidden="true" />
-          <div className="stage-band" aria-hidden="true" />
+        <div className="hero-text">
+          <h1>
+            <span className="hl">
+              <span style={{ '--d': '0ms' }}>Monte o projeto</span>
+            </span>
+            <span className="hl">
+              <span style={{ '--d': '110ms' }}>do carro</span>
+            </span>
+            <span className="hl hl-accent">
+              <span style={{ '--d': '220ms' }}>que você sempre imaginou.</span>
+            </span>
+          </h1>
 
-          <div className="stage-hero-text">
-            <h1>
-              <span className="hl">
-                <span style={{ '--d': '0ms' }}>Monte o projeto</span>
-              </span>
-              <span className="hl">
-                <span style={{ '--d': '110ms' }}>do carro</span>
-              </span>
-              <span className="hl hl-accent">
-                <span style={{ '--d': '220ms' }}>que você sempre imaginou.</span>
-              </span>
-            </h1>
+          <p className="landing-rise" style={{ '--d': '350ms' }}>
+            Escolha seu veículo, encontre peças, monte sua configuração
+            e acompanhe uma estimativa do investimento do seu projeto.
+          </p>
 
-            <p className="landing-rise" style={{ '--d': '350ms' }}>
-              Escolha seu veículo, encontre peças, monte sua configuração
-              e acompanhe uma estimativa do investimento do seu projeto.
-            </p>
-
-            <div className="landing-actions landing-rise" style={{ '--d': '480ms' }}>
-              <button type="button" onClick={onEnter}>
-                Entre para criar projetos
-                <ArrowRight size={17} />
-              </button>
-            </div>
-
-            <small className="landing-rise" style={{ '--d': '600ms' }}>
-              É necessário entrar ou criar uma conta para montar projetos.
-            </small>
-          </div>
-
-          <div className="stage-steps-text">
-            <h2>Do carro original ao seu projeto</h2>
-
-            <ol className="story-steps">
-              {STEPS.map(([title, text], index) => (
-                <li
-                  key={title}
-                  className={`story-step ${index <= step ? 'shown' : ''} ${
-                    index === step ? 'active' : ''
-                  }`}
-                >
-                  <span className="story-step-dot">{index + 1}</span>
-
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </div>
-                </li>
-              ))}
-            </ol>
-          </div>
-
-          <div className="stage-car">
-            <div className="stage-car-drop">
-              <div className="stage-car-box">
-                <img
-                  src={Lancer}
-                  alt="Prévia de um projeto automotivo"
-                />
-
-                {PINS.map((pin, index) => (
-                  <span
-                    className={`stage-pin ${step >= 1 ? 'on' : ''}`}
-                    key={pin.id}
-                    style={{ left: `${pin.x}%`, top: `${pin.y}%`, '--i': index }}
-                  >
-                    <i />
-                    <b>
-                      {pin.label}
-                      <em>{formatBRL(pin.price)}</em>
-                    </b>
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className={`stage-picker ${step >= 0 ? 'on' : ''}`}>
-            {['Mitsubishi', 'Lancer', 'GT'].map((item, index) => (
-              <span key={item} style={{ '--i': index }}>
-                {item}
-              </span>
-            ))}
-          </div>
-
-          <div className={`stage-total ${step >= 2 ? 'on' : ''}`}>
-            <small>Total do projeto</small>
-            <strong>{formatBRL(shownTotal)}</strong>
-
+          <div className="landing-actions landing-rise" style={{ '--d': '480ms' }}>
             <button type="button" onClick={onEnter}>
-              Criar meu projeto
-              <ArrowRight size={16} />
+              Entre para criar projetos
+              <ArrowRight size={17} />
             </button>
+          </div>
+
+          <small className="landing-rise" style={{ '--d': '600ms' }}>
+            É necessário entrar ou criar uma conta para montar projetos.
+          </small>
+        </div>
+
+        <div className="hero-car">
+          <div className="hero-car-drop">
+            <img src={Lancer} alt="Prévia de um projeto automotivo" />
           </div>
         </div>
       </section>
 
-      <section className="landing-section" id="experimente">
-        <div className="landing-section-heading" data-rv>
-          <h2>Monte um projeto aqui mesmo</h2>
+      <section
+        className="how"
+        id="como-funciona"
+        ref={howRef}
+        onMouseEnter={() => setHowHover(true)}
+        onMouseLeave={() => setHowHover(false)}
+      >
+        <div className="how-text" data-rv>
+          <h2>Do carro original ao seu projeto</h2>
 
-          <p>
-            Marque as peças e veja o valor e a compatibilidade mudarem na
-            hora.
-          </p>
+          <ol className="how-steps">
+            {STEPS.map(([title, text], index) => (
+              <li key={title}>
+                <button
+                  type="button"
+                  className={`how-step ${stepsShown ? 'shown' : ''} ${
+                    index === step ? 'active' : ''
+                  }`}
+                  style={{ '--i': index }}
+                  aria-pressed={index === step}
+                  onClick={() => setStep(index)}
+                >
+                  <span className="how-step-dot">{index + 1}</span>
+
+                  <span className="how-step-body">
+                    <strong>{title}</strong>
+                    <small>{text}</small>
+                  </span>
+
+                  {index === step && !howHover && !prefersReducedMotion() && (
+                    <i className="how-progress" />
+                  )}
+                </button>
+              </li>
+            ))}
+          </ol>
         </div>
 
-        <PartBuilder onEnter={onEnter} />
+        <div className="how-stage" data-rv>
+          <div className="how-window">
+            <div className="how-window-head">
+              <span>Novo projeto</span>
+              <small>Passo {Math.max(step, 0) + 1} de {STEPS.length}</small>
+            </div>
+
+            <div className={`how-view ${step <= 0 ? 'on' : ''}`}>
+              <h3>Seu veículo</h3>
+
+              {[
+                ['Marca', 'Mitsubishi'],
+                ['Modelo', 'Lancer'],
+                ['Geração', 'Lancer X'],
+                ['Ano', '2010'],
+                ['Versão', 'GT'],
+              ].map(([label, value], index) => (
+                <div
+                  className={`how-field ${step === 0 ? 'filled' : ''}`}
+                  key={label}
+                  style={{ '--i': index }}
+                >
+                  <small>{label}</small>
+                  <strong>{value}</strong>
+                  <Check size={15} />
+                </div>
+              ))}
+            </div>
+
+            <div className={`how-view ${step === 1 ? 'on' : ''}`}>
+              <h3>Peças do projeto</h3>
+
+              {[
+                ...PINS.map((pin) => [pin.label, pin.price, 'ok']),
+              ].map(([label, price, fit], index) => (
+                <div className="how-row" key={label} style={{ '--i': index }}>
+                  <span className="how-row-check">
+                    <Check size={14} />
+                  </span>
+
+                  <span className="how-row-text">
+                    <strong>{label}</strong>
+                    <small className={fit}>
+                      {fit === 'ok' ? 'Compatível com o veículo' : 'Requer adaptação'}
+                    </small>
+                  </span>
+
+                  <b>{formatBRL(price)}</b>
+                </div>
+              ))}
+            </div>
+
+            <div className={`how-view ${step === 2 ? 'on' : ''}`}>
+              <h3>Resumo do projeto</h3>
+
+              <small className="how-total-label">Total estimado</small>
+              <strong className="how-total-value">{formatBRL(shownTotal)}</strong>
+
+              <div className="how-bar" aria-hidden="true">
+                {PINS.map((pin, index) => (
+                  <span
+                    key={pin.id}
+                    style={{
+                      flexGrow: pin.price,
+                      background: ['#ff5a1f', '#ff8a4c', '#c4410f', '#ffb27a'][index],
+                    }}
+                  />
+                ))}
+              </div>
+
+              <p className="how-total-note">
+                {PINS.length} peças no projeto. Tudo compatível com o veículo.
+              </p>
+
+              <button type="button" onClick={onEnter}>
+                Criar meu projeto
+                <ArrowRight size={16} />
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section className="landing-section landing-preview-section">
