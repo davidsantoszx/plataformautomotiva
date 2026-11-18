@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "contract:emit": "prisma contract emit",
-    "catalog:import": "tsx scripts/importCatalog.ts"
+    "catalog:import": "tsx scripts/importCatalog.ts",
+    "catalog:export-cars" : "tsx scripts/carsCatalog.ts export",
+    "catalog:seed-cars": "tsx scripts/carsCatalog.ts seed"
   },
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.5",
