@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer'
+import nodemailer, { type Transporter } from 'nodemailer'
 
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com'
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465)
@@ -7,7 +7,7 @@ const SMTP_PASS = process.env.SMTP_PASS
 const MAIL_FROM =
   process.env.MAIL_FROM || `Plataforma Automotiva <${SMTP_USER ?? 'no-reply@localhost'}>`
 
-let transporter: nodemailer.Transporter | null = null
+let transporter: Transporter | null = null
 
 function getTransporter() {
   if (!transporter) {
