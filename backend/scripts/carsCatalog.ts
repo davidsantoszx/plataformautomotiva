@@ -1,4 +1,5 @@
 import 'dotenv/config'
+import { existsSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -12,7 +13,23 @@ import { db } from '../src/prisma/db'
  *   npm run catalog:seed-cars    -> lê o cars.json e cria/atualiza o banco
  *
  * O seed é seguro para rodar várias vezes: só cria ou atualiza,
- * nunca apaga nada.
+ * nunca apaga nada. Um veículo que já existe em outra geração (catálogo
+ * antigo) é adotado: o seed o encontra por source + externalId e o move
+ * para a geração do cars.json.
+ *
+ * Para limpar do banco tudo o que NÃO está no cars.json:
+ *   npm run catalog:clean-cars        -> seed + SIMULA a limpeza
+ *   npm run catalog:clean-cars:apply  -> seed + apaga de verdade
+ * Veículos usados por projetos nunca são apagados.
+ *
+ * Modelos 3D: se a geração não tiver model3dUrl no cars.json, o seed
+ * procura o arquivo pela convenção
+ *
+ *   frontend/public/models/cars/<marca>/<modelo>/<modelo>-<geracao>.glb
+ *
+ * (ex.: volkswagen/gol/gol-g4.glb). O model3dUrl só é gravado no banco
+ * quando o arquivo existe, então um carro sem GLB nunca aponta para um
+ * link quebrado. Ao final, o seed lista os arquivos que ainda faltam.
  */
 
 const __filename = fileURLToPath(import.meta.url)
@@ -22,6 +39,43 @@ const carsPath = path.resolve(
   __dirname,
   '../data/catalog/cars.json',
 )
+
+// pasta pública do frontend (backend e frontend são pastas irmãs)
+const publicDir = path.resolve(
+  __dirname,
+  '../../frontend/public',
+)
+
+const missingModels = new Set<string>()
+
+function resolveModel3dUrl(
+  brandSlug: string,
+  modelSlug: string,
+  generationSlug: string,
+  explicitUrl?: string | null,
+) {
+  // se o slug da geração já começa com o do modelo (lancer-x), não repete
+  const fileName = generationSlug.startsWith(`${modelSlug}-`)
+    ? generationSlug
+    : `${modelSlug}-${generationSlug}`
+
+  const url =
+    explicitUrl?.trim() ||
+    `/models/cars/${brandSlug}/${modelSlug}/${fileName}.glb`
+
+  // link externo (CDN, etc.): não dá para conferir no disco
+  if (/^https?:\/\//i.test(url)) {
+    return url
+  }
+
+  if (existsSync(path.join(publicDir, url))) {
+    return url
+  }
+
+  missingModels.add(url)
+
+  return undefined
+}
 
 type VehicleEntry = {
   year: number
@@ -318,6 +372,7 @@ async function seedCars() {
 
   const created = { brands: 0, models: 0, generations: 0, vehicles: 0 }
   const updated = { brands: 0, models: 0, generations: 0, vehicles: 0 }
+  const keepVehicleIds = new Set<number>()
 
   for (const brand of data.brands) {
     const brandSlug = brand.slug.trim().toLowerCase()
@@ -414,6 +469,13 @@ async function seedCars() {
           created.generations++
         }
 
+        const generationModelUrl = resolveModel3dUrl(
+          brandSlug,
+          modelSlug,
+          generationSlug,
+          generation.model3dUrl,
+        )
+
         const existingVehicles = await db.orm.public.Vehicle
           .where({ generationId: generationRow.id })
           .all()
@@ -424,21 +486,34 @@ async function seedCars() {
         for (const vehicle of generation.vehicles ?? []) {
           const version = vehicle.version ?? null
 
-          const existing = existingVehicles.find(
+          let existing = existingVehicles.find(
             (item) =>
               item.year === vehicle.year &&
               (item.version ?? null) === version,
           )
+
+          // já existe em outra geração (catálogo antigo)? adota o veículo
+          if (!existing && vehicle.source && vehicle.externalId) {
+            existing =
+              (await db.orm.public.Vehicle.first({
+                source: vehicle.source,
+                externalId: vehicle.externalId,
+              })) ?? undefined
+          }
 
           const vehicleData = {
             generationId: generationRow.id,
             year: vehicle.year,
             version: version ?? undefined,
             tier: vehicle.tier ?? 'BASIC',
-            model3dUrl:
-              vehicle.model3dUrl ??
-              generation.model3dUrl ??
-              undefined,
+            model3dUrl: vehicle.model3dUrl
+              ? resolveModel3dUrl(
+                  brandSlug,
+                  modelSlug,
+                  generationSlug,
+                  vehicle.model3dUrl,
+                )
+              : generationModelUrl,
             engine: vehicle.engine ?? undefined,
             transmission: vehicle.transmission ?? undefined,
             fuel: vehicle.fuel ?? undefined,
@@ -467,11 +542,14 @@ async function seedCars() {
               .where({ id: existing.id })
               .update(vehicleData)
 
+            keepVehicleIds.add(existing.id)
             updated.vehicles++
             updatedHere++
           } else {
-            await db.orm.public.Vehicle.create(vehicleData)
+            const createdVehicle =
+              await db.orm.public.Vehicle.create(vehicleData)
 
+            keepVehicleIds.add(createdVehicle.id)
             created.vehicles++
             createdHere++
           }
@@ -491,8 +569,175 @@ async function seedCars() {
   console.log(
     `   Atualizados: ${updated.brands} marcas, ${updated.models} modelos, ${updated.generations} gerações, ${updated.vehicles} veículos`,
   )
+
+  if (missingModels.size > 0) {
+    console.log(
+      '\n📦 Modelos 3D esperados que ainda não existem (solte o GLB e rode o seed de novo):',
+    )
+
+    for (const url of [...missingModels].sort()) {
+      console.log(`   frontend/public${url}`)
+    }
+  }
+
+  if (process.argv.includes('--prune')) {
+    await pruneCatalog(
+      keepVehicleIds,
+      process.argv.includes('--apply'),
+    )
+  }
+
   console.log(
     '\n⚠️  Reinicie o backend para o filtro do plano Free recarregar o catálogo.',
+  )
+}
+
+/*
+ * Apaga do banco tudo o que não está no cars.json.
+ * Sem --apply só mostra o que seria apagado.
+ */
+async function pruneCatalog(
+  keepVehicleIds: Set<number>,
+  apply: boolean,
+) {
+  console.log('\n🧹 Limpeza do catálogo')
+
+  const projectRows = await db.orm.public.Project
+    .select('id', 'vehicleId')
+    .all()
+
+  const projectVehicleIds = new Set<number>()
+
+  for (const row of projectRows) {
+    const vehicleId = (row as unknown as { vehicleId: number | null })
+      .vehicleId
+
+    if (typeof vehicleId === 'number') {
+      projectVehicleIds.add(vehicleId)
+    }
+  }
+
+  const vehicleRows = await db.orm.public.Vehicle.select('id').all()
+
+  const doomed = vehicleRows
+    .map((row) => row.id)
+    .filter(
+      (id) =>
+        !keepVehicleIds.has(id) && !projectVehicleIds.has(id),
+    )
+
+  const keptByProject = [...projectVehicleIds].filter(
+    (id) => !keepVehicleIds.has(id),
+  )
+
+  const doomedSet = new Set(doomed)
+
+  const compatRows = await db.orm.public.PartCompatibility
+    .select('id', 'vehicleId')
+    .all()
+
+  const doomedCompat = compatRows.filter((row) =>
+    doomedSet.has(row.vehicleId),
+  )
+
+  console.log(`   Veículos no banco:            ${vehicleRows.length}`)
+  console.log(`   Veículos do cars.json (fica): ${keepVehicleIds.size}`)
+  console.log(`   Veículos a apagar:            ${doomed.length}`)
+  console.log(`   Compatibilidades a apagar:    ${doomedCompat.length}`)
+
+  if (keptByProject.length > 0) {
+    console.log(
+      `   ⚠️  ${keptByProject.length} veículo(s) fora do cars.json ficam porque projetos os usam.`,
+    )
+  }
+
+  if (!apply) {
+    console.log(
+      '\n   Simulação: nada foi apagado. Para apagar de verdade rode: npm run catalog:clean-cars:apply',
+    )
+
+    return
+  }
+
+  let done = 0
+
+  for (const row of doomedCompat) {
+    await db.orm.public.PartCompatibility
+      .where({ id: row.id })
+      .delete()
+  }
+
+  for (const id of doomed) {
+    await db.orm.public.Vehicle.where({ id }).delete()
+
+    done++
+
+    if (done % 2000 === 0) {
+      console.log(`   ... ${done}/${doomed.length} veículos apagados`)
+    }
+  }
+
+  console.log(`   ✓ ${doomed.length} veículos apagados`)
+
+  // gerações, modelos e marcas que ficaram vazios
+  let removedGenerations = 0
+  let removedModels = 0
+  let removedBrands = 0
+
+  const brandRows = await db.orm.public.CarBrand
+    .select('id', 'name', 'slug')
+    .all()
+
+  for (const brand of brandRows) {
+    const modelRows = await db.orm.public.CarModel
+      .where({ brandId: brand.id })
+      .all()
+
+    let remainingModels = modelRows.length
+
+    for (const model of modelRows) {
+      const generationRows = await db.orm.public.CarGeneration
+        .where({ modelId: model.id })
+        .all()
+
+      let remainingGenerations = generationRows.length
+
+      for (const generation of generationRows) {
+        const vehicles = await db.orm.public.Vehicle
+          .where({ generationId: generation.id })
+          .all()
+
+        if (vehicles.length === 0) {
+          await db.orm.public.CarGeneration
+            .where({ id: generation.id })
+            .delete()
+
+          removedGenerations++
+          remainingGenerations--
+        }
+      }
+
+      if (remainingGenerations === 0) {
+        await db.orm.public.CarModel
+          .where({ id: model.id })
+          .delete()
+
+        removedModels++
+        remainingModels--
+      }
+    }
+
+    if (remainingModels === 0) {
+      await db.orm.public.CarBrand
+        .where({ id: brand.id })
+        .delete()
+
+      removedBrands++
+    }
+  }
+
+  console.log(
+    `   ✓ Removidos também: ${removedGenerations} gerações, ${removedModels} modelos, ${removedBrands} marcas`,
   )
 }
 
@@ -512,6 +757,8 @@ async function main() {
   console.log('Uso:')
   console.log('  tsx scripts/carsCatalog.ts export')
   console.log('  tsx scripts/carsCatalog.ts seed')
+  console.log('  tsx scripts/carsCatalog.ts seed --prune          (simula a limpeza)')
+  console.log('  tsx scripts/carsCatalog.ts seed --prune --apply  (apaga de verdade)')
 
   process.exitCode = 1
 }

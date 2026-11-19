@@ -4,14 +4,16 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "contract:emit": "prisma contract emit",
-    "catalog:import": "tsx scripts/importCatalog.ts",
-    "catalog:export-cars" : "tsx scripts/carsCatalog.ts export",
-    "catalog:seed-cars": "tsx scripts/carsCatalog.ts seed"
-  },
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "contract:emit": "prisma contract emit",
+  "catalog:import": "tsx scripts/importCatalog.ts",
+  "catalog:export-cars": "tsx scripts/carsCatalog.ts export",
+  "catalog:seed-cars": "tsx scripts/carsCatalog.ts seed",
+  "catalog:clean-cars": "tsx scripts/carsCatalog.ts seed --prune",
+  "catalog:clean-cars:apply": "tsx scripts/carsCatalog.ts seed --prune --apply"
+},
   "dependencies": {
     "@duckdb/node-api": "^1.5.5-r.5",
     "@prisma/orm-postgres": "^8.0.0-rc.7",
